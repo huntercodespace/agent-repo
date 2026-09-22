@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { sessionGroups } from "../data/workspace";
 import { CredentialsPage } from "./CredentialsPage";
 
@@ -44,16 +45,29 @@ function PiMark() {
   );
 }
 
-function TrafficDot({ color, border, label, onClick }: { color: string; border: string; label: string; onClick: () => void }) {
+function WindowChromeButton({
+  label,
+  onClick,
+  children,
+  danger = false,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+  danger?: boolean;
+}) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="h-3 w-3 rounded-full border"
-      style={{ backgroundColor: color, borderColor: border }}
-    />
+      className={`flex h-10 w-11 items-center justify-center text-pi-muted transition-colors ${
+        danger ? "hover:bg-[#c42b1c] hover:text-white" : "hover:bg-pi-cardHover hover:text-pi-text"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -61,13 +75,8 @@ export function CredentialsFrame() {
   const desktop = window.piDesktop;
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-pi-bg font-sans text-xs text-[#c9d1d9] antialiased selection:bg-pi-accent selection:text-white">
-      <header className="flex h-10 shrink-0 select-none items-center justify-between border-b border-pi-border bg-pi-surface px-3">
-        <div className="flex items-center gap-4">
-          <div className="mr-1 flex items-center gap-2">
-            <TrafficDot color="#ff5f56" border="rgba(224,68,62,0.5)" label="关闭" onClick={() => desktop?.close()} />
-            <TrafficDot color="#ffbd2e" border="rgba(222,161,35,0.5)" label="最小化" onClick={() => desktop?.minimize()} />
-            <TrafficDot color="#27c93f" border="rgba(26,171,41,0.5)" label="最大化" onClick={() => desktop?.toggleMaximize()} />
-          </div>
+      <header className="flex h-10 shrink-0 select-none items-center justify-between border-b border-pi-border bg-pi-surface pl-3">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
           <div className="flex items-center gap-1.5 font-mono text-[11px] text-pi-muted">
             <a href="#/" className="transition-colors hover:text-pi-text">pi-monorepo</a>
             <span className="text-pi-border">/</span>
@@ -82,7 +91,7 @@ export function CredentialsFrame() {
             </a>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex items-center gap-2 pr-2 text-[11px]">
           <a href="#/onboarding" className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text">
             <span>打开文件夹</span>
           </a>
@@ -93,6 +102,23 @@ export function CredentialsFrame() {
           <button type="button" className="flex items-center gap-1.5 rounded bg-pi-accent px-3 py-1 font-medium text-white shadow-sm transition-colors hover:bg-pi-accentHover">
             <span>交接 Handoff</span>
           </button>
+        </div>
+        <div className="ml-2 flex h-10 shrink-0 items-stretch">
+          <WindowChromeButton label="最小化" onClick={() => desktop?.minimize()}>
+            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 6h8" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          </WindowChromeButton>
+          <WindowChromeButton label="最大化" onClick={() => desktop?.toggleMaximize()}>
+            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <rect x="2.25" y="2.25" width="7.5" height="7.5" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          </WindowChromeButton>
+          <WindowChromeButton label="关闭" danger onClick={() => desktop?.close()}>
+            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          </WindowChromeButton>
         </div>
       </header>
       <div className="flex min-h-0 flex-1 overflow-hidden">
