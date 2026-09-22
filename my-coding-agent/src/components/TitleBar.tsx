@@ -1,17 +1,43 @@
+import type { ReactNode } from "react";
 import { Icon } from "./Icon";
 import { PiLogo } from "./PiLogo";
 
 export type RightRailTab = "files" | "terminal" | "diff";
 
+/** Inline SVGs — Material subset lacks minimize / crop_square, which overflow as ligature text. */
+function MinimizeIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="shrink-0">
+      <rect x="1" y="4.5" width="8" height="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function MaximizeIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="shrink-0">
+      <rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" className="shrink-0">
+      <path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function WindowControl({
   label,
   onClick,
-  icon,
+  children,
   danger = false,
 }: {
   label: string;
   onClick: () => void;
-  icon: string;
+  children: ReactNode;
   danger?: boolean;
 }) {
   return (
@@ -20,13 +46,13 @@ function WindowControl({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className={`titlebar-no-drag flex h-10 w-11 shrink-0 items-center justify-center text-on-surface-variant transition-colors ${
+      className={`titlebar-no-drag flex h-10 w-11 shrink-0 items-center justify-center overflow-hidden text-on-surface-variant transition-colors ${
         danger
           ? "hover:bg-[#c42b1c] hover:text-white"
           : "hover:bg-surface-container-high hover:text-on-surface"
       }`}
     >
-      <Icon name={icon} className="text-[16px]" />
+      {children}
     </button>
   );
 }
@@ -60,9 +86,15 @@ function RightRailTabs({ active }: { active: RightRailTab }) {
 function WindowControls({ desktop }: { desktop?: Window["piDesktop"] }) {
   return (
     <div className="titlebar-no-drag flex h-10 shrink-0 items-stretch border-l border-surface-container-high/40">
-      <WindowControl label="最小化" icon="minimize" onClick={() => desktop?.minimize()} />
-      <WindowControl label="最大化" icon="crop_square" onClick={() => desktop?.toggleMaximize()} />
-      <WindowControl label="关闭" icon="close" danger onClick={() => desktop?.close()} />
+      <WindowControl label="最小化" onClick={() => desktop?.minimize()}>
+        <MinimizeIcon />
+      </WindowControl>
+      <WindowControl label="最大化" onClick={() => desktop?.toggleMaximize()}>
+        <MaximizeIcon />
+      </WindowControl>
+      <WindowControl label="关闭" danger onClick={() => desktop?.close()}>
+        <CloseIcon />
+      </WindowControl>
     </div>
   );
 }
@@ -71,7 +103,7 @@ export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
   const desktop = window.piDesktop;
 
   return (
-    <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center bg-surface-container-lowest pl-space-md">
+    <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center overflow-hidden bg-surface-container-lowest pl-space-md">
       <div className="flex min-w-0 flex-1 items-center gap-space-md">
         <div
           className="flex min-w-0 items-center gap-space-sm"
