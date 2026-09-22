@@ -6,12 +6,12 @@ import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
 import { Icon } from "./components/Icon";
-import { readStatusFromLocation, type EngineState } from "./status";
+import { readStatusFromLocation, type EngineState, type SandboxState } from "./status";
 
 export default function App() {
   const initial = readStatusFromLocation();
   const [engine, setEngine] = useState<EngineState>(initial.engine);
-  const [sandboxEnabled, setSandboxEnabled] = useState(initial.sandboxEnabled);
+  const [sandbox, setSandbox] = useState<SandboxState>(initial.sandbox);
 
   return (
     <div className="h-screen select-none overflow-hidden bg-surface font-body-md text-body-md text-on-surface">
@@ -51,9 +51,9 @@ export default function App() {
       </div>
       <StatusBar
         engine={engine}
-        sandboxEnabled={sandboxEnabled}
+        sandbox={sandbox}
         onEngineChange={setEngine}
-        onSandboxChange={setSandboxEnabled}
+        onSandboxChange={setSandbox}
       />
     </div>
   );
