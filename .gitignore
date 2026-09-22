@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build / output
+dist/
+build/
+out/
+release/
+*.asar
+.webpack/
+
+# Electron (electron-builder / electron-forge)
+*.dmg
+*.AppImage
+*.exe
+*.blockmap
+*.snap
+.electron-builder/
+.electron-builder.yml.cache/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / cache
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.cache
+.parcel-cache
+coverage/
+.nyc_output/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# TypeScript / temp
+*.tsbuildinfo
+.turbo/
