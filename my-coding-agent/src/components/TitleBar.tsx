@@ -1,14 +1,16 @@
 import { Icon } from "./Icon";
 import { PiLogo } from "./PiLogo";
 
-function TrafficLight({
-  color,
+function WindowControl({
   label,
   onClick,
+  icon,
+  danger = false,
 }: {
-  color: string;
   label: string;
   onClick: () => void;
+  icon: string;
+  danger?: boolean;
 }) {
   return (
     <button
@@ -16,9 +18,14 @@ function TrafficLight({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="titlebar-no-drag h-3 w-3 rounded-full transition-opacity hover:opacity-80"
-      style={{ backgroundColor: color }}
-    />
+      className={`titlebar-no-drag flex h-10 w-11 items-center justify-center text-on-surface-variant transition-colors ${
+        danger
+          ? "hover:bg-[#c42b1c] hover:text-white"
+          : "hover:bg-surface-container-high hover:text-on-surface"
+      }`}
+    >
+      <Icon name={icon} className="text-[16px]" />
+    </button>
   );
 }
 
@@ -26,15 +33,10 @@ export function TitleBar() {
   const desktop = window.piDesktop;
 
   return (
-    <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center justify-between bg-surface-container-lowest px-space-md">
-      <div className="flex items-center gap-space-md">
-        <div className="titlebar-no-drag flex items-center gap-1.5 px-space-xs">
-          <TrafficLight color="#ff5f56" label="关闭" onClick={() => desktop?.close()} />
-          <TrafficLight color="#ffbd2e" label="最小化" onClick={() => desktop?.minimize()} />
-          <TrafficLight color="#27c93f" label="最大化" onClick={() => desktop?.toggleMaximize()} />
-        </div>
+    <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center justify-between bg-surface-container-lowest pl-space-md">
+      <div className="flex min-w-0 flex-1 items-center gap-space-md">
         <div
-          className="flex items-center gap-space-sm pl-space-sm"
+          className="flex items-center gap-space-sm"
           onDoubleClick={() => desktop?.toggleMaximize()}
         >
           <PiLogo className="h-4 w-auto object-contain" />
@@ -53,7 +55,7 @@ export function TitleBar() {
           </a>
         </div>
       </div>
-      <div className="titlebar-no-drag flex items-center gap-space-xs">
+      <div className="titlebar-no-drag flex shrink-0 items-center gap-space-xs pr-space-xs">
         <a
           href="#/onboarding"
           className="titlebar-no-drag flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
@@ -85,6 +87,11 @@ export function TitleBar() {
         <div className="ml-space-xs flex h-7 w-7 items-center justify-center rounded-full bg-primary">
           <Icon name="person" className="text-[15px] text-on-primary" />
         </div>
+      </div>
+      <div className="titlebar-no-drag ml-space-sm flex h-10 shrink-0 items-stretch">
+        <WindowControl label="最小化" icon="minimize" onClick={() => desktop?.minimize()} />
+        <WindowControl label="最大化" icon="crop_square" onClick={() => desktop?.toggleMaximize()} />
+        <WindowControl label="关闭" icon="close" danger onClick={() => desktop?.close()} />
       </div>
     </header>
   );
