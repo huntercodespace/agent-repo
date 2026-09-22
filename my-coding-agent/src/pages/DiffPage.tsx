@@ -227,37 +227,7 @@ export function DiffPage() {
     </div>
     {/* Right Unified Diff Review Panel (380px fixed width, surgical workbench style) */}
     <div className="w-[380px] shrink-0 bg-surface-container-lowest flex flex-col h-full shadow-2xl z-10">
-      {/* Pane Primary Tabs */}
-      <div className="h-10 bg-surface-container-lowest flex items-center px-space-xs gap-1 shrink-0 select-none">
-        <button className="flex-1 h-8 rounded text-outline hover:text-on-surface hover:bg-surface-container-low font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-colors" type="button">
-          <span className="material-symbols-outlined text-[14px]">
-            account_tree
-          </span>
-          <span>
-            文件树 Files
-          </span>
-        </button>
-        <button className="flex-1 h-8 rounded text-outline hover:text-on-surface hover:bg-surface-container-low font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-colors" type="button">
-          <span className="material-symbols-outlined text-[14px]">
-            terminal
-          </span>
-          <span>
-            终端 Terminal
-          </span>
-        </button>
-        <button className="flex-1 h-8 rounded bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm" type="button">
-          <span className="material-symbols-outlined text-[14px] text-tertiary">
-            difference
-          </span>
-          <span>
-            变更审查 Diff
-          </span>
-          <span className="w-4 h-4 rounded-full bg-primary text-on-primary font-code-sm text-code-sm text-[10px] flex items-center justify-center">
-            3
-          </span>
-        </button>
-      </div>
-      {/* Diff Review Toolbar */}
+      {/* Diff Review Toolbar — pane tabs live in TitleBar beside window controls */}
       <div className="px-space-md py-space-sm bg-surface-container-low flex flex-col gap-space-xs shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-space-xs">

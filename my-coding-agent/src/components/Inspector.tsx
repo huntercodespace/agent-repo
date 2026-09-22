@@ -4,29 +4,6 @@ export function Inspector() {
   return (
     <aside className="flex w-full shrink-0 flex-col justify-between bg-surface-container-lowest lg:h-full lg:w-[340px]">
       <div className="flex min-h-0 flex-col">
-        <div className="flex h-10 items-center gap-space-xs bg-surface-container-low px-space-sm font-label-sm text-label-sm">
-          <button
-            type="button"
-            className="flex h-8 items-center gap-1.5 rounded bg-surface-container px-space-sm font-medium text-on-surface shadow-sm"
-          >
-            <Icon name="folder_open" className="text-[15px] text-secondary" />
-            <span>文件树 Files</span>
-          </button>
-          <button
-            type="button"
-            className="flex h-8 items-center gap-1.5 rounded px-space-sm text-on-surface-variant transition-colors hover:bg-surface-container/50 hover:text-on-surface"
-          >
-            <Icon name="terminal" className="text-[15px]" />
-            <span>终端 Terminal</span>
-          </button>
-          <button
-            type="button"
-            className="flex h-8 items-center gap-1.5 rounded px-space-sm text-on-surface-variant transition-colors hover:bg-surface-container/50 hover:text-on-surface"
-          >
-            <Icon name="difference" className="text-[15px]" />
-            <span>变更审查 Diff</span>
-          </button>
-        </div>
         <div className="flex flex-col gap-0.5 overflow-y-auto p-space-sm font-code-sm text-code-sm">
           <div className="flex cursor-pointer items-center gap-1.5 px-space-sm py-1 font-medium text-on-surface">
             <Icon name="expand_more" className="text-[14px] text-outline" />
