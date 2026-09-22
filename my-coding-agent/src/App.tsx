@@ -92,11 +92,10 @@ export default function App() {
     : underlay === "engine" ? <EngineStatusPage />
     : <WorkspacePage />;
 
-  // Right-rail tabs share the title bar with window controls on workspace/diff only.
+  // Derive from route so tabs/width stay in sync on navigation (no underlay lag).
   const titleRightRail: RightRailTab | null =
-    route === "branch" ? null
-      : underlay === "diff" ? "diff"
-      : underlay === "workspace" ? "files"
+    route === "diff" ? "diff"
+      : route === "workspace" ? "files"
       : null;
 
   return (
