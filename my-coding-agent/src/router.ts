@@ -1,4 +1,12 @@
-export type Route = "workspace" | "diff" | "settings" | "onboarding" | "credentials" | "branch";
+export type Route =
+  | "workspace"
+  | "diff"
+  | "settings"
+  | "onboarding"
+  | "credentials"
+  | "branch"
+  | "status"
+  | "engine";
 
 export function readRoute(hash = window.location.hash): Route {
   const path = hash.replace(/^#/, "").split("?")[0].replace(/^\/+/, "");
@@ -13,6 +21,10 @@ export function readRoute(hash = window.location.hash): Route {
       return "credentials";
     case "branch":
       return "branch";
+    case "status":
+      return "status";
+    case "engine":
+      return "engine";
     default:
       return "workspace";
   }

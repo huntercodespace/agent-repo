@@ -91,6 +91,15 @@
 }
 
 @font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./assets/fonts/noto-sc-8.woff2") format("woff2");
+  unicode-range: U+2191, U+2193, U+25c9, U+25cf, U+300c-300d, U+4e09, U+4e13, U+4e24, U+4e66, U+4e8b, U+4e91, U+4f18, U+4f9b, U+5047, U+51cf, U+529b, U+529f, U+5339, U+53c9, U+5404, U+5410, U+541e, U+5468, U+54cd, U+5546, U+56e0, U+585e, U+58f0, U+5b50, U+5b88, U+5c01, U+5c04, U+5c42, U+5c5e, U+5d29, U+5e27, U+5e73, U+5e94, U+5f71, U+5f80, U+5faa, U+5fd7-5fd8, U+603b, U+6062, U+6270, U+6295, U+62e5, U+62f7, U+65e5, U+672b, U+675c, U+69fd, U+6bb5, U+6beb, U+6c60, U+6ca1, U+6cc4, U+6df7, U+6e21, U+6e83, U+6e90, U+6f5c, U+7269, U+74f6, U+76ae, U+77e9, U+786c, U+7981, U+7aa5, U+7ba1, U+7ecf, U+7f29, U+8005, U+8026, U+80a9, U+822a, U+82af, U+843d, U+8868, U+88ab, U+89c9, U+8bae-8baf, U+8bd1, U+8be2, U+8d1d, U+8d39, U+8dc3, U+8df3, U+8f6f, U+8f7b, U+9020, U+9053, U+9065, U+957f, U+9635, U+963b, U+9645, U+96c6, U+9732, U+9886, U+9888, U+9a7b;
+}
+
+@font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;
   font-weight: 400;
@@ -140,6 +149,20 @@ summary::-webkit-details-marker {
     -webkit-font-smoothing: antialiased;
     user-select: none;
   }
+}
+
+.glow-subtle {
+  box-shadow: 0 0 15px -3px rgba(124, 130, 246, 0.15);
+}
+
+.input-disabled-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.015),
+    rgba(255, 255, 255, 0.015) 8px,
+    rgba(0, 0, 0, 0.05) 8px,
+    rgba(0, 0, 0, 0.05) 16px
+  );
 }
 
 .titlebar-drag {

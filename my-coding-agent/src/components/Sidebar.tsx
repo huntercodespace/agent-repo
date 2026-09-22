@@ -16,7 +16,7 @@ function sessionActive(route: Route, id: string) {
 
 export function Sidebar({ route }: { route: Route }) {
   return (
-    <aside className="fixed bottom-8 left-0 top-10 z-40 flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest">
+    <aside className="fixed bottom-9 left-0 top-10 z-40 flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest">
       <div className="flex flex-col">
         <div className="flex h-12 items-center justify-between bg-surface-container-lowest px-space-md">
           <div className="flex items-center gap-space-sm">
@@ -87,6 +87,30 @@ export function Sidebar({ route }: { route: Route }) {
         >
           <Icon name="extension" className="mr-2 text-[16px] text-on-surface-variant" />
           <span>插件市场</span>
+        </a>
+        <a
+          href="#/status"
+          aria-current={route === "status" ? "page" : undefined}
+          className={
+            route === "status"
+              ? "flex items-center rounded bg-surface-container-high px-space-sm py-1.5 font-medium text-on-surface transition-colors"
+              : "flex items-center rounded px-space-sm py-1.5 font-body-sm text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          }
+        >
+          <Icon name="dns" className="mr-2 text-[16px] text-on-surface-variant" />
+          <span>状态栏规范</span>
+        </a>
+        <a
+          href="#/engine"
+          aria-current={route === "engine" ? "page" : undefined}
+          className={
+            route === "engine"
+              ? "flex items-center rounded bg-surface-container-high px-space-sm py-1.5 font-medium text-on-surface transition-colors"
+              : "flex items-center rounded px-space-sm py-1.5 font-body-sm text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          }
+        >
+          <Icon name="memory" className="mr-2 text-[16px] text-on-surface-variant" />
+          <span>引擎状态</span>
         </a>
         <a
           href="#/settings"

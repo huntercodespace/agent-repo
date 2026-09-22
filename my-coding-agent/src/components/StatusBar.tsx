@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   nextEngineState,
   nextSandboxState,
@@ -7,62 +7,66 @@ import {
 } from "../status";
 import { Icon } from "./Icon";
 
-const engineMeta: Record<
-  EngineState,
-  { label: string; hint?: string; chip: string; dot: string }
-> = {
+const engineChip: Record<EngineState, { node: ReactNode; latency: string; tokens: string; latencyClass: string }> = {
   idle: {
-    label: "引擎·RPC 空闲·已连接",
-    chip: "bg-[#0e3a2c] text-[#5ef0b4] shadow-[inset_0_0_0_1px_rgba(78,222,163,0.45)]",
-    dot: "bg-[#3ee6a0]",
+    latency: "延迟 18ms",
+    tokens: "已消耗 4.2k tokens",
+    latencyClass: "text-tertiary",
+    node: (
+      <>
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tertiary opacity-40" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-tertiary" />
+        </span>
+        <span className="font-label-sm text-[11px] font-semibold text-on-surface">引擎 · RPC:</span>
+        <span className="font-label-sm text-[11px] font-medium text-tertiary">空闲 · 已连接</span>
+        <span className="rounded bg-surface-container-lowest px-1 py-0.5 font-code-sm text-[9px] uppercase tracking-wider text-outline">
+          idle
+        </span>
+      </>
+    ),
   },
   chatting: {
-    label: "引擎·RPC 对话中",
-    hint: "每窗口独立进程",
-    chip: "bg-[#142844] text-[#8ecbff] shadow-[inset_0_0_0_1px_rgba(90,170,230,0.45)]",
-    dot: "bg-[#5eb6f5]",
+    latency: "延迟 32ms",
+    tokens: "已消耗 8.9k tokens",
+    latencyClass: "text-primary",
+    node: (
+      <>
+        <Icon name="radio_button_checked" className="animate-pulse text-[15px] text-primary" />
+        <span className="font-label-sm text-[11px] font-semibold text-on-surface">引擎 · RPC:</span>
+        <span className="font-label-sm text-[11px] font-medium text-primary">对话中 (Streaming)</span>
+        <span className="rounded bg-primary/25 px-1.5 py-0.5 font-code-sm text-[9px] font-semibold text-primary">
+          4.2k tok/s
+        </span>
+      </>
+    ),
   },
   reconnecting: {
-    label: "引擎·RPC 重连中",
-    hint: "每窗口独立进程",
-    chip: "bg-[#3a2c10] text-[#ffc857] shadow-[inset_0_0_0_1px_rgba(245,180,60,0.45)]",
-    dot: "animate-pulse bg-[#f5b942]",
+    latency: "延迟 -- ms",
+    tokens: "已消耗 4.2k tokens",
+    latencyClass: "text-secondary",
+    node: (
+      <>
+        <Icon name="sync" className="animate-spin text-[14px] text-secondary" />
+        <span className="font-label-sm text-[11px] font-semibold text-on-surface">引擎 · RPC:</span>
+        <span className="font-label-sm text-[11px] font-medium text-secondary">重连中 (尝试 2/5)</span>
+        <span className="rounded bg-surface-container-lowest px-1 py-0.5 font-code-sm text-[9px] tracking-wider text-secondary">
+          backoff
+        </span>
+      </>
+    ),
   },
   disconnected: {
-    label: "引擎·RPC 已断开",
-    hint: "每窗口独立进程",
-    chip: "bg-[#2a2426] text-[#d9c4bf] shadow-[inset_0_0_0_1px_rgba(180,140,140,0.35)]",
-    dot: "bg-[#e15b6a]",
-  },
-};
-
-const sandboxMeta: Record<
-  SandboxState,
-  { label: string; chip: string; dot: string; badge: string; badgeClass: string; body: string }
-> = {
-  off: {
-    label: "未启用",
-    chip: "bg-[#2a2d33] text-[#9b9ba6] shadow-[inset_0_0_0_1px_rgba(150,150,160,0.28)]",
-    dot: "bg-[#7d7d88]",
-    badge: "未启用",
-    badgeClass: "bg-[#2c3036] text-[#9b9ba6]",
-    body: "启用后仅隔离终端命令，帮助降低命令风险；仍可改当前项目。会防范工作区外的文件操作，并限制随意联网。非绝对安全。",
-  },
-  enabling: {
-    label: "正在启用",
-    chip: "bg-[#1c3328] text-[#b7e7cf] shadow-[inset_0_0_0_1px_rgba(78,222,163,0.28)]",
-    dot: "animate-pulse bg-[#8fd9b4]",
-    badge: "正在启用",
-    badgeClass: "bg-[#163028] text-[#b7e7cf]",
-    body: "正在隔离终端命令。仍可改当前项目。启用后防范工作区外的文件操作，并限制随意联网。非绝对安全。",
-  },
-  on: {
-    label: "沙盒·命令隔离",
-    chip: "bg-[#0b5a3c] text-[#7dffc3] shadow-[inset_0_0_0_1px_rgba(80,255,180,0.55)]",
-    dot: "bg-[#5dffb0]",
-    badge: "已生效",
-    badgeClass: "bg-[#123d2e] text-[#7dffc3]",
-    body: "主要防范工作区外的文件操作，并限制随意联网；仍可改当前项目。当前仅隔离终端命令。帮助降低命令风险，非绝对安全。",
+    latency: "延迟 N/A",
+    tokens: "已消耗 4.2k tokens",
+    latencyClass: "text-error",
+    node: (
+      <>
+        <Icon name="cancel" className="text-[13px] text-error" />
+        <span className="font-label-sm text-[11px] font-semibold text-on-surface">引擎 · RPC:</span>
+        <span className="font-label-sm text-[11px] font-medium text-error">已断开 (退出码 137)</span>
+      </>
+    ),
   },
 };
 
@@ -74,8 +78,7 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ engine, sandbox, onEngineChange, onSandboxChange }: StatusBarProps) {
-  const engineChip = engineMeta[engine];
-  const sandboxChip = sandboxMeta[sandbox];
+  const current = engineChip[engine];
   const [hoveringSandbox, setHoveringSandbox] = useState(
     () => new URLSearchParams(window.location.search).get("policy") === "1",
   );
@@ -92,83 +95,117 @@ export function StatusBar({ engine, sandbox, onEngineChange, onSandboxChange }: 
   }, [sandbox, onSandboxChange]);
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-8 select-none items-center justify-between bg-surface-container-lowest px-3 font-label-xs text-[11px] text-on-surface-variant">
-      <div className="flex min-w-0 items-center gap-1.5">
+    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-9 select-none items-center justify-between bg-[#111318] px-space-md font-label-sm text-[11px] text-on-surface-variant">
+      <div className="flex min-w-0 items-center gap-space-xs">
         <a
           href="#/branch"
           title="切换分支"
-          className="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full bg-[#1a1e24] px-2 text-on-surface transition-colors hover:bg-[#242a32]"
+          className="group flex h-6 items-center gap-1.5 rounded bg-surface-container px-2 font-code-sm text-[12px] text-on-surface transition-colors hover:bg-surface-container-high"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-[#3ee6a0]" />
-          main
+          <Icon name="fork_left" className="text-[14px] text-on-surface-variant group-hover:text-primary" />
+          <span className="font-medium">main*</span>
+          <Icon name="expand_more" className="text-[12px] text-outline" />
         </a>
         <button
           type="button"
           data-engine={engine}
           title="每窗口独立进程"
           onClick={() => onEngineChange(nextEngineState(engine))}
-          className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-2 text-left leading-none ${engineChip.chip} ${engineChip.hint ? "h-[26px]" : "h-5"}`}
+          className={`flex h-6 items-center gap-2 rounded px-2.5 shadow-sm transition-colors ${
+            engine === "chatting"
+              ? "bg-primary/20 shadow-[0_0_12px_rgba(127,133,249,0.25)] hover:bg-primary/25"
+              : "bg-surface-container-high hover:bg-surface-bright"
+          }`}
         >
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${engineChip.dot}`} />
-          <span className="flex min-w-0 flex-col justify-center">
-            <span className="truncate font-medium">{engineChip.label}</span>
-            {engineChip.hint ? (
-              <span className="mt-0.5 truncate text-[9px] font-normal leading-none opacity-75">{engineChip.hint}</span>
-            ) : null}
-          </span>
+          {current.node}
+          {engine === "disconnected" ? (
+            <span
+              role="presentation"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEngineChange("idle");
+              }}
+              className="ml-1 flex items-center gap-1 rounded bg-surface-bright px-1.5 py-0.5 font-label-xs text-[10px] text-on-surface transition-colors hover:bg-primary hover:text-on-primary"
+            >
+              <Icon name="refresh" className="text-[11px]" />
+              重新连接 (R)
+            </span>
+          ) : null}
         </button>
         <div
-          className="relative shrink-0"
+          className="relative"
           onMouseEnter={() => setHoveringSandbox(true)}
           onMouseLeave={() => setHoveringSandbox(false)}
-          onFocus={() => setHoveringSandbox(true)}
-          onBlur={() => setHoveringSandbox(false)}
         >
           <button
             type="button"
             data-sandbox={sandbox}
-            aria-describedby="sandbox-policy"
             onClick={() => onSandboxChange(nextSandboxState(sandbox))}
-            onKeyDown={(event) => {
-              if (event.key === "Escape" && sandbox === "enabling") {
-                event.preventDefault();
-                onSandboxChange("off");
-              }
-            }}
-            className={`inline-flex h-5 items-center gap-1.5 rounded-full px-2 font-medium leading-none ${sandboxChip.chip}`}
+            className="flex h-6 items-center gap-1.5 rounded bg-surface-container-low px-2 transition-colors hover:bg-surface-container"
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${sandboxChip.dot}`} />
-            {sandboxChip.label}
+            <Icon
+              name="shield_with_heart"
+              className={`text-[13px] ${sandbox === "on" ? "text-tertiary" : "text-outline"}`}
+            />
+            <span className={`font-label-sm text-[11px] ${sandbox === "on" ? "text-tertiary" : "text-on-surface-variant"}`}>
+              {sandbox === "on" ? "沙箱 · 命令隔离" : sandbox === "enabling" ? "沙箱 · 正在启用" : "沙箱 · 未启用"}
+            </span>
           </button>
           {hoveringSandbox ? (
-            <div
-              id="sandbox-policy"
-              role="tooltip"
-              className="absolute bottom-[calc(100%+8px)] left-0 w-[380px] rounded-lg border border-[#1d6b4a] bg-[#101816] p-3 text-left shadow-[0_16px_36px_-8px_rgba(0,0,0,0.65)]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 text-[13px] font-medium text-on-surface">
-                  <Icon name="check_circle" className="text-[16px] text-[#5ef0b4]" />
-                  <span>沙盒隔离策略</span>
+            sandbox === "on" ? (
+              <div className="absolute bottom-8 left-0 z-50 w-80 rounded-lg border border-tertiary/40 bg-surface-container-high/95 p-space-md shadow-2xl backdrop-blur-md">
+                <div className="mb-2 flex items-center justify-between border-b border-outline-variant/30 pb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="shield_with_heart" className="text-[18px] text-tertiary" />
+                    <span className="font-headline-sm text-[13px] font-semibold text-on-surface">沙盒隔离策略</span>
+                  </div>
+                  <span className="rounded border border-tertiary/30 bg-tertiary/10 px-1.5 py-0.5 font-label-xs text-tertiary">
+                    已生效
+                  </span>
                 </div>
-                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${sandboxChip.badgeClass}`}>
-                  {sandboxChip.badge}
+                <p className="font-body-sm text-[12px] leading-relaxed text-on-surface">
+                  主要防范工作区外的文件操作，并限制随意联网；仍可修改当前项目。当前仅隔离终端命令。帮助降低命令风险，非绝对安全。
+                </p>
+                <div className="mt-2 flex items-center justify-between border-t border-outline-variant/20 pt-2 font-label-xs text-outline">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-tertiary" />
+                    终端命令：独立沙箱
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
+                    外网请求：白名单拦截
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute bottom-8 left-0 z-50 flex w-60 flex-col rounded-lg bg-surface-container-highest p-2 shadow-xl">
+                <span className="mb-1 font-label-xs font-semibold text-on-surface">
+                  {sandbox === "enabling" ? "正在启用" : "宿主直通模式 (Host Direct)"}
+                </span>
+                <span className="font-body-sm text-[11px] text-on-surface-variant">
+                  {sandbox === "enabling"
+                    ? "正在隔离终端命令。取消后仍为灰色未启用，没有失败弹窗。"
+                    : "脚本直接执行于当前开发机操作系统环境，未封装在轻量隔离中。"}
                 </span>
               </div>
-              <p className="mt-2 text-[12px] font-normal leading-5 text-[#c9d5ce]">{sandboxChip.body}</p>
-              <div className="mt-2.5 flex flex-wrap gap-2 text-[11px] text-[#7dffc3]">
-                <span className="rounded bg-[#0e2a22] px-2 py-1">终端命令：独立沙箱</span>
-                <span className="rounded bg-[#0e2a22] px-2 py-1">外网请求：白名单拦截</span>
-              </div>
-            </div>
+            )
           ) : null}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-4 pl-3">
-        <Icon name="shield" className="text-[14px] text-[#8f9aa3]" />
-        <span className="text-[#5ef0b4]">延迟 42ms</span>
-        <span className="text-outline">4.2k / 128k (3.2%)</span>
-        <span className="text-outline">UTF-8 · LF · TypeScript</span>
+      <div className="flex shrink-0 items-center gap-space-md font-code-sm text-[11px]">
+        <a href="#/status" className={`flex items-center gap-1 hover:text-on-surface ${current.latencyClass}`}>
+          <Icon name="speed" className="text-[13px]" />
+          <span>{current.latency}</span>
+        </a>
+        <span className="flex items-center gap-1">
+          <Icon name="data_usage" className="text-[13px] text-primary" />
+          <span>{current.tokens}</span>
+        </span>
+        <span>UTF-8</span>
+        <span>LF</span>
+        <a href="#/engine" className="hover:text-on-surface" title="引擎状态">
+          TypeScript
+        </a>
       </div>
     </footer>
   );

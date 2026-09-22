@@ -5,8 +5,10 @@ import { TitleBar } from "./components/TitleBar";
 import { BranchSwitcher } from "./pages/BranchSwitcher";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { DiffPage } from "./pages/DiffPage";
+import { EngineStatusPage } from "./pages/EngineStatusPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { StatusSpecPage } from "./pages/StatusSpecPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
 import { readRoute, type Route } from "./router";
 import { readStatusFromLocation, type EngineState, type SandboxState } from "./status";
@@ -28,7 +30,7 @@ export default function App() {
   const [sandbox, setSandbox] = useState<SandboxState>(initial.sandbox);
   const [underlay, setUnderlay] = useState<Route>(route === "branch" || route === "onboarding" ? "workspace" : route);
   const [branchDirty, setBranchDirty] = useState(
-    () => new URLSearchParams(window.location.search).get("dirty") === "1",
+    () => new URLSearchParams(window.location.search).get("dirty") !== "0",
   );
 
   useEffect(() => {
@@ -46,13 +48,15 @@ export default function App() {
   const page = underlay === "diff" ? <DiffPage />
     : underlay === "settings" ? <SettingsPage />
     : underlay === "credentials" ? <CredentialsPage />
+    : underlay === "status" ? <StatusSpecPage />
+    : underlay === "engine" ? <EngineStatusPage />
     : <WorkspacePage />;
 
   return (
     <div className="h-screen select-none overflow-hidden bg-surface font-body-md text-body-md text-on-surface">
       <TitleBar />
       <Sidebar route={route === "branch" ? underlay : route} />
-      <div className="h-full min-h-0 pl-60 pb-8 pt-10">
+      <div className="h-full min-h-0 pl-60 pb-9 pt-10">
         <div className="h-full min-h-0">{page}</div>
       </div>
       <StatusBar
