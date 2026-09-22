@@ -94,10 +94,14 @@ export function StatusBar({ engine, sandbox, onEngineChange, onSandboxChange }: 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-8 select-none items-center justify-between bg-surface-container-lowest px-3 font-label-xs text-[11px] text-on-surface-variant">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full bg-[#1a1e24] px-2 text-on-surface">
+        <a
+          href="#/branch"
+          title="切换分支"
+          className="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full bg-[#1a1e24] px-2 text-on-surface transition-colors hover:bg-[#242a32]"
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-[#3ee6a0]" />
           main
-        </span>
+        </a>
         <button
           type="button"
           data-engine={engine}

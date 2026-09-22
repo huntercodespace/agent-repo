@@ -1,8 +1,8 @@
 # Pi desktop shell
 
-Electron workspace for the Pi coding agent. This package is the main workspace screen: title bar, session sidebar, conversation, file inspector, and the bottom status bar.
+Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Session data, credentials, and git state are static placeholders.
 
-Auth storage, a live RPC client, and a real command sandbox are not part of this shell. Session messages and the status chips are static UI state.
+Auth storage, a live RPC client, and a real command sandbox are not part of this shell.
 
 ## Requirements
 
@@ -43,6 +43,27 @@ On Linux containers where Chromium’s sandbox cannot start, launch with:
 ```bash
 ELECTRON_NO_SANDBOX=1 npm run dev
 ```
+
+## Pages
+
+Routes are hashes, so they work in the browser and in the Electron window.
+
+| Page | Open |
+| --- | --- |
+| Main workspace | [http://127.0.0.1:5173/#/](http://127.0.0.1:5173/#/) |
+| Diff review | [#/diff](http://127.0.0.1:5173/#/diff) |
+| Settings | [#/settings](http://127.0.0.1:5173/#/settings) |
+| Onboarding | [#/onboarding](http://127.0.0.1:5173/#/onboarding) |
+| Model credentials (six states) | [#/credentials](http://127.0.0.1:5173/#/credentials) |
+| Branch switcher, clean | [#/branch](http://127.0.0.1:5173/#/branch) |
+| Branch switcher, dirty worktree | `?dirty=1#/branch` |
+
+Inside the window:
+
+- **Fix auth token race condition** or **提交更改** opens diff review.
+- **设置** opens preferences. **模型与计算** and the primary model row open credentials.
+- **打开文件夹** opens the project picker. A recent project returns to the workspace.
+- The **main** badge in the title bar, and the branch chip on the status bar, open the branch switcher. The switcher can flip between a clean tree and a dirty tree. It does not change the `main` chip.
 
 ## Status bar
 

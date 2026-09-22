@@ -43,27 +43,31 @@ export function TitleBar() {
           <span className="font-code-sm text-code-sm text-on-surface-variant">core</span>
           <span className="font-code-sm text-code-sm text-outline">/</span>
           <span className="font-code-sm text-code-sm font-semibold text-on-surface">agent-runtime</span>
-          <span className="ml-space-xs flex items-center gap-1 rounded bg-surface-container-high px-1.5 py-0.5 font-code-sm text-code-sm text-secondary">
+          <a
+            href="#/branch"
+            title="切换分支"
+            className="titlebar-no-drag ml-space-xs flex items-center gap-1 rounded bg-surface-container-high px-1.5 py-0.5 font-code-sm text-code-sm text-secondary transition-colors hover:bg-surface-bright"
+          >
             <span>main</span>
             <span className="text-outline">⌥</span>
-          </span>
+          </a>
         </div>
       </div>
       <div className="titlebar-no-drag flex items-center gap-space-xs">
-        <button
-          type="button"
-          className="flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
+        <a
+          href="#/onboarding"
+          className="titlebar-no-drag flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
         >
           <Icon name="folder_open" className="text-[15px] text-on-surface-variant" />
           <span>打开文件夹</span>
-        </button>
-        <button
-          type="button"
-          className="flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
+        </a>
+        <a
+          href="#/diff"
+          className="titlebar-no-drag flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
         >
           <Icon name="commit" className="text-[15px] text-tertiary" />
           <span>提交更改 (3)</span>
-        </button>
+        </a>
         <button
           type="button"
           className="flex h-7 items-center gap-1.5 rounded bg-primary px-space-sm font-label-sm text-label-sm font-medium text-on-primary transition-colors hover:bg-primary-container hover:text-on-primary-container"

@@ -1,8 +1,20 @@
-import { activeSessionId, sessionGroups } from "../data/workspace";
+import { sessionGroups } from "../data/workspace";
+import type { Route } from "../router";
 import { Icon } from "./Icon";
 import { PiLogo } from "./PiLogo";
 
-export function Sidebar() {
+function sessionHref(id: string) {
+  if (id === "auth-race-condition") return "#/diff";
+  return "#/";
+}
+
+function sessionActive(route: Route, id: string) {
+  if (route === "diff") return id === "auth-race-condition";
+  if (route === "workspace") return id === "refactor-sse-parser";
+  return false;
+}
+
+export function Sidebar({ route }: { route: Route }) {
   return (
     <aside className="fixed bottom-8 left-0 top-10 z-40 flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest">
       <div className="flex flex-col">
@@ -40,11 +52,11 @@ export function Sidebar() {
                 {group.label}
               </div>
               {group.items.map((item) => {
-                const active = item.id === activeSessionId;
+                const active = sessionActive(route, item.id);
                 return (
                   <a
                     key={item.id}
-                    href={`#${item.id}`}
+                    href={sessionHref(item.id)}
                     aria-current={active ? "page" : undefined}
                     className={
                       active
@@ -77,8 +89,13 @@ export function Sidebar() {
           <span>插件市场</span>
         </a>
         <a
-          href="#settings"
-          className="flex items-center justify-between rounded px-space-sm py-1.5 font-body-sm text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          href="#/settings"
+          aria-current={route === "settings" || route === "credentials" ? "page" : undefined}
+          className={
+            route === "settings" || route === "credentials"
+              ? "flex items-center justify-between rounded bg-surface-container-high px-space-sm py-1.5 font-medium text-on-surface transition-colors"
+              : "flex items-center justify-between rounded px-space-sm py-1.5 font-body-sm text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+          }
         >
           <span>设置</span>
           <span className="font-code-sm text-code-sm text-outline">⌘,</span>
