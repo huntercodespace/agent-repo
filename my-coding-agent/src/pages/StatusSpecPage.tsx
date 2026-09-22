@@ -87,14 +87,14 @@ export function StatusSpecPage() {
                 ：独立声明代码执行隔离层（容器/Direct Host），两者严格解耦保持独立槽位。
               </span>
             </div>
-            <div className="flex items-center gap-space-xs text-primary cursor-pointer hover:underline">
+            <a href="#/engine" className="flex items-center gap-space-xs text-primary cursor-pointer hover:underline">
               <span>
                 查看 IPC 通讯协议白皮书
               </span>
               <span className="material-symbols-outlined text-[14px]">
                 arrow_outward
               </span>
-            </div>
+            </a>
           </div>
         </div>
       </div>
@@ -375,7 +375,7 @@ export function StatusSpecPage() {
                     shield_with_heart
                   </span>
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
-                    沙箱 · 未启用
+                    沙盒 · 未启用
                   </span>
                 </div>
                 <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
@@ -632,7 +632,7 @@ export function StatusSpecPage() {
                     shield_with_heart
                   </span>
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
-                    沙箱 · 未启用
+                    沙盒 · 未启用
                   </span>
                 </div>
                 <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
@@ -835,7 +835,7 @@ export function StatusSpecPage() {
                     shield_with_heart
                   </span>
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
-                    沙箱 · 未启用
+                    沙盒 · 未启用
                   </span>
                 </div>
                 <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
@@ -1038,7 +1038,7 @@ export function StatusSpecPage() {
                     shield_with_heart
                   </span>
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
-                    沙箱 · 未启用
+                    沙盒 · 未启用
                   </span>
                 </div>
                 <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">

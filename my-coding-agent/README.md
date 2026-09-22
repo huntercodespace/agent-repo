@@ -66,21 +66,20 @@ Inside the window:
 - **设置** opens preferences. **模型与计算** and the primary model row open credentials.
 - **打开文件夹** opens the project picker. A recent project returns to the workspace.
 - The **main** badge in the title bar, and the branch chip on the status bar, open the branch switcher. It opens on the dirty worktree from the HTML export. `?dirty=0` hides that warning. **刷新** toggles the warning. The chip stays `main*`.
-- **状态栏规范** opens the four engine-chip variants. **引擎状态** opens the sandbox policy card and the lifecycle samples. The live status bar uses the spec chips: one 引擎 · RPC state, and a separate 沙箱 chip.
+- **已消耗 4.2k tokens** on the workspace footer opens the status-bar spec. **延迟 24ms** opens the engine status screen. **Git: main** and the title-bar branch chip open the branch switcher.
 
 ## Status bar
 
-The bottom bar shows three independent pieces: a branch chip, one engine chip, and one sandbox chip.
+Workspace, diff, and settings use the 24px footer from those screens: `Git: main ✓ | Pi Engine: v2.4 (Ready) | 权限: 自动执行 (安全模式)`. Credentials uses its own footer (`凭据存储: 本地 AuthStorage 就绪`). The branch screen uses `⎇ main`.
+
+`#/engine` uses the taller status bar: four engine chips at once, plus a sandbox chip.
 
 | Chip | States |
 | --- | --- |
-| Branch | `main*`. It does not follow the engine or sandbox. |
-| 引擎 · RPC | 空闲 · 已连接 / 对话中 (Streaming) / 重连中 (尝试 2/5) / 已断开 (退出码 137). The tooltip reads 每窗口独立进程. |
-| 沙箱 | Grey **沙箱 · 未启用**, in-progress **沙箱 · 正在启用**, or bright **沙箱 · 命令隔离**. |
+| 引擎 · RPC | 空闲 · 已连接 / 对话中 / 重连中 / 已断开. Each chip keeps the subtitle 每窗口独立进程. Click one to mark it active. |
+| 沙盒 | Grey **沙盒 · 未启用**, in-progress **沙盒 · 正在启用**, or bright **沙盒 · 命令隔离**. |
 
-Hover the sandbox chip for the isolation note. When the sandbox is on, the card is titled 沙盒隔离策略 and says it only covers terminal commands, you can still edit the current project, and it limits out-of-workspace file access plus casual network access. Press Escape during **正在启用** to return to grey **沙箱 · 未启用**. That cancel does not open a dialog. `?policy=1` opens the sandbox note. |
-
-Click a chip to cycle the stub. The default screen is idle and sandbox on.
+Click the sandbox chip to cycle the stub. Press Escape during **正在启用** to return to grey **沙盒 · 未启用**. That cancel does not open a dialog. Hover the chip while it is on for the 沙盒隔离策略 note. `?policy=1` opens that note. The default is idle and sandbox off.
 
 Query overrides:
 

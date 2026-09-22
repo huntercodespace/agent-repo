@@ -37,7 +37,7 @@ export function CredentialsPage() {
               </div>
             </button>
             {/* 外观与主题 Appearance */}
-            <button className="w-full flex items-center justify-between px-2.5 py-2 rounded text-pi-muted hover:bg-pi-card hover:text-pi-text transition-colors text-left group">
+            <a href="#/settings" className="w-full flex items-center justify-between px-2.5 py-2 rounded text-pi-muted hover:bg-pi-card hover:text-pi-text transition-colors text-left group">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-pi-muted group-hover:text-pi-text" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10">
@@ -54,7 +54,7 @@ export function CredentialsPage() {
                   </div>
                 </div>
               </div>
-            </button>
+            </a>
             {/* 模型与计算 Models & Inference */}
             <button className="w-full flex items-center justify-between px-2.5 py-2 rounded text-pi-muted hover:bg-pi-card hover:text-pi-text transition-colors text-left group">
               <div className="flex items-center gap-2">
