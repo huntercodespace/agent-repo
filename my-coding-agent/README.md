@@ -56,7 +56,7 @@ Routes are hashes, so they work in the browser and in the Electron window.
 | Onboarding | [#/onboarding](http://127.0.0.1:5173/#/onboarding) |
 | Model credentials (six states) | [#/credentials](http://127.0.0.1:5173/#/credentials) |
 | Branch switcher, dirty worktree | [#/branch](http://127.0.0.1:5173/#/branch) |
-| Branch switcher, clean | `?dirty=0#/branch` |
+| Branch switcher, clean | [#/branch?dirty=0](http://127.0.0.1:5173/#/branch?dirty=0) |
 | Status bar spec | [#/status](http://127.0.0.1:5173/#/status) |
 | Engine status | [#/engine](http://127.0.0.1:5173/#/engine) |
 
@@ -65,7 +65,7 @@ Inside the window:
 - **Fix auth token race condition** or **提交更改** opens diff review.
 - **设置** opens preferences. **模型与计算** and the primary model row open credentials.
 - **打开文件夹** opens the project picker. A recent project returns to the workspace.
-- The **main** badge in the title bar, and the branch chip on the status bar, open the branch switcher. It opens on the dirty worktree from the HTML export. `?dirty=0` hides that warning. **刷新** toggles the warning. The chip stays `main*`.
+- The **main** badge in the title bar, and the branch chip on the status bar, open the branch switcher. It opens on the dirty worktree from the HTML export. `#/branch?dirty=0` hides that warning. A real search string still works (`?dirty=0#/branch`). **刷新** toggles the warning. The chip stays `main*`.
 - **已消耗 4.2k tokens** on the workspace footer opens the status-bar spec. **延迟 24ms** opens the engine status screen. **Git: main** and the title-bar branch chip open the branch switcher.
 
 ## Status bar
@@ -79,14 +79,15 @@ Workspace, diff, and settings use the 24px footer from those screens: `Git: main
 | 引擎 · RPC | 空闲 · 已连接 / 对话中 / 重连中 / 已断开. Each chip keeps the subtitle 每窗口独立进程. Click one to mark it active. |
 | 沙盒 | Grey **沙盒 · 未启用**, in-progress **沙盒 · 正在启用**, or bright **沙盒 · 命令隔离**. |
 
-Click the sandbox chip to cycle the stub. Press Escape during **正在启用** to return to grey **沙盒 · 未启用**. That cancel does not open a dialog. Hover the chip while it is on for the 沙盒隔离策略 note. `?policy=1` opens that note. The default is idle and sandbox off.
+Click the sandbox chip to cycle the stub. Press Escape during **正在启用** to return to grey **沙盒 · 未启用**. That cancel does not open a dialog. Hover the chip while it is on for the 沙盒隔离策略 note. `#/engine?policy=1` (or `?policy=1`) opens that note when the sandbox is on. The default is idle and sandbox off.
 
-Query overrides:
+Query overrides live in the hash, and the same keys in `location.search` still apply. A hash key wins when both set it.
 
 ```text
-?engine=chatting&sandbox=off
-?engine=reconnecting&sandbox=enabling
-?engine=disconnected
+#/engine?engine=chatting&sandbox=off
+#/engine?engine=reconnecting&sandbox=enabling
+#/engine?engine=disconnected
+#/engine?sandbox=on&policy=1
 ```
 
-`engine` is `idle`, `chatting`, `reconnecting`, or `disconnected`. `sandbox` is `off`, `enabling`, or `on`.
+`engine` is `idle`, `chatting`, `reconnecting`, or `disconnected`. `sandbox` is `off`, `enabling`, or `on`. Changing the hash re-reads `engine`, `sandbox`, `dirty`, and `policy` without a reload.

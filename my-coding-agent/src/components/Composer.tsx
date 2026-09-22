@@ -40,7 +40,7 @@ export function Composer() {
               className="flex h-8 items-center gap-1 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-tertiary transition-colors hover:bg-surface-container-high"
             >
               <Icon name="security" className="text-[15px]" />
-              <span className="text-on-surface">沙箱读写 (安全模式)</span>
+              <span className="text-on-surface">沙盒读写 (安全模式)</span>
               <Icon name="expand_more" className="text-[14px] text-outline" />
             </button>
           </div>

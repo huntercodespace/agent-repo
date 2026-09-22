@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { nextSandboxState, type EngineState, type SandboxState } from "../status";
+import { useEffect, useState } from "react";
+import { readLocationQuery } from "../router";
+import { nextSandboxState, readPolicyNoteOpen, type EngineState, type SandboxState } from "../status";
 import { Icon } from "./Icon";
 
 interface StatusBarProps {
@@ -24,9 +25,14 @@ function sandboxLabel(sandbox: SandboxState) {
 }
 
 export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxChange }: StatusBarProps) {
-  const [hoveringSandbox, setHoveringSandbox] = useState(
-    () => new URLSearchParams(window.location.search).get("policy") === "1",
-  );
+  const [policyOpen, setPolicyOpen] = useState(() => readPolicyNoteOpen(readLocationQuery()));
+  const [hoveringSandbox, setHoveringSandbox] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setPolicyOpen(readPolicyNoteOpen(readLocationQuery()));
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
 
   if (variant === "branch") {
     return (
@@ -135,7 +141,7 @@ export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxC
               </span>
               <Icon name="shield" className={`shrink-0 text-[15px] ${sandboxOn ? "text-tertiary" : "text-outline"}`} />
             </button>
-            {hoveringSandbox && sandboxOn ? (
+            {(hoveringSandbox || policyOpen) && sandboxOn ? (
               <div className="absolute bottom-12 left-0 z-50 w-[380px] rounded-lg border border-tertiary/40 bg-surface-container-high/95 p-space-md shadow-2xl backdrop-blur-md">
                 <div className="mb-2 flex items-center justify-between border-b border-outline-variant/30 pb-1.5">
                   <div className="flex items-center gap-1.5">

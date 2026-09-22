@@ -11,17 +11,23 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StatusSpecPage } from "./pages/StatusSpecPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
-import { readRoute, type Route } from "./router";
-import { readStatusFromLocation, type EngineState, type SandboxState } from "./status";
+import { readLocationQuery, readRoute, type Route } from "./router";
+import {
+  readDirtyWorktree,
+  readStatusFromLocation,
+  type EngineState,
+  type SandboxState,
+} from "./status";
 
-function useRoute() {
-  const [route, setRoute] = useState<Route>(() => readRoute());
-  useEffect(() => {
-    const onHash = () => setRoute(readRoute());
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-  return route;
+function readShellFromLocation() {
+  const params = readLocationQuery();
+  const status = readStatusFromLocation(params);
+  return {
+    route: readRoute(),
+    engine: status.engine,
+    sandbox: status.sandbox,
+    dirty: readDirtyWorktree(params),
+  };
 }
 
 function shellFor(route: Route): { pad: string; side: string; bar: "workspace" | "branch" | "engine" | "none" } {
@@ -32,14 +38,24 @@ function shellFor(route: Route): { pad: string; side: string; bar: "workspace" |
 }
 
 export default function App() {
-  const route = useRoute();
-  const initial = readStatusFromLocation();
+  const initial = readShellFromLocation();
+  const [route, setRoute] = useState<Route>(initial.route);
   const [engine, setEngine] = useState<EngineState>(initial.engine);
   const [sandbox, setSandbox] = useState<SandboxState>(initial.sandbox);
-  const [underlay, setUnderlay] = useState<Route>(route === "branch" || route === "onboarding" ? "workspace" : route);
-  const [branchDirty, setBranchDirty] = useState(
-    () => new URLSearchParams(window.location.search).get("dirty") !== "0",
-  );
+  const [underlay, setUnderlay] = useState<Route>(initial.route === "branch" || initial.route === "onboarding" ? "workspace" : initial.route);
+  const [branchDirty, setBranchDirty] = useState(initial.dirty);
+
+  useEffect(() => {
+    const sync = () => {
+      const next = readShellFromLocation();
+      setRoute(next.route);
+      setEngine(next.engine);
+      setSandbox(next.sandbox);
+      setBranchDirty(next.dirty);
+    };
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
 
   useEffect(() => {
     if (route !== "branch" && route !== "onboarding" && route !== "credentials") setUnderlay(route);
