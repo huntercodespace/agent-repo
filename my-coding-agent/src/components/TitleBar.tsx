@@ -20,7 +20,7 @@ function WindowControl({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className={`titlebar-no-drag flex h-10 w-11 items-center justify-center text-on-surface-variant transition-colors ${
+      className={`titlebar-no-drag flex h-10 w-11 shrink-0 items-center justify-center text-on-surface-variant transition-colors ${
         danger
           ? "hover:bg-[#c42b1c] hover:text-white"
           : "hover:bg-surface-container-high hover:text-on-surface"
@@ -33,33 +33,42 @@ function WindowControl({
 
 function RightRailTabs({ active }: { active: RightRailTab }) {
   const tabClass = (id: RightRailTab) =>
-    `titlebar-no-drag flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded px-1.5 font-label-sm text-label-sm transition-colors ${
+    `titlebar-no-drag flex h-8 shrink-0 items-center gap-1 rounded px-space-sm font-label-sm text-label-sm transition-colors ${
       active === id
         ? "bg-surface-container font-medium text-on-surface shadow-sm"
         : "text-on-surface-variant hover:bg-surface-container/50 hover:text-on-surface"
     }`;
 
   return (
-    <div className="titlebar-no-drag flex min-w-0 flex-1 items-center gap-0.5 px-space-xs">
+    <div className="titlebar-no-drag flex items-center gap-0.5 px-space-xs">
       <a href="#/" className={tabClass("files")} title="文件树 Files">
-        <Icon name="folder_open" className={`shrink-0 text-[15px] ${active === "files" ? "text-secondary" : ""}`} />
-        <span className="truncate">文件树 Files</span>
+        <Icon name="folder_open" className={`text-[15px] ${active === "files" ? "text-secondary" : ""}`} />
+        <span>文件树</span>
       </a>
       <button type="button" className={tabClass("terminal")} title="终端 Terminal">
-        <Icon name="terminal" className="shrink-0 text-[15px]" />
-        <span className="truncate">终端 Terminal</span>
+        <Icon name="terminal" className="text-[15px]" />
+        <span>终端</span>
       </button>
       <a href="#/diff" className={tabClass("diff")} title="变更审查 Diff">
-        <Icon name="difference" className={`shrink-0 text-[15px] ${active === "diff" ? "text-tertiary" : ""}`} />
-        <span className="truncate">变更审查 Diff</span>
+        <Icon name="difference" className={`text-[15px] ${active === "diff" ? "text-tertiary" : ""}`} />
+        <span>变更审查</span>
       </a>
+    </div>
+  );
+}
+
+function WindowControls({ desktop }: { desktop?: Window["piDesktop"] }) {
+  return (
+    <div className="titlebar-no-drag flex h-10 shrink-0 items-stretch border-l border-surface-container-high/40">
+      <WindowControl label="最小化" icon="minimize" onClick={() => desktop?.minimize()} />
+      <WindowControl label="最大化" icon="crop_square" onClick={() => desktop?.toggleMaximize()} />
+      <WindowControl label="关闭" icon="close" danger onClick={() => desktop?.close()} />
     </div>
   );
 }
 
 export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
   const desktop = window.piDesktop;
-  const railWidth = rightRail === "diff" ? "w-[380px]" : rightRail ? "w-[340px]" : null;
 
   return (
     <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center bg-surface-container-lowest pl-space-md">
@@ -117,20 +126,14 @@ export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
           <Icon name="person" className="text-[15px] text-on-primary" />
         </div>
       </div>
-      {rightRail && railWidth ? (
-        <div className={`titlebar-no-drag flex h-10 shrink-0 items-stretch ${railWidth}`}>
+      {rightRail ? (
+        <div className="flex h-10 shrink-0 items-stretch">
           <RightRailTabs active={rightRail} />
-          <div className="flex h-10 shrink-0 items-stretch border-l border-surface-container-high/40">
-            <WindowControl label="最小化" icon="minimize" onClick={() => desktop?.minimize()} />
-            <WindowControl label="最大化" icon="crop_square" onClick={() => desktop?.toggleMaximize()} />
-            <WindowControl label="关闭" icon="close" danger onClick={() => desktop?.close()} />
-          </div>
+          <WindowControls desktop={desktop} />
         </div>
       ) : (
-        <div className="titlebar-no-drag ml-space-sm flex h-10 shrink-0 items-stretch">
-          <WindowControl label="最小化" icon="minimize" onClick={() => desktop?.minimize()} />
-          <WindowControl label="最大化" icon="crop_square" onClick={() => desktop?.toggleMaximize()} />
-          <WindowControl label="关闭" icon="close" danger onClick={() => desktop?.close()} />
+        <div className="ml-space-sm">
+          <WindowControls desktop={desktop} />
         </div>
       )}
     </header>
