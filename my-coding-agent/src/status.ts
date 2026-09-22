@@ -25,7 +25,7 @@ export function readStatusFromLocation(search = window.location.search): StatusB
   const sandbox = params.get("sandbox");
   return {
     engine: isEngineState(engine) ? engine : "idle",
-    sandbox: isSandboxState(sandbox) ? sandbox : "on",
+    sandbox: isSandboxState(sandbox) ? sandbox : "off",
   };
 }
 

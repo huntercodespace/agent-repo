@@ -40,7 +40,7 @@ export function BranchSwitcher({
   }
 
   return (
-    <div className="fixed bottom-10 left-60 z-[60] w-[380px] max-w-[calc(100vw-18rem)] overflow-hidden rounded-xl bg-surface-container-low shadow-2xl">
+    <div className="fixed bottom-8 left-64 z-[60] w-[380px] max-w-[calc(100vw-18rem)] overflow-hidden rounded-xl bg-surface-container-low shadow-2xl">
       <div className="h-1 bg-gradient-to-r from-primary via-secondary to-primary-container" />
       <div className="flex items-center justify-between px-space-md pb-2 pt-space-md">
         <div className="flex items-center gap-2">
