@@ -1,3 +1,5 @@
+import { mergeLocationQuery, pathFromHash } from "./hashQuery";
+
 export type Route =
   | "workspace"
   | "diff"
@@ -8,8 +10,15 @@ export type Route =
   | "status"
   | "engine";
 
+export function readLocationQuery(
+  hash = window.location.hash,
+  search = window.location.search,
+): URLSearchParams {
+  return mergeLocationQuery(hash, search);
+}
+
 export function readRoute(hash = window.location.hash): Route {
-  const path = hash.replace(/^#/, "").split("?")[0].replace(/^\/+/, "");
+  const path = pathFromHash(hash);
   switch (path) {
     case "diff":
       return "diff";

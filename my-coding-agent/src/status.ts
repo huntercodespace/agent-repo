@@ -1,3 +1,5 @@
+import { readLocationQuery } from "./router";
+
 export const ENGINE_STATES = ["idle", "chatting", "reconnecting", "disconnected"] as const;
 
 export type EngineState = (typeof ENGINE_STATES)[number];
@@ -19,14 +21,21 @@ export function isSandboxState(value: string | null): value is SandboxState {
   return SANDBOX_STATES.some((state) => state === value);
 }
 
-export function readStatusFromLocation(search = window.location.search): StatusBarState {
-  const params = new URLSearchParams(search);
+export function readStatusFromLocation(params = readLocationQuery()): StatusBarState {
   const engine = params.get("engine");
   const sandbox = params.get("sandbox");
   return {
     engine: isEngineState(engine) ? engine : "idle",
     sandbox: isSandboxState(sandbox) ? sandbox : "off",
   };
+}
+
+export function readDirtyWorktree(params = readLocationQuery()): boolean {
+  return params.get("dirty") !== "0";
+}
+
+export function readPolicyNoteOpen(params = readLocationQuery()): boolean {
+  return params.get("policy") === "1";
 }
 
 export function nextEngineState(current: EngineState): EngineState {
