@@ -1,7 +1,10 @@
 import { useState, type ChangeEvent } from "react";
 import { ModelSelect } from "../components/ModelSelect";
+import { useCredentialBoard } from "../credentials/board";
 
 export function SettingsPage() {
+  const board = useCredentialBoard();
+  const flashModelId = board.providers.find((provider) => provider.id === "deepseek")?.flashModelId ?? null;
   const [fontSizeLabel, setFontSizeLabel] = useState("14px (Default)");
 
   function onFontSize(event: ChangeEvent<HTMLInputElement>) {
@@ -400,7 +403,7 @@ export function SettingsPage() {
               <ModelSelect variant="field" fallback="Pi-Sonnet-3.5" />
               <span className="font-code-sm text-code-sm text-outline">
                 保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek V4 Flash。
-                <span className="mt-0.5 block font-mono text-[10px]">deepseek/deepseek-v4-flash</span>
+                {flashModelId ? <span className="mt-0.5 block font-mono text-[10px]">deepseek/{flashModelId}</span> : null}
                 <a className="ml-2 text-primary hover:underline" href="#/credentials">管理密钥</a>
               </span>
             </div>

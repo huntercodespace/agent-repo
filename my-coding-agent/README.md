@@ -124,20 +124,20 @@ A stored API key is masked to `••••` plus the last four characters (shor
 
 #### DeepSeek V4 Flash
 
-DeepSeek is provider id `deepseek` (not `deepseek-chat`). The built-in flash model id is `deepseek-v4-flash`, so the provider/model pair is `deepseek/deepseek-v4-flash`. The readable label is **DeepSeek V4 Flash**, with the small subtitle `deepseek/deepseek-v4-flash`. The DeepSeek card uses the Stitch resting states: 未配置, 已保存 (stored key), and 校验失败 (check or save error). In-progress still uses 验证与保存中, and an env key still uses 来自环境变量.
+DeepSeek is provider id `deepseek` (not `deepseek-chat`). The readable label is **DeepSeek V4 Flash**. The subtitle is the pair resolved from `ModelRegistry` for that provider: prefer model id `deepseek-flash`, otherwise the first model whose name contains “Flash”. On the installed `@earendil-works/pi-ai@0.87.1` catalog that resolves to **`deepseek/deepseek-flash`**. `deepseek-v4-flash` is a relay-catalog id (OpenRouter and similar) and is not sent to provider `deepseek`. The DeepSeek card uses the Stitch resting states: 未配置, 已保存 (stored key), and 校验失败 (check or save error). In-progress still uses 验证与保存中, and an env key still uses 来自环境变量.
 
 In the desktop window:
 
 1. Open `#/credentials`.
 2. Find **DeepSeek** (search “DeepSeek”).
 3. Paste the API key and choose **保存密钥**. The card switches to 来自本地 and shows only the mask. The key is in `~/.pi/agent/auth.json` as `{ "deepseek": { "type": "api_key", "key": "sk-..." } }`, not in `settings.json` and not in the IPC result.
-4. That save also calls RPC `set_model` with `{ type: "set_model", provider: "deepseek", modelId: "deepseek-v4-flash" }` on the window’s `RpcClient`, and writes `defaultProvider` / `defaultModel` through Pi `SettingsManager`. The workspace chip follows that selection. It does not stop at React state.
+4. That save also calls RPC `set_model` with the resolved pair. On this install that is `{ type: "set_model", provider: "deepseek", modelId: "deepseek-flash" }` via `RpcClient.setModel`, and writes `defaultProvider` / `defaultModel` through Pi `SettingsManager`. The workspace chip follows that selection. It does not stop at React state.
 
 `AuthStorage` is not exported from the package index. This app imports `AuthStorage` from `dist/core/auth-storage.js`. `modify(provider, fn)` matches current upstream: `fn` receives the current credential and returns the next one (`undefined` leaves the file unchanged). The on-disk object is `{ [providerId]: credential }`.
 
 `RpcClient.setModel(provider, modelId)` sends `{ type: "set_model", provider, modelId }`. The RPC handler in `@earendil-works/pi-coding-agent@0.87.0` looks the model up with `modelRuntime.getAvailableSnapshot()`, then calls `session.setModel(model)`. That command shape matches the locked call.
 
-Published `@earendil-works/pi-ai@0.87.1` (the copy nested in `pi-coding-agent@0.87.0`) still catalogs this flash model as `deepseek-flash` (“DeepSeek V4.1 Flash”) plus `deepseek-v4-pro`. Upstream `earendil-works/pi` main and the locked id use `deepseek-v4-flash`. This app still sends `set_model` for `deepseek/deepseek-v4-flash`. Against the bundled 0.87 CLI that returns `Model not found: deepseek/deepseek-v4-flash` until the published catalog includes that id. The model picker continues to list whatever `ModelRegistry.getAll()` returns, and does not invent a second vendor table.
+`set_model` looks the model up on provider `deepseek` with `modelRuntime.getAvailableSnapshot()`. The native flash entry in the installed catalog is id `deepseek-flash` (catalog name “DeepSeek V4.1 Flash”). Sending `deepseek-v4-flash` on that provider returns `Model not found`. This app does not bump `@earendil-works/pi-coding-agent` for the rename. It asks `ModelRegistry.getAll()` for provider `deepseek`, prefers id `deepseek-flash`, and otherwise takes a model whose name contains “Flash”. The resolved id on this tree is `deepseek-flash`.
 
 Env keys still work. `重新检测 ENV` calls `detectEnv` → `findEnvKeys` and reports the variable name only. DeepSeek’s variable is `DEEPSEEK_API_KEY`:
 

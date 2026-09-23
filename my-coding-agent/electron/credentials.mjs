@@ -11,12 +11,16 @@
  * from each provider's auth.apiKey / auth.oauth login, not a hardcoded subset.
  *
  * DeepSeek is provider id `deepseek`. After that key is saved, the desktop
- * host calls RPC set_model for `deepseek/deepseek-v4-flash`.
+ * host resolves the flash model from ModelRegistry and calls RPC set_model
+ * with that pair. The installed catalog resolves to `deepseek/deepseek-flash`.
  */
 
 import { pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DEEPSEEK_FLASH_LABEL, DEEPSEEK_PROVIDER_ID, isDeepSeekFlash, resolveDeepSeekFlash } from "./deepseek-flash.mjs";
+
+export { DEEPSEEK_PROVIDER_ID, resolveDeepSeekFlash };
 
 const emptySummary = {
   configured: false,
@@ -24,11 +28,6 @@ const emptySummary = {
   mask: null,
   providerId: null,
 };
-
-/** Locked Pi provider id. Not `deepseek-chat`. */
-export const DEEPSEEK_PROVIDER_ID = "deepseek";
-/** Locked built-in flash id: provider/model `deepseek/deepseek-v4-flash`. */
-export const DEEPSEEK_FLASH_MODEL_ID = "deepseek-v4-flash";
 
 let runtimePromise;
 let authStoragePromise;
@@ -196,6 +195,7 @@ function modelsOf(models) {
 }
 
 function sealProvider(provider, flow, envVarNames, models) {
+  const flash = provider.id === DEEPSEEK_PROVIDER_ID ? resolveDeepSeekFlash(models) : null;
   return {
     id: provider.id,
     name: typeof provider.name === "string" && provider.name ? provider.name : provider.id,
@@ -206,6 +206,7 @@ function sealProvider(provider, flow, envVarNames, models) {
     multiStep: flow === "multi-step",
     envVarNames,
     models,
+    flashModelId: flash?.modelId ?? null,
   };
 }
 
@@ -543,14 +544,20 @@ export async function detectEnv(providerId) {
 }
 
 export function displayModelName(providerId, modelId, name) {
-  if (providerId === DEEPSEEK_PROVIDER_ID && modelId === DEEPSEEK_FLASH_MODEL_ID) return "DeepSeek V4 Flash";
+  if (isDeepSeekFlash(providerId, modelId, name)) return DEEPSEEK_FLASH_LABEL;
   return name || modelId;
 }
 
-/** DeepSeek saves select the locked flash model. Other providers keep the current model. */
-export function modelAfterApiKeySave(providerId) {
+/** DeepSeek saves select the flash model resolved from ModelRegistry. */
+export async function resolveDeepSeekFlashModel() {
+  const registry = await modelRegistry();
+  const models = registry.getAll().filter((model) => model?.provider === DEEPSEEK_PROVIDER_ID);
+  return resolveDeepSeekFlash(models);
+}
+
+export async function modelAfterApiKeySave(providerId) {
   if (providerId !== DEEPSEEK_PROVIDER_ID) return null;
-  return { providerId: DEEPSEEK_PROVIDER_ID, modelId: DEEPSEEK_FLASH_MODEL_ID };
+  return resolveDeepSeekFlashModel();
 }
 
 export async function rememberSelectedModel(providerId, modelId) {
@@ -578,7 +585,7 @@ export async function rememberSelectedModel(providerId, modelId) {
  * `session.setModel` is RpcClient.setModel(provider, modelId) → `{ type: "set_model", provider, modelId }`.
  */
 export async function afterApiKeySaved(providerId, session) {
-  const target = modelAfterApiKeySave(providerId);
+  const target = await modelAfterApiKeySave(providerId);
   if (!target) return null;
   const saved = await rememberSelectedModel(target.providerId, target.modelId);
   if (!saved.ok) return { ok: false, message: saved.message, live: null };

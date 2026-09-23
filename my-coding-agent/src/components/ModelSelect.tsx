@@ -22,7 +22,12 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
     || (board.selected.providerId && board.selected.modelId
       ? modelChoiceLabel(board.selected.providerId, board.selected.modelId, board.selected.modelId)
       : null);
-  const flashSelected = board.selected.providerId === "deepseek" && board.selected.modelId === "deepseek-v4-flash";
+  const deepseek = board.providers.find((provider) => provider.id === "deepseek");
+  const flashModelId = deepseek?.flashModelId ?? null;
+  const flashPair = flashModelId ? `deepseek/${flashModelId}` : null;
+  const flashSelected = Boolean(
+    flashPair && board.selected.providerId === "deepseek" && board.selected.modelId === flashModelId,
+  );
 
   async function onChange(event: ChangeEvent<HTMLSelectElement>) {
     const next = event.target.value;
@@ -53,13 +58,13 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
       className={className}
       value={value}
       onChange={onChange}
-      title={flashSelected ? "deepseek/deepseek-v4-flash" : selectedName || fallback}
+      title={flashSelected && flashPair ? flashPair : selectedName || fallback}
     >
       <option value="">{selectedName || fallback}</option>
       {configured.map((provider) => (
         <optgroup key={provider.id} label={provider.name}>
           {provider.models.map((model) => {
-            const label = modelChoiceLabel(provider.id, model.id, model.name);
+            const label = modelChoiceLabel(provider.id, model.id, model.name, provider.flashModelId);
             return (
               <option key={`${provider.id}/${model.id}`} value={`${provider.id}/${model.id}`}>
                 {label}
@@ -75,7 +80,7 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
     return (
       <span className="flex max-w-[18rem] flex-col justify-center leading-none">
         {select}
-        <span className="px-space-sm font-mono text-[10px] text-outline">deepseek/deepseek-v4-flash</span>
+        <span className="px-space-sm font-mono text-[10px] text-outline">{flashPair}</span>
       </span>
     );
   }

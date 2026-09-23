@@ -18,6 +18,8 @@ export interface ProviderInfo {
   multiStep: boolean;
   envVarNames: string[];
   models: ProviderModel[];
+  /** Native flash id from ModelRegistry, or null when this provider has none. */
+  flashModelId: string | null;
 }
 
 export type CredentialUiStatus = "unconfigured" | "stored" | "environment" | "oauth" | "error";

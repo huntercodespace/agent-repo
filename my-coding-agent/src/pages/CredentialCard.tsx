@@ -28,8 +28,8 @@ const toneClass = {
 };
 
 function heading(provider: ProviderInfo) {
-  if (provider.id === "deepseek") {
-    return { title: "DeepSeek V4 Flash", subtitle: "deepseek/deepseek-v4-flash" };
+  if (provider.id === "deepseek" && provider.flashModelId) {
+    return { title: "DeepSeek V4 Flash", subtitle: `deepseek/${provider.flashModelId}` };
   }
   const names = provider.models.slice(0, 2).map((model) => model.name);
   if (names.length === 0) return { title: provider.name, subtitle: provider.id };

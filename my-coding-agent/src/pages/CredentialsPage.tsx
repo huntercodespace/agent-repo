@@ -4,6 +4,7 @@ import { CredentialCard } from "./CredentialCard";
 
 export function CredentialsPage() {
   const board = useCredentialBoard();
+  const flashModelId = board.providers.find((provider) => provider.id === "deepseek")?.flashModelId ?? null;
   const [query, setQuery] = useState("");
   const [detecting, setDetecting] = useState(false);
   const [detectNote, setDetectNote] = useState<string | null>(null);
@@ -100,7 +101,7 @@ export function CredentialsPage() {
                 </span>
               </div>
               <p className="text-pi-muted text-xs mt-1.5 leading-relaxed max-w-2xl">
-                服务商和模型来自 Pi 的 ModelRegistry / pi-ai，不是写死的厂商表。密钥经主进程 AuthStorage.modify 写入。DeepSeek 的 provider id 是 deepseek，Flash 是 deepseek-v4-flash。保存 DeepSeek API Key 后会调用 RPC set_model。
+                服务商和模型来自 Pi 的 ModelRegistry / pi-ai，不是写死的厂商表。密钥经主进程 AuthStorage.modify 写入。DeepSeek 的 provider id 是 deepseek。保存 API Key 后 set_model 使用注册表解析出的 Flash{flashModelId ? `（deepseek/${flashModelId}）` : ""}。
               </p>
             </div>
             <button

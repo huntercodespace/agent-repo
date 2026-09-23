@@ -26,13 +26,19 @@ try {
   assert.equal(deepseek.multiStep, false);
   assert.ok(deepseek.models.length > 0, "deepseek models should come from ModelRegistry");
   assert.equal(credentials.DEEPSEEK_PROVIDER_ID, "deepseek");
-  assert.equal(credentials.DEEPSEEK_FLASH_MODEL_ID, "deepseek-v4-flash");
-  assert.deepEqual(credentials.modelAfterApiKeySave("deepseek"), {
-    providerId: "deepseek",
-    modelId: "deepseek-v4-flash",
-  });
-  assert.equal(credentials.modelAfterApiKeySave("anthropic"), null);
-  assert.equal(credentials.displayModelName("deepseek", "deepseek-v4-flash", "DeepSeek V4.1 Flash"), "DeepSeek V4 Flash");
+  assert.equal(deepseek.flashModelId, "deepseek-flash");
+  const resolved = await credentials.resolveDeepSeekFlashModel();
+  assert.deepEqual(resolved, { providerId: "deepseek", modelId: "deepseek-flash" });
+  assert.deepEqual(await credentials.modelAfterApiKeySave("deepseek"), resolved);
+  assert.equal(await credentials.modelAfterApiKeySave("anthropic"), null);
+  assert.deepEqual(credentials.resolveDeepSeekFlash([
+    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", provider: "deepseek" },
+    { id: "deepseek-flash", name: "DeepSeek V4.1 Flash", provider: "deepseek" },
+  ]), { providerId: "deepseek", modelId: "deepseek-flash" });
+  assert.deepEqual(credentials.resolveDeepSeekFlash([
+    { id: "custom-flash", name: "Example Flash", provider: "deepseek" },
+  ]), { providerId: "deepseek", modelId: "custom-flash" });
+  assert.equal(credentials.displayModelName("deepseek", "deepseek-flash", "DeepSeek V4.1 Flash"), "DeepSeek V4 Flash");
 
   const codex = providers.find((provider) => provider.id === "openai-codex");
   assert.equal(codex?.oauthOnly, true);
@@ -83,17 +89,18 @@ try {
       return { ok: true, provider, id: modelId, label: `${provider}/${modelId}` };
     },
   });
-  assert.deepEqual(calls, [{ type: "set_model", provider: "deepseek", modelId: "deepseek-v4-flash" }]);
+  assert.deepEqual(calls, [{ type: "set_model", provider: "deepseek", modelId: "deepseek-flash" }]);
   assert.equal(applied.ok, true);
   assert.equal(applied.name, "DeepSeek V4 Flash");
   assert.equal(applied.providerId, "deepseek");
-  assert.equal(applied.modelId, "deepseek-v4-flash");
+  assert.equal(applied.modelId, "deepseek-flash");
   assert.equal(JSON.stringify(applied).includes(secret), false);
   const settingsFile = readFileSync(join(dir, "settings.json"), "utf8");
-  assert.equal(settingsFile.includes("deepseek-v4-flash"), true);
+  assert.equal(settingsFile.includes("deepseek-flash"), true);
+  assert.equal(settingsFile.includes("deepseek-v4-flash"), false);
   assert.equal(settingsFile.includes(secret), false);
   const current = await credentials.getSelectedModel();
-  assert.equal(current.modelId, "deepseek-v4-flash");
+  assert.equal(current.modelId, "deepseek-flash");
   assert.equal(current.providerId, "deepseek");
   assert.equal(current.name, "DeepSeek V4 Flash");
 
