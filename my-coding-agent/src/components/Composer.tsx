@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
+import { ModelSelect } from "./ModelSelect";
 import { Icon } from "./Icon";
 
 interface ComposerProps {
@@ -54,14 +55,10 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
             >
               <Icon name="attach_file" className="text-[18px]" />
             </button>
-            <button
-              type="button"
-              className="flex h-8 items-center gap-1 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
-            >
+            <div className="flex min-h-8 items-center gap-1">
               <Icon name="model_training" className="text-[15px] text-primary" />
-              <span>{label}</span>
-              <Icon name="expand_more" className="text-[14px] text-outline" />
-            </button>
+              <ModelSelect variant="chip" fallback={label} />
+            </div>
             <button
               type="button"
               className="flex h-8 items-center gap-1 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"

@@ -66,6 +66,17 @@ export function RpcProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const desktop = window.piDesktop;
+    if (!desktop?.onCredentialStatus) return;
+    return desktop.onCredentialStatus((payload) => {
+      setStatus((current) => ({ ...current, credentials: payload.summary }));
+      if (payload.summary.configured) {
+        setNotice((current) => (current && current.includes("凭据") ? null : current));
+      }
+    });
+  }, []);
+
   const sendPrompt = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return false;

@@ -2,7 +2,7 @@
 
 Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Session data, credentials, and git state are static placeholders.
 
-The target architecture below is locked. This slice wires the per-window RPC loop and a main-process AuthStorage probe. The sandbox is still not enabled.
+The target architecture below is locked. This slice wires the per-window RPC loop and a real credentials page over Pi AuthStorage. The sandbox is still not enabled.
 
 ## Architecture
 
@@ -24,7 +24,7 @@ Capability is `unsupported`, `available`, or `enabled`. Windows is not hardcoded
 
 ### Credentials
 
-The main process is a thin wrap over Pi **AuthStorage** (`~/.pi/agent/auth.json`). Keys stay out of the renderer and out of `settings.json`. IPC returns a mask, a source, and a status only.
+The main process is a thin wrap over Pi **AuthStorage** (`~/.pi/agent/auth.json`). `ModelRuntime.login` / `logout` / `checkAuth` persist through that store. Keys stay out of the renderer and out of `settings.json`. IPC returns a mask, a source, and a status only.
 
 ### Packaging
 
@@ -33,7 +33,7 @@ The app bundles a standalone `pi`, built with build-binaries, into `extraResourc
 ### Phasing
 
 1. UI shell first. Done.
-2. Credentials IPC. This slice probes AuthStorage in the main process and returns a mask, a source, and a status. The credentials screen is still the Stitch mock; it does not write keys.
+2. Credentials IPC. `#/credentials` lists every built-in provider and can save, clear, detect env keys, and start OAuth. The screen is no longer a static mock.
 3. Real RpcClient spawn. The minimal per-window loop (spawn, `get_state`, `prompt`, stream, stop) is in.
 4. Optional ASRT enable flow. Not in this slice.
 
@@ -103,19 +103,51 @@ Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the 
 
 ### Credentials
 
-Auth stays in the main process. The host wraps Pi `AuthStorage` (`~/.pi/agent/auth.json` via `AuthStorage.create()`). IPC returns `configured`, `source` (`stored` or `environment`), `mask`, and `providerId`. The renderer never receives the key.
+Auth stays in the main process. The host wraps Pi `AuthStorage` (`~/.pi/agent/auth.json`). An API-key save calls `AuthStorage.modify(providerId, fn)`, and `fn` returns `{ "type": "api_key", "key": "..." }`. The file is keyed by the pi-ai provider id, so DeepSeek is `auth.json` → `deepseek`. `checkAuth` runs after that write. Clears and OAuth logout call `logout`, which deletes the stored credential. OAuth login still goes through `ModelRuntime.login`, which persists with the same `modify` path. The renderer never receives the key.
 
-A stored API key is masked to `••••` plus the last four characters (shorter values stay `••••`). OAuth is `oauth ••••`. An environment key is reported by variable name only, for example `ANTHROPIC_API_KEY`. If nothing is configured, the composer links to `#/credentials` and does not call `prompt`.
+IPC:
 
-Put a key in either place:
+| Method | Channel | Returns |
+| --- | --- | --- |
+| `listProviders` | `credentials:listProviders` | id, name, auth flags, model ids. No secrets. |
+| `getStatus` | `credentials:getStatus` | mask, source, status per provider |
+| `saveApiKey` | `credentials:saveApiKey` | mask, source, status after save |
+| `clear` | `credentials:clear` | the same triple |
+| `startOAuth` / `logoutOAuth` | `credentials:startOAuth`, `credentials:logoutOAuth` | the same triple, plus `credentials:oauth-event` (`opened` / `waiting` / `success` / `error`) |
+| `detectEnv` | `credentials:detectEnv` | provider id and env var **names** from `findEnvKeys` |
+
+There is no `retrySave`. A failed save leaves the key in the password field; saving again calls `saveApiKey`.
+
+Provider ids and auth flags come from pi-ai’s built-in registry (`ModelRuntime.getProviders()`, fed by `builtinProviders()`). Model ids come from `ModelRegistry.getAll()` over that same runtime. Nothing on this page is a hand-copied vendor list. Each provider’s `auth.apiKey.login` / `auth.oauth.login` decides the flags: single-secret API key, OAuth, both, or `authFlow: "multi-step"`. `openai-codex` is OAuth-only. Amazon Bedrock, Google Vertex, and the Cloudflare providers are multi-step and stay disabled on this page. OAuth is offered for every provider whose auth object has an OAuth login (Anthropic, OpenAI Codex, GitHub Copilot, OpenRouter, xAI, Kimi, Radius, Meta, and any later registry entry). Every single-secret provider is saved with the same `AuthStorage.modify(providerId, …)` call.
+
+A stored API key is masked to `••••` plus the last four characters (shorter values stay `••••`). OAuth is `oauth ••••`. An environment key is reported by variable name only, for example `DEEPSEEK_API_KEY`. If nothing is configured, the composer links to `#/credentials` and does not call `prompt`. After a successful save the main process pushes `credentials:status`, and the workspace gate clears without restarting the window.
+
+#### DeepSeek V4 Flash
+
+DeepSeek is provider id `deepseek` (not `deepseek-chat`). The readable label is **DeepSeek V4 Flash**. The subtitle is the pair resolved from `ModelRegistry` for that provider: prefer model id `deepseek-flash`, otherwise the first model whose name contains “Flash”. On the installed `@earendil-works/pi-ai@0.87.1` catalog that resolves to **`deepseek/deepseek-flash`**. `deepseek-v4-flash` is a relay-catalog id (OpenRouter and similar) and is not sent to provider `deepseek`. The DeepSeek card uses the Stitch resting states: 未配置, 已保存 (stored key), and 校验失败 (check or save error). In-progress still uses 验证与保存中, and an env key still uses 来自环境变量.
+
+In the desktop window:
+
+1. Open `#/credentials`.
+2. Find **DeepSeek** (search “DeepSeek”).
+3. Paste the API key and choose **保存密钥**. The card switches to 来自本地 and shows only the mask. The key is in `~/.pi/agent/auth.json` as `{ "deepseek": { "type": "api_key", "key": "sk-..." } }`, not in `settings.json` and not in the IPC result.
+4. That save also calls RPC `set_model` with the resolved pair. On this install that is `{ type: "set_model", provider: "deepseek", modelId: "deepseek-flash" }` via `RpcClient.setModel`, and writes `defaultProvider` / `defaultModel` through Pi `SettingsManager`. The workspace chip follows that selection. It does not stop at React state.
+
+`AuthStorage` is not exported from the package index. This app imports `AuthStorage` from `dist/core/auth-storage.js`. `modify(provider, fn)` matches current upstream: `fn` receives the current credential and returns the next one (`undefined` leaves the file unchanged). The on-disk object is `{ [providerId]: credential }`.
+
+`RpcClient.setModel(provider, modelId)` sends `{ type: "set_model", provider, modelId }`. The RPC handler in `@earendil-works/pi-coding-agent@0.87.0` looks the model up with `modelRuntime.getAvailableSnapshot()`, then calls `session.setModel(model)`. That command shape matches the locked call.
+
+`set_model` looks the model up on provider `deepseek` with `modelRuntime.getAvailableSnapshot()`. The native flash entry in the installed catalog is id `deepseek-flash` (catalog name “DeepSeek V4.1 Flash”). Sending `deepseek-v4-flash` on that provider returns `Model not found`. This app does not bump `@earendil-works/pi-coding-agent` for the rename. It asks `ModelRegistry.getAll()` for provider `deepseek`, prefers id `deepseek-flash`, and otherwise takes a model whose name contains “Flash”. The resolved id on this tree is `deepseek-flash`.
+
+Env keys still work. `重新检测 ENV` calls `detectEnv` → `findEnvKeys` and reports the variable name only. DeepSeek’s variable is `DEEPSEEK_API_KEY`:
 
 ```bash
-# ~/.pi/agent/auth.json  (written by `pi` login / AuthStorage, not by this shell)
-# or, for one shell:
-ANTHROPIC_API_KEY=sk-... npm run dev
+DEEPSEEK_API_KEY=sk-... npm run dev
 ```
 
-Other recognized variables include `OPENAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, and `XAI_API_KEY`. The child inherits the environment. Do not put keys in `settings.json` or in the renderer.
+The same path recognizes every variable `findEnvKeys` knows (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, and the rest of the pi-ai map). The child inherits the environment. Do not put keys in `settings.json` or in the renderer.
+
+`node scripts/credentials-smoke.mjs` checks the registry, a masked DeepSeek save, and that `settings.json` does not contain the key. It uses a temporary `PI_CODING_AGENT_DIR`.
 
 `@earendil-works/pi-coding-agent` asks for Node `>=22.19`. This shell still runs the bundled CLI on the Node that is on `PATH` (the same `node` `RpcClient` spawns).
 
@@ -141,7 +173,7 @@ Routes are hashes, so they work in the browser and in the Electron window.
 | Diff review | [#/diff](http://127.0.0.1:5173/#/diff) |
 | Settings | [#/settings](http://127.0.0.1:5173/#/settings) |
 | Onboarding | [#/onboarding](http://127.0.0.1:5173/#/onboarding) |
-| Model credentials (six states) | [#/credentials](http://127.0.0.1:5173/#/credentials) |
+| Model credentials | [#/credentials](http://127.0.0.1:5173/#/credentials) |
 | Branch switcher, dirty worktree | [#/branch](http://127.0.0.1:5173/#/branch) |
 | Branch switcher, clean | [#/branch?dirty=0](http://127.0.0.1:5173/#/branch?dirty=0) |
 | Status bar spec | [#/status](http://127.0.0.1:5173/#/status) |

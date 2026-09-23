@@ -1,6 +1,10 @@
 import { useState, type ChangeEvent } from "react";
+import { ModelSelect } from "../components/ModelSelect";
+import { useCredentialBoard } from "../credentials/board";
 
 export function SettingsPage() {
+  const board = useCredentialBoard();
+  const flashModelId = board.providers.find((provider) => provider.id === "deepseek")?.flashModelId ?? null;
   const [fontSizeLabel, setFontSizeLabel] = useState("14px (Default)");
 
   function onFontSize(event: ChangeEvent<HTMLInputElement>) {
@@ -396,23 +400,11 @@ export function SettingsPage() {
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">
                 默认主模型 Primary Agent Model
               </label>
-              <a className="h-10 rounded bg-surface-container px-space-md flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors" href="#/credentials">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-primary">
-                  </span>
-                  <span className="font-code-sm text-code-sm text-on-surface font-semibold">
-                    Pi-Sonnet-3.5
-                  </span>
-                  <span className="font-label-xs text-label-xs text-on-surface-variant font-normal">
-                    (Recommended for complex refactor)
-                  </span>
-                </div>
-                <span className="material-symbols-outlined text-outline text-[16px]">
-                  unfold_more
-                </span>
-              </a>
+              <ModelSelect variant="field" fallback="Pi-Sonnet-3.5" />
               <span className="font-code-sm text-code-sm text-outline">
-                用于 AST 重构分析、多文件批量更改以及测试用例生成
+                保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek V4 Flash。
+                {flashModelId ? <span className="mt-0.5 block font-mono text-[10px]">deepseek/{flashModelId}</span> : null}
+                <a className="ml-2 text-primary hover:underline" href="#/credentials">管理密钥</a>
               </span>
             </div>
             {/* Fast Model */}
