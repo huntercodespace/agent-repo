@@ -81,14 +81,6 @@ export function CredentialsPage() {
             </div>
           </div>
         </div>
-        <div className="p-2.5 rounded-lg bg-pi-card/80 border border-pi-border">
-          <div className="text-pi-accent text-xs font-semibold mb-1">AuthStorage 保护状态</div>
-          <div className="text-[10px] text-pi-muted leading-relaxed font-mono">
-            本地 ~/.pi/agent/auth.json
-            <br />
-            文件权限：<span className="text-emerald-400">0600</span>
-          </div>
-        </div>
       </nav>
       <main className="flex-1 bg-pi-bg overflow-y-auto p-6 flex flex-col justify-between">
         <div className="space-y-5 max-w-[940px] mx-auto w-full">

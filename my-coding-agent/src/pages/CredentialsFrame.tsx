@@ -1,36 +1,9 @@
 import type { ReactNode } from "react";
-import { sessionGroups } from "../data/workspace";
+import { useRpc } from "../rpc/RpcProvider";
 import { CredentialsPage } from "./CredentialsPage";
 
-function SessionGlyph({ kind }: { kind: string }) {
-  const common = "h-3.5 w-3.5 shrink-0";
-  if (kind === "bolt") {
-    return (
-      <svg className={`${common} text-pi-accent`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-      </svg>
-    );
-  }
-  if (kind === "folder") {
-    return (
-      <svg className={`${common} text-pi-muted`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-      </svg>
-    );
-  }
-  if (kind === "history") {
-    return (
-      <svg className={`${common} text-pi-muted`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-    );
-  }
-  return (
-    <svg className={`${common} text-pi-muted`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
+function workspaceName(cwd: string) {
+  return cwd.split(/[\\/]/).filter(Boolean).at(-1) || cwd;
 }
 
 function PiMark() {
@@ -73,6 +46,8 @@ function WindowChromeButton({
 
 export function CredentialsFrame() {
   const desktop = window.piDesktop;
+  const { status } = useRpc();
+  const cwd = status.available ? status.cwd : "";
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-pi-bg font-sans text-xs text-[#c9d1d9] antialiased selection:bg-pi-accent selection:text-white">
       <header className="flex h-10 shrink-0 select-none items-center justify-between border-b border-pi-border bg-pi-surface pl-3">
@@ -124,61 +99,27 @@ export function CredentialsFrame() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="flex w-60 shrink-0 flex-col justify-between border-r border-pi-border bg-pi-surface">
           <div className="p-3">
-            <div className="mb-2 flex items-center justify-between border-b border-pi-border pb-3">
-              <a href="#/" className="flex items-center gap-2">
-                <PiMark />
-                <span className="flex items-baseline gap-1.5">
-                  <span className="text-sm font-bold tracking-tight text-white">Pi</span>
-                  <span className="rounded border border-pi-border bg-pi-card px-1.5 py-0.5 font-mono text-[10px] text-pi-muted">v2.4.0</span>
-                </span>
-              </a>
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-pi-card text-pi-muted">+</span>
-            </div>
-            <div className="relative mb-3">
-              <input
-                readOnly
-                type="text"
-                placeholder="搜索会话与命令 ⌘K"
-                className="w-full cursor-pointer rounded border border-pi-border bg-pi-card px-2.5 py-1.5 text-xs text-pi-muted hover:border-pi-borderLight focus:outline-none"
-              />
-            </div>
-            <div className="space-y-4 text-xs">
-              {sessionGroups.map((group) => (
-                <div key={group.label}>
-                  <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-pi-muted">{group.label}</div>
-                  <ul className="space-y-0.5">
-                    {group.items.map((item) => (
-                      <li key={item.id}>
-                        <a
-                          href={item.id === "auth-race-condition" ? "#/diff" : "#/"}
-                          className="flex items-center gap-2 rounded px-2 py-1.5 text-pi-muted hover:bg-pi-card hover:text-pi-text"
-                        >
-                          <SessionGlyph kind={item.icon} />
-                          <span className="truncate">{item.label}</span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <a href="#/" className="flex items-center gap-2 border-b border-pi-border pb-3">
+              <PiMark />
+              <span className="text-sm font-bold tracking-tight text-white">Pi</span>
+            </a>
+            <nav aria-label="工作区" className="pt-4 text-xs">
+              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-pi-muted">当前工作区</div>
+              {cwd ? (
+                <a href="#/" title={cwd} className="flex items-center rounded px-2 py-1.5 text-pi-text hover:bg-pi-card">
+                  <span className="truncate">{workspaceName(cwd)}</span>
+                </a>
+              ) : (
+                <p className="px-2 py-1.5 text-pi-muted">尚未连接工作区</p>
+              )}
+              <p className="px-2 pt-4 text-pi-muted">暂无历史会话</p>
+            </nav>
           </div>
-          <div className="space-y-1 border-t border-pi-border bg-pi-card/30 p-3">
-            <a href="#workflows" className="flex items-center gap-2 rounded px-2 py-1.5 text-pi-muted hover:bg-pi-card hover:text-pi-text">
-              <span>自动化工作流</span>
+          <nav aria-label="设置" className="border-t border-pi-border bg-pi-card/30 p-3">
+            <a href="#/settings" className="flex items-center rounded px-2 py-1.5 font-medium text-pi-text hover:bg-pi-card">
+              偏好设置
             </a>
-            <a href="#plugins" className="flex items-center gap-2 rounded px-2 py-1.5 text-pi-muted hover:bg-pi-card hover:text-pi-text">
-              <span>插件市场</span>
-            </a>
-            <a href="#/settings" className="flex items-center justify-between rounded border border-pi-border bg-pi-card px-2 py-1.5 font-medium text-white">
-              <span>偏好设置</span>
-              <span className="font-mono text-[10px] text-pi-muted">⌘,</span>
-            </a>
-            <div className="flex items-center justify-between px-1 pt-2 text-[11px] text-pi-muted">
-              <span className="truncate font-mono">dev@company.io</span>
-              <div className="h-2 w-2 rounded-full bg-emerald-400" />
-            </div>
-          </div>
+          </nav>
         </aside>
         <CredentialsPage />
       </div>
