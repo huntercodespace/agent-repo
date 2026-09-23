@@ -1,4 +1,4 @@
-import type { RpcWireEvent, TranscriptBlock } from "./types";
+import type { HistoryMessage, RpcWireEvent, TranscriptBlock } from "./types";
 
 function nextId(blocks: TranscriptBlock[], prefix: string) {
   return `${prefix}-${blocks.length + 1}`;
@@ -123,4 +123,46 @@ export function applyRpcEvent(blocks: TranscriptBlock[], event: RpcWireEvent): T
 
 export function appendUserBlock(blocks: TranscriptBlock[], text: string): TranscriptBlock[] {
   return blocks.concat({ id: nextId(blocks, "user"), kind: "user", text });
+}
+
+/** Build the same visible blocks from Pi's persisted messages after a restart or session switch. */
+export function hydrateMessages(messages: HistoryMessage[]): TranscriptBlock[] {
+  let blocks: TranscriptBlock[] = [];
+  for (const message of messages) {
+    if (message.role === "user") {
+      blocks = appendUserBlock(blocks, message.text);
+    } else if (message.role === "assistant") {
+      let textIndex = -1;
+      for (const part of message.content) {
+        if (part.type === "text" && part.text) {
+          const current = blocks[textIndex];
+          if (current?.kind === "assistant") {
+            blocks = patch(blocks, textIndex, { ...current, text: current.text + part.text, parts: { 0: current.text + part.text } });
+          } else {
+            blocks = blocks.concat({ id: nextId(blocks, "assistant"), kind: "assistant", text: part.text, parts: { 0: part.text }, pending: false });
+            textIndex = blocks.length - 1;
+          }
+        } else if (part.type === "toolCall") {
+          textIndex = -1;
+          blocks = blocks.concat({
+            id: nextId(blocks, "tool"),
+            kind: "tool",
+            toolCallId: part.id,
+            name: part.name,
+            args: part.args,
+            output: "",
+            pending: true,
+            isError: false,
+          });
+        }
+      }
+    } else if (message.role === "toolResult") {
+      const index = findTool(blocks, message.toolCallId);
+      if (index === -1) continue;
+      const tool = blocks[index];
+      if (tool.kind !== "tool") continue;
+      blocks = patch(blocks, index, { ...tool, output: message.text, isError: message.isError, pending: false });
+    }
+  }
+  return settleTranscript(blocks);
 }

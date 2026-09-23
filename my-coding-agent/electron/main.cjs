@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, Menu, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
+const { createWorkspaceStore } = require("./workspace-store.cjs");
 
 const isDev = process.env.ELECTRON_DEV === "1";
 
@@ -11,9 +12,21 @@ if (process.env.ELECTRON_NO_SANDBOX === "1") {
 
 /** @type {Map<number, { start: () => Promise<void>, stop: () => Promise<void>, prompt: (message: string) => Promise<unknown>, snapshot: () => unknown, isStopping: () => boolean }>} */
 const sessions = new Map();
+const switchingWorkspaces = new Set();
 
 const hostPromise = import("./rpc-host.mjs");
 const credentialsPromise = import("./credentials.mjs");
+let workspaceStorePromise;
+
+function getWorkspaceStore() {
+  workspaceStorePromise ??= (async () => {
+    await app.whenReady();
+    const host = await hostPromise;
+    const filePath = path.join(app.getPath("userData"), "workspaces.json");
+    return createWorkspaceStore(filePath, host.resolveProjectCwd().cwd);
+  })();
+  return workspaceStorePromise;
+}
 
 function broadcast(channel, payload) {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -41,6 +54,63 @@ function windowFromEvent(event) {
   return BrowserWindow.fromWebContents(event.sender);
 }
 
+function createRpcSession(win, host, cwd, cwdWarning = null) {
+  return host.createWindowSession({
+    webContentsId: win.webContents.id,
+    cwd,
+    cwdWarning,
+    send(channel, payload) {
+      try {
+        if (win.isDestroyed() || win.webContents.isDestroyed()) return;
+        win.webContents.send(channel, payload);
+      } catch {
+        // The frame can close between the destroyed check and send.
+      }
+    },
+  });
+}
+
+async function switchWindowWorkspace(win, cwd) {
+  const store = await getWorkspaceStore();
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return { ok: false, state: store.snapshot(), message: "窗口已关闭" };
+  const id = win.webContents.id;
+  if (switchingWorkspaces.has(id)) return { ok: false, state: store.snapshot(), message: "正在切换工作区" };
+  const known = store.snapshot().paths.find((entry) => entry === cwd);
+  if (!known) return { ok: false, state: store.snapshot(), message: "请先添加这个工作区" };
+  const previous = sessions.get(id);
+  if (previous?.snapshot().engine === "chatting") {
+    return { ok: false, state: store.snapshot(), message: "请等待当前回答结束后再切换工作区" };
+  }
+  if (previous?.snapshot().cwd === known) {
+    try {
+      return { ok: true, state: store.activate(known) };
+    } catch (error) {
+      return { ok: false, state: store.snapshot(), message: error instanceof Error ? error.message : "保存工作区失败" };
+    }
+  }
+
+  switchingWorkspaces.add(id);
+  try {
+    const host = await hostPromise;
+    const next = createRpcSession(win, host, known);
+    const state = store.activate(known);
+    if (previous) {
+      await previous.stop();
+      if (sessions.get(id) === previous) sessions.delete(id);
+    }
+    if (win.isDestroyed() || win.webContents.isDestroyed()) return { ok: false, state: store.snapshot(), message: "窗口已关闭" };
+    sessions.set(id, next);
+    win.webContents.send("rpc:status", next.snapshot());
+    broadcast("workspaces:changed", state);
+    await next.start();
+    return { ok: true, state };
+  } catch (error) {
+    return { ok: false, state: store.snapshot(), message: error instanceof Error ? error.message : "切换工作区失败" };
+  } finally {
+    switchingWorkspaces.delete(id);
+  }
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
@@ -66,6 +136,15 @@ function createWindow() {
   Menu.setApplicationMenu(null);
 
   const webContentsId = win.webContents.id;
+
+  win.webContents.on("did-finish-load", () => {
+    if (win.isDestroyed()) return;
+    const current = sessions.get(webContentsId);
+    if (current) win.webContents.send("rpc:status", current.snapshot());
+    void getWorkspaceStore().then((store) => {
+      if (!win.isDestroyed()) win.webContents.send("workspaces:changed", store.snapshot());
+    });
+  });
 
   win.on("close", (event) => {
     const session = sessions.get(webContentsId);
@@ -97,28 +176,13 @@ function createWindow() {
     win.loadFile(indexPath);
   };
 
-  hostPromise
-    .then((host) => {
+  Promise.all([hostPromise, getWorkspaceStore()])
+    .then(([host, store]) => {
       if (win.isDestroyed()) return null;
       const project = host.resolveProjectCwd();
-      const session = host.createWindowSession({
-        webContentsId,
-        cwd: project.cwd,
-        cwdWarning: project.warning,
-        send(channel, payload) {
-          try {
-            if (win.isDestroyed() || win.webContents.isDestroyed()) return;
-            win.webContents.send(channel, payload);
-          } catch {
-            // The first frame can be disposed while Chromium is still starting.
-          }
-        },
-      });
+      const cwd = store.snapshot().activeCwd;
+      const session = createRpcSession(win, host, cwd, cwd === project.cwd ? project.warning : null);
       sessions.set(webContentsId, session);
-      win.webContents.on("did-finish-load", () => {
-        if (win.isDestroyed()) return;
-        win.webContents.send("rpc:status", session.snapshot());
-      });
       const starting = session.start();
       load();
       return starting;
@@ -151,6 +215,43 @@ ipcMain.handle("rpc:prompt", async (event, message) => {
   if (!session) return { ok: false, code: "disconnected", message: "这个窗口没有 RPC 会话" };
   return session.prompt(message);
 });
+
+ipcMain.handle("rpc:list-sessions", async (event) => {
+  const session = sessions.get(event.sender.id);
+  return session ? session.listSessions() : [];
+});
+
+ipcMain.handle("rpc:get-session-view", async (event) => {
+  const session = sessions.get(event.sender.id);
+  return session ? session.getSessionView() : { ok: false, message: "这个窗口没有 RPC 会话" };
+});
+
+ipcMain.handle("rpc:change-session", async (event, sessionId) => {
+  const session = sessions.get(event.sender.id);
+  return session ? session.changeSession(sessionId) : { ok: false, message: "这个窗口没有 RPC 会话" };
+});
+
+ipcMain.handle("workspaces:list", async () => (await getWorkspaceStore()).snapshot());
+
+ipcMain.handle("workspaces:add", async (event) => {
+  const win = windowFromEvent(event);
+  const store = await getWorkspaceStore();
+  if (!win) return { ok: false, state: store.snapshot(), message: "窗口已关闭" };
+  const selection = await dialog.showOpenDialog(win, {
+    title: "添加工作区",
+    properties: ["openDirectory", "createDirectory"],
+  });
+  if (selection.canceled || !selection.filePaths[0]) return { ok: false, cancelled: true, state: store.snapshot() };
+  try {
+    const cwd = store.add(selection.filePaths[0]);
+    broadcast("workspaces:changed", store.snapshot());
+    return await switchWindowWorkspace(win, cwd);
+  } catch (error) {
+    return { ok: false, state: store.snapshot(), message: error instanceof Error ? error.message : "添加工作区失败" };
+  }
+});
+
+ipcMain.handle("workspaces:switch", async (event, cwd) => switchWindowWorkspace(windowFromEvent(event), cwd));
 
 ipcMain.handle("credentials:listProviders", async () => {
   const credentials = await credentialsPromise;

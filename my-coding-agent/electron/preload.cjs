@@ -6,6 +6,17 @@ contextBridge.exposeInMainWorld("piDesktop", {
   close: () => ipcRenderer.send("window:close"),
   getEngineStatus: () => ipcRenderer.invoke("rpc:get-status"),
   sendPrompt: (message) => ipcRenderer.invoke("rpc:prompt", message),
+  listSessions: () => ipcRenderer.invoke("rpc:list-sessions"),
+  getSessionView: () => ipcRenderer.invoke("rpc:get-session-view"),
+  changeSession: (sessionId) => ipcRenderer.invoke("rpc:change-session", sessionId),
+  listWorkspaces: () => ipcRenderer.invoke("workspaces:list"),
+  addWorkspace: () => ipcRenderer.invoke("workspaces:add"),
+  switchWorkspace: (cwd) => ipcRenderer.invoke("workspaces:switch", cwd),
+  onWorkspacesChanged: (callback) => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on("workspaces:changed", listener);
+    return () => ipcRenderer.removeListener("workspaces:changed", listener);
+  },
   onEngineStatus: (callback) => {
     const listener = (_event, status) => callback(status);
     ipcRenderer.on("rpc:status", listener);

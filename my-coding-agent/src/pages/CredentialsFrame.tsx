@@ -46,37 +46,26 @@ function WindowChromeButton({
 
 export function CredentialsFrame() {
   const desktop = window.piDesktop;
-  const { status } = useRpc();
+  const { status, workspaceState, addWorkspace, switchWorkspace, workspaceBusy } = useRpc();
   const cwd = status.available ? status.cwd : "";
+  const paths = workspaceState.paths.length ? workspaceState.paths : cwd ? [cwd] : [];
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-pi-bg font-sans text-xs text-[#c9d1d9] antialiased selection:bg-pi-accent selection:text-white">
       <header className="flex h-10 shrink-0 select-none items-center justify-between border-b border-pi-border bg-pi-surface pl-3">
-        <div className="flex min-w-0 flex-1 items-center gap-4">
-          <div className="flex items-center gap-1.5 font-mono text-[11px] text-pi-muted">
-            <a href="#/" className="transition-colors hover:text-pi-text">pi-monorepo</a>
-            <span className="text-pi-border">/</span>
-            <a href="#/" className="transition-colors hover:text-pi-text">core</a>
-            <span className="text-pi-border">/</span>
-            <span className="text-pi-text">agent-runtime</span>
-            <a href="#/branch" className="ml-2 inline-flex items-center gap-1 rounded border border-pi-border bg-pi-card px-1.5 py-0.5 text-[10px] text-pi-muted">
-              <svg className="h-3 w-3 text-pi-accent" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                <path fillRule="evenodd" d="M11.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122V6A2.5 2.5 0 0110 8.5H6a1 1 0 00-1 1v1.128a2.251 2.251 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0v1.836A2.492 2.492 0 016 7h4a1 1 0 001-1v-.628A2.25 2.25 0 019.5 3.25zM4.25 12a.75.75 0 100 1.5.75.75 0 000-1.5zM3.5 3.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0z" />
-              </svg>
-              <span>main</span>
-            </a>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 pr-2 text-[11px]">
-          <a href="#/onboarding" className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text">
+        <div className="flex min-w-0 flex-1 items-center gap-4 text-[11px]">
+          <button type="button" disabled={workspaceBusy} onClick={() => void addWorkspace()} className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text disabled:cursor-not-allowed disabled:opacity-50">
             <span>打开文件夹</span>
-          </a>
+          </button>
           <a href="#/diff" className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text">
             <span className="text-emerald-400">✓</span>
             <span>提交更改 (3)</span>
           </a>
-          <button type="button" className="flex items-center gap-1.5 rounded bg-pi-accent px-3 py-1 font-medium text-white shadow-sm transition-colors hover:bg-pi-accentHover">
-            <span>交接 Handoff</span>
-          </button>
+          <a href="#/branch" className="inline-flex items-center gap-1 rounded border border-pi-border bg-pi-card px-1.5 py-0.5 font-mono text-[10px] text-pi-muted">
+            <svg className="h-3 w-3 text-pi-accent" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+              <path fillRule="evenodd" d="M11.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122V6A2.5 2.5 0 0110 8.5H6a1 1 0 00-1 1v1.128a2.251 2.251 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0v1.836A2.492 2.492 0 016 7h4a1 1 0 001-1v-.628A2.25 2.25 0 019.5 3.25zM4.25 12a.75.75 0 100 1.5.75.75 0 000-1.5zM3.5 3.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0z" />
+            </svg>
+            <span>main</span>
+          </a>
         </div>
         <div className="ml-2 flex h-10 shrink-0 items-stretch">
           <WindowChromeButton label="最小化" onClick={() => desktop?.minimize()}>
@@ -104,15 +93,23 @@ export function CredentialsFrame() {
               <span className="text-sm font-bold tracking-tight text-white">Pi</span>
             </a>
             <nav aria-label="工作区" className="pt-4 text-xs">
-              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-pi-muted">当前工作区</div>
-              {cwd ? (
-                <a href="#/" title={cwd} className="flex items-center rounded px-2 py-1.5 text-pi-text hover:bg-pi-card">
-                  <span className="truncate">{workspaceName(cwd)}</span>
-                </a>
+              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-pi-muted">工作区</div>
+              {paths.length ? (
+                paths.map((workspacePath) => (
+                  <button
+                    key={workspacePath}
+                    type="button"
+                    title={workspacePath}
+                    disabled={workspaceBusy || (workspacePath !== cwd && (!cwd || status.engine === "chatting"))}
+                    onClick={() => void switchWorkspace(workspacePath)}
+                    className={`flex w-full items-center rounded px-2 py-1.5 text-left hover:bg-pi-card disabled:cursor-not-allowed disabled:opacity-50 ${workspacePath === cwd ? "bg-pi-card text-pi-text" : "text-pi-muted"}`}
+                  >
+                    <span className="truncate">{workspaceName(workspacePath)}</span>
+                  </button>
+                ))
               ) : (
                 <p className="px-2 py-1.5 text-pi-muted">尚未连接工作区</p>
               )}
-              <p className="px-2 pt-4 text-pi-muted">暂无历史会话</p>
             </nav>
           </div>
           <nav aria-label="设置" className="border-t border-pi-border bg-pi-card/30 p-3">

@@ -129,8 +129,17 @@ async function handle(line) {
         thinkingLevel: "off",
         isStreaming: streaming,
         messageCount: 0,
+        sessionId: "fixture-session",
       },
     });
+    return;
+  }
+  if (command.type === "get_messages") {
+    write({ id, type: "response", command: "get_messages", success: true, data: { messages: [] } });
+    return;
+  }
+  if (command.type === "new_session") {
+    write({ id, type: "response", command: "new_session", success: true, data: { cancelled: false } });
     return;
   }
   if (command.type === "prompt") {

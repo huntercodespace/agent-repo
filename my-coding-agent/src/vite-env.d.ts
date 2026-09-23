@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { CredentialBroadcast, EnvHit, OAuthEvent, ProviderInfo, ProviderStatus, SelectedModel, SetModelResult } from "./credentials/types";
-import type { EngineSnapshot, PromptResult, RpcWireEvent } from "./rpc/types";
+import type { EngineSnapshot, PromptResult, RpcWireEvent, SessionSummary, SessionView, WorkspaceActionResult, WorkspaceState } from "./rpc/types";
 
 export interface PiDesktopApi {
   minimize: () => void;
@@ -9,6 +9,13 @@ export interface PiDesktopApi {
   close: () => void;
   getEngineStatus: () => Promise<EngineSnapshot>;
   sendPrompt: (message: string) => Promise<PromptResult>;
+  listSessions: () => Promise<SessionSummary[]>;
+  getSessionView: () => Promise<SessionView>;
+  changeSession: (sessionId: string | null) => Promise<SessionView>;
+  listWorkspaces: () => Promise<WorkspaceState>;
+  addWorkspace: () => Promise<WorkspaceActionResult>;
+  switchWorkspace: (cwd: string) => Promise<WorkspaceActionResult>;
+  onWorkspacesChanged: (callback: (state: WorkspaceState) => void) => () => void;
   onEngineStatus: (callback: (status: EngineSnapshot) => void) => () => void;
   onRpcEvent: (callback: (event: RpcWireEvent) => void) => () => void;
   listProviders: () => Promise<ProviderInfo[]>;

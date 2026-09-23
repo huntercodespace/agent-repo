@@ -47,7 +47,7 @@ export function WorkspacePage() {
               </span>
             </span>
             <span className="text-outline">/</span>
-            <span className="font-medium text-on-surface-variant">Session #0482</span>
+            <span className="font-medium text-on-surface-variant">{rpc.activeSessionId ? `会话 ${rpc.activeSessionId.slice(0, 8)}` : "新会话"}</span>
             <span className="rounded bg-surface-container-high px-1.5 py-0.5 font-label-xs text-label-xs font-semibold uppercase tracking-wider text-tertiary">
               Active Run
             </span>
@@ -77,7 +77,7 @@ export function WorkspacePage() {
         </div>
         <Composer
           modelLabel={live ? rpc.status.modelLabel : null}
-          busy={live && rpc.status.engine === "reconnecting"}
+          busy={rpc.sessionBusy || (live && rpc.status.engine === "reconnecting")}
           guide={guide}
           onSend={(text) => rpc.sendPrompt(text)}
         />

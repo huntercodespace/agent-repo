@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import logo from "../assets/pi-logo.png";
+import { useRpc } from "../rpc/RpcProvider";
 
 export function OnboardingPage() {
+  const { addWorkspace } = useRpc();
   const [modal, setModal] = useState<null | "clone" | "shortcut">(null);
   const [toast, setToast] = useState<string | null>(null);
   const [cloneUrl, setCloneUrl] = useState("");
 
   function showToast(text: string) {
     setToast(text);
+  }
+
+  function chooseWorkspace() {
+    if (window.piDesktop?.addWorkspace) void addWorkspace();
+    else showToast("请在桌面应用中选择工作区目录");
   }
 
   function openProject(name: string) {
@@ -41,7 +48,7 @@ export function OnboardingPage() {
       const key = event.key.toLowerCase();
       if (key === "o") {
         event.preventDefault();
-        showToast("正在唤起系统目录选择器...");
+        chooseWorkspace();
       } else if (key === "k") {
         event.preventDefault();
         showToast("快捷搜索已激活 (⌘K)");
@@ -49,7 +56,7 @@ export function OnboardingPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [addWorkspace]);
 
   return (
   <main className="h-full min-h-screen w-full overflow-y-auto bg-surface text-on-surface font-body-md text-body-md">
@@ -175,7 +182,7 @@ export function OnboardingPage() {
           {/* 2) Primary Action Cards (Grid of 3) */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
             {/* Card 1: Open Local (Hero Action) */}
-            <div className="group relative bg-surface-container-low hover:bg-surface-container rounded-xl p-space-lg flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm hover:shadow-xl" onClick={() => showToast("正在唤起系统目录选择器...")}>
+            <div className="group relative bg-surface-container-low hover:bg-surface-container rounded-xl p-space-lg flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm hover:shadow-xl" onClick={chooseWorkspace}>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-container to-secondary rounded-t-xl opacity-90">
               </div>
               <div>
@@ -614,7 +621,7 @@ export function OnboardingPage() {
                 ·
               </span>
               <span>
-                Latency: 
+                Latency:
                 <strong className="text-tertiary font-code-sm">
                   18ms
                 </strong>

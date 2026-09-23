@@ -5,7 +5,7 @@
  * stdout on `\n` only (attachJsonlLineReader). Do not parse this stream with readline.
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { delimiter, dirname, join } from "node:path";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const emptyCredentials = {
@@ -231,6 +231,8 @@ const STREAM_POLL_MS = 1000;
 
 export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcClientCtor }) {
   let client = null;
+  let activeSessionFile = null;
+  let changingSession = false;
   let generation = 0;
   let stopping = false;
   let ready = false;
@@ -247,6 +249,13 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
   let modelLabel = null;
   let detail = cwdWarning;
   let credentials = { ...emptyCredentials };
+
+  function belongsToWorkspace(entry) {
+    if (!entry.cwd) return true; // Older Pi session headers did not record cwd.
+    const source = resolve(entry.cwd);
+    const target = resolve(cwd);
+    return process.platform === "win32" ? source.toLowerCase() === target.toLowerCase() : source === target;
+  }
 
   function snapshot() {
     return {
@@ -418,8 +427,10 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
     const rpc = new RpcClient({
       cliPath,
       cwd,
-      // History is not persisted in this slice. Recoverable sessions require dropping --no-session.
-      args: ["--no-session"],
+      // Pi keeps its default per-working-directory JSONL files in the user's home directory.
+      args: activeSessionFile && fileExists(activeSessionFile)
+        ? ["--session", activeSessionFile]
+        : ["--continue"],
       env: {
         ...process.env,
         PI_SKIP_VERSION_CHECK: process.env.PI_SKIP_VERSION_CHECK ?? "1",
@@ -454,6 +465,7 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
       });
       const state = await rpc.getState();
       if (gen !== generation || stopping) return;
+      activeSessionFile = typeof state?.sessionFile === "string" ? state.sessionFile : null;
       modelLabel = modelLabelFrom(state);
       ready = true;
       restarts = 0;
@@ -512,6 +524,7 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
     if (typeof message !== "string" || message.trim() === "") {
       return { ok: false, code: "empty" };
     }
+    if (changingSession) return { ok: false, code: "error", message: "正在切换会话" };
     // Set before any await so a second send during this call is a steer, not another plain prompt.
     const steer = engine === "chatting" || promptBusy;
     promptBusy = true;
@@ -522,6 +535,7 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
       if (!credentials.configured) {
         return { ok: false, code: "credentials", href: "#/credentials" };
       }
+      if (changingSession) return { ok: false, code: "error", message: "正在切换会话" };
       if (!client || !ready || gen !== generation || stopping) {
         return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
       }
@@ -606,6 +620,99 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
     return { ok: true, provider: response?.provider || provider, id: response?.id || modelId, label };
   }
 
+  async function listSessions() {
+    const { SessionManager } = await import("@earendil-works/pi-coding-agent");
+    const entries = await SessionManager.list(cwd);
+    return entries.filter((entry) => entry.messageCount > 0 && belongsToWorkspace(entry)).map((entry) => ({
+      id: entry.id,
+      title: (entry.name || entry.firstMessage?.trim().split("\n")[0] || "未命名会话").slice(0, 120),
+      modified: entry.modified.toISOString(),
+      messageCount: entry.messageCount,
+    }));
+  }
+
+  function historyMessages(messages) {
+    const result = [];
+    for (const message of messages) {
+      if (message?.role === "user") {
+        const text = textFromContent(message.content);
+        if (text) result.push({ role: "user", text });
+      } else if (message?.role === "assistant" && Array.isArray(message.content)) {
+        const content = [];
+        for (const part of message.content) {
+          if (part?.type === "text" && typeof part.text === "string") {
+            content.push({ type: "text", text: part.text });
+          } else if (part?.type === "toolCall") {
+            content.push({
+              type: "toolCall",
+              id: typeof part.id === "string" ? part.id : "",
+              name: typeof part.name === "string" ? part.name : "tool",
+              args: previewJson(part.arguments),
+            });
+          }
+        }
+        if (content.length) result.push({ role: "assistant", content });
+      } else if (message?.role === "toolResult") {
+        result.push({
+          role: "toolResult",
+          toolCallId: typeof message.toolCallId === "string" ? message.toolCallId : "",
+          text: clip(textFromContent(message.content)),
+          isError: Boolean(message.isError),
+        });
+      }
+    }
+    return result;
+  }
+
+  async function getSessionView() {
+    if (startPromise) await startPromise;
+    if (!client || !ready || stopping) return { ok: false, message: detail || "引擎未连接" };
+    const current = client;
+    const [state, messages] = await Promise.all([current.getState(), current.getMessages()]);
+    if (current !== client || stopping) return { ok: false, message: "会话已断开" };
+    activeSessionFile = typeof state?.sessionFile === "string" ? state.sessionFile : null;
+    const nextModelLabel = modelLabelFrom(state);
+    if (nextModelLabel !== modelLabel) {
+      modelLabel = nextModelLabel;
+      publish();
+    }
+    return {
+      ok: true,
+      sessionId: typeof state?.sessionId === "string" ? state.sessionId : null,
+      messages: historyMessages(messages),
+    };
+  }
+
+  async function changeSession(sessionId) {
+    if (changingSession || promptBusy || engine === "chatting") {
+      return { ok: false, message: "请等待当前回答结束后再切换会话" };
+    }
+    if (!client || !ready || stopping) return { ok: false, message: detail || "引擎未连接" };
+    changingSession = true;
+    try {
+      const state = await client.getState();
+      if (state?.isStreaming) return { ok: false, message: "请等待当前回答结束后再切换会话" };
+      if (sessionId !== null && sessionId === state?.sessionId) return getSessionView();
+      let result;
+      if (sessionId === null) {
+        result = await client.newSession();
+      } else {
+        if (typeof sessionId !== "string") return { ok: false, message: "无效的会话" };
+        const { SessionManager } = await import("@earendil-works/pi-coding-agent");
+        const available = await SessionManager.list(cwd);
+        const target = available.find((entry) => entry.id === sessionId && belongsToWorkspace(entry));
+        if (!target) return { ok: false, message: "会话不存在或不属于当前工作区" };
+        result = await client.switchSession(target.path);
+      }
+      if (result?.cancelled) return { ok: false, message: "会话切换已取消" };
+      return getSessionView();
+    } catch (error) {
+      return { ok: false, message: scrubSecrets(error instanceof Error ? error.message : String(error)).slice(0, 240) };
+    } finally {
+      changingSession = false;
+    }
+  }
+
   return {
     start,
     stop,
@@ -613,6 +720,9 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcC
     snapshot,
     setCredentials,
     setModel,
+    listSessions,
+    getSessionView,
+    changeSession,
     isStopping: () => stopping,
   };
 }

@@ -1,6 +1,6 @@
 # Pi desktop shell
 
-Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Session data, credentials, and git state are static placeholders.
+Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Conversation sessions and credentials use Pi's local storage; some git and review screens still use placeholders.
 
 The target architecture below is locked. This slice wires the per-window RPC loop and a real credentials page over Pi AuthStorage. The sandbox is still not enabled.
 
@@ -10,7 +10,7 @@ The target architecture below is locked. This slice wires the per-window RPC loo
 
 Each Electron window talks to **pi-coding-agent** in RPC mode. The main process `spawn`s `pi --mode rpc` and uses the official **RpcClient** over stdin/stdout JSONL. v1 stays on that path. Experimental pi-server and Chord are out of v1.
 
-Closing a window ends that session and kills that RPC child. Engine status is scoped per window (`webContentsId`).
+Closing a window kills that RPC child; the conversation remains in Pi's session store. Engine status is scoped per window (`webContentsId`).
 
 ### Sandbox
 
@@ -99,7 +99,7 @@ pi resolution, in order:
 
 `RpcClient` always launches that file with `node`, so a standalone bun binary is not a valid `PI_CLI` here. Packaging a build-binaries `pi` into `extraResources` is a later step.
 
-Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the process cwd (`npm run dev` from `my-coding-agent` uses that folder). The child is started with `--no-session`, so this slice does not persist history. Recoverable sessions require dropping that flag later so pi writes a session file.
+The initial working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the process cwd (`npm run dev` from `my-coding-agent` uses that folder). The title bar's folder button adds a directory with the native picker; the sidebar lists added workspaces and switches the active RPC session between them. Workspace paths and the last active path are kept in Electron's user-data `workspaces.json`. Each Pi child starts with `--continue` and uses Pi's default session storage under the user's `~/.pi/agent/sessions/` directory, grouped by working directory. Session files are not written into the project.
 
 ### Credentials
 

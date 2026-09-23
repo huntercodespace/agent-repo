@@ -31,6 +31,34 @@ export interface PromptResult {
   message?: string;
 }
 
+export interface SessionSummary {
+  id: string;
+  title: string;
+  modified: string;
+  messageCount: number;
+}
+
+export interface WorkspaceState {
+  paths: string[];
+  activeCwd: string;
+}
+
+export interface WorkspaceActionResult {
+  ok: boolean;
+  state: WorkspaceState;
+  cancelled?: boolean;
+  message?: string;
+}
+
+export type HistoryMessage =
+  | { role: "user"; text: string }
+  | { role: "assistant"; content: Array<{ type: "text"; text: string } | { type: "toolCall"; id: string; name: string; args: string }> }
+  | { role: "toolResult"; toolCallId: string; text: string; isError: boolean };
+
+export type SessionView =
+  | { ok: true; sessionId: string | null; messages: HistoryMessage[] }
+  | { ok: false; message: string };
+
 /** Subset of pi RPC stdout events forwarded to the renderer. */
 export interface RpcWireEvent {
   type: string;
