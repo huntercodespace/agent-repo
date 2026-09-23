@@ -3,8 +3,6 @@ import { useRpc } from "../rpc/RpcProvider";
 import { Icon } from "./Icon";
 import { PiLogo } from "./PiLogo";
 
-export type RightRailTab = "files" | "terminal" | "diff";
-
 /** Inline SVGs — Material subset lacks minimize / crop_square, which overflow as ligature text. */
 function MinimizeIcon() {
   return (
@@ -58,28 +56,13 @@ function WindowControl({
   );
 }
 
-function RightRailTabs({ active }: { active: RightRailTab }) {
-  const tabClass = (id: RightRailTab) =>
-    `titlebar-no-drag flex h-8 shrink-0 items-center gap-1 rounded px-space-sm font-label-sm text-label-sm transition-colors ${
-      active === id
-        ? "bg-surface-container font-medium text-on-surface shadow-sm"
-        : "text-on-surface-variant hover:bg-surface-container/50 hover:text-on-surface"
-    }`;
-
+function TerminalTab() {
   return (
-    <div className="titlebar-no-drag flex items-center gap-0.5 px-space-xs">
-      <a href="#/" className={tabClass("files")} title="文件树 Files">
-        <Icon name="folder_open" className={`text-[15px] ${active === "files" ? "text-secondary" : ""}`} />
-        <span>文件树</span>
-      </a>
-      <button type="button" className={tabClass("terminal")} title="终端 Terminal">
+    <div className="titlebar-no-drag flex items-center px-space-xs">
+      <button type="button" className="titlebar-no-drag flex h-8 shrink-0 items-center gap-1 rounded px-space-sm font-label-sm text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container/50 hover:text-on-surface" title="终端 Terminal">
         <Icon name="terminal" className="text-[15px]" />
         <span>终端</span>
       </button>
-      <a href="#/diff" className={tabClass("diff")} title="变更审查 Diff">
-        <Icon name="difference" className={`text-[15px] ${active === "diff" ? "text-tertiary" : ""}`} />
-        <span>变更审查</span>
-      </a>
     </div>
   );
 }
@@ -100,7 +83,7 @@ function WindowControls({ desktop }: { desktop?: Window["piDesktop"] }) {
   );
 }
 
-export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
+export function TitleBar({ showTerminal = false }: { showTerminal?: boolean }) {
   const desktop = window.piDesktop;
   const { addWorkspace, workspaceBusy, status } = useRpc();
   const [gitCount, setGitCount] = useState<number | null>(null);
@@ -163,9 +146,9 @@ export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
           </a>
         </div>
       </div>
-      {rightRail ? (
+      {showTerminal ? (
         <div className="flex h-10 shrink-0 items-stretch">
-          <RightRailTabs active={rightRail} />
+          <TerminalTab />
           <WindowControls desktop={desktop} />
         </div>
       ) : (

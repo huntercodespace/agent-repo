@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
-import { TitleBar, type RightRailTab } from "./components/TitleBar";
+import { TitleBar } from "./components/TitleBar";
 import { BranchCanvas } from "./pages/BranchCanvas";
 import { BranchSwitcher } from "./pages/BranchSwitcher";
 import { CredentialsFrame } from "./pages/CredentialsFrame";
@@ -94,15 +94,9 @@ export default function App() {
     : underlay === "engine" ? <EngineStatusPage />
     : <WorkspacePage />;
 
-  // Derive from route so tabs/width stay in sync on navigation (no underlay lag).
-  const titleRightRail: RightRailTab | null =
-    route === "diff" ? "diff"
-      : route === "workspace" ? "files"
-      : null;
-
   return (
     <div className="h-screen select-none overflow-hidden bg-surface font-body-md text-body-md text-on-surface">
-      <TitleBar rightRail={titleRightRail} />
+      <TitleBar showTerminal={route === "diff" || route === "workspace"} />
       <Sidebar route={route === "branch" ? underlay : route} bottomClass={shell.side} />
       <div className={`h-full min-h-0 pl-60 pt-10 ${shell.pad}`}>
         <div className="h-full min-h-0">{page}</div>
