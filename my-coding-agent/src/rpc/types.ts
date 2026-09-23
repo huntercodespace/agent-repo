@@ -45,6 +45,7 @@ export interface RpcWireEvent {
   outputPreview?: string;
   isError?: boolean;
   willRetry?: boolean;
+  errorMessage?: string;
 }
 
 export type TranscriptBlock =

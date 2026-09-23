@@ -38,6 +38,11 @@ const wireEnd = toWireEvent({
 });
 assert.equal(wireEnd.text, undefined);
 assert.equal(wireEnd.role, "assistant");
+const wireError = toWireEvent({
+  type: "message_end",
+  message: { role: "assistant", stopReason: "error", errorMessage: "HTTP 401: invalid API key" },
+});
+assert.equal(wireError.errorMessage, "HTTP 401: invalid API key");
 
 const events = [];
 let armed = false;
@@ -110,6 +115,7 @@ try {
   assert.equal(assistants[0].text.includes("hidden"), false);
   assert.equal(assistants.at(-1).text, "nud!ged");
   assert.equal(events.some((event) => event.type === "agent_end" && event.willRetry), true);
+
   console.log("rpc host smoke ok");
 } finally {
   await session.stop();

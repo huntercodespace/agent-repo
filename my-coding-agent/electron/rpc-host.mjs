@@ -136,10 +136,13 @@ export function toWireEvent(event) {
   const type = event.type;
   if (type === "message_start" || type === "message_end") {
     const message = event.message && typeof event.message === "object" ? event.message : {};
-    // Role only. The current protocol has no cumulative message text on these events.
+    // Message text is streamed by text_delta; only forward the final error here.
     return {
       type,
       role: typeof message.role === "string" ? message.role : null,
+      ...(type === "message_end" && message.stopReason === "error" && typeof message.errorMessage === "string"
+        ? { errorMessage: clip(message.errorMessage, 1000) }
+        : {}),
     };
   }
   if (type === "message_update") {
@@ -226,7 +229,7 @@ const IDLE_CHECK_EVENTS = new Set([
 
 const STREAM_POLL_MS = 1000;
 
-export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
+export function createWindowSession({ webContentsId, cwd, cwdWarning, send, RpcClientCtor }) {
   let client = null;
   let generation = 0;
   let stopping = false;
@@ -387,11 +390,11 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
     pid = null;
     publish();
 
-    let RpcClient;
+    let RpcClient = RpcClientCtor;
     let creds;
     try {
-      [{ RpcClient }, creds] = await Promise.all([
-        import("@earendil-works/pi-coding-agent"),
+      [RpcClient, creds] = await Promise.all([
+        RpcClient ? Promise.resolve(RpcClient) : import("@earendil-works/pi-coding-agent").then((module) => module.RpcClient),
         readCredentialStatus(),
       ]);
     } catch (error) {
@@ -583,6 +586,16 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   }
 
   async function setModel(provider, modelId) {
+    if (!stopping && (!client || !ready)) {
+      if (restartTimer) {
+        clearTimeout(restartTimer);
+        restartTimer = null;
+      }
+      restarts = 0;
+      const alreadyStarting = Boolean(startPromise);
+      await start();
+      if (alreadyStarting && !stopping && (!client || !ready)) await start();
+    }
     if (!client || !ready || stopping) {
       return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
     }

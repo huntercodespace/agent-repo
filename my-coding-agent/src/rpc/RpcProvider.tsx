@@ -54,6 +54,11 @@ export function RpcProvider({ children }: { children: ReactNode }) {
     const offStatus = desktop.onEngineStatus(apply);
     const offEvent = desktop.onRpcEvent((event) => {
       setBlocks((current) => applyRpcEvent(current, event));
+      if (event.type === "message_end" && event.errorMessage) {
+        setNotice(`模型请求失败：${event.errorMessage}`);
+      } else if (event.type === "agent_start") {
+        setNotice(null);
+      }
     });
     let cancelled = false;
     desktop.getEngineStatus().then((snapshot) => {
@@ -92,7 +97,7 @@ export function RpcProvider({ children }: { children: ReactNode }) {
     const result: PromptResult = await desktop.sendPrompt(trimmed);
     if (!result.ok) {
       if (result.code === "credentials") {
-        setNotice("模型凭据未配置。密钥只留在主进程 AuthStorage，请打开凭据页。");
+        setNotice(result.message ? `模型凭据不可用：${result.message}` : "模型凭据未配置。请打开凭据页。");
         return false;
       }
       setNotice(result.message || "发送失败");
