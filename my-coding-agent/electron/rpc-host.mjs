@@ -6,28 +6,7 @@
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { delimiter, dirname, join } from "node:path";
-import { pathToFileURL, fileURLToPath } from "node:url";
-
-const ENV_PROVIDERS = [
-  ["anthropic", "ANTHROPIC_API_KEY"],
-  ["anthropic", "ANTHROPIC_AUTH_TOKEN"],
-  ["anthropic", "ANTHROPIC_OAUTH_TOKEN"],
-  ["openai", "OPENAI_API_KEY"],
-  ["azure-openai", "AZURE_OPENAI_API_KEY"],
-  ["google", "GEMINI_API_KEY"],
-  ["groq", "GROQ_API_KEY"],
-  ["xai", "XAI_API_KEY"],
-  ["openrouter", "OPENROUTER_API_KEY"],
-  ["mistral", "MISTRAL_API_KEY"],
-  ["cerebras", "CEREBRAS_API_KEY"],
-  ["deepseek", "DEEPSEEK_API_KEY"],
-  ["together", "TOGETHER_API_KEY"],
-  ["fireworks", "FIREWORKS_API_KEY"],
-  ["moonshot", "MOONSHOT_API_KEY"],
-  ["minimax", "MINIMAX_API_KEY"],
-  ["nvidia", "NVIDIA_API_KEY"],
-  ["bedrock", "AWS_BEARER_TOKEN_BEDROCK"],
-];
+import { fileURLToPath } from "node:url";
 
 const emptyCredentials = {
   configured: false,
@@ -35,8 +14,6 @@ const emptyCredentials = {
   mask: null,
   providerId: null,
 };
-
-let authStorePromise;
 
 function packageRoot() {
   const indexPath = fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent"));
@@ -105,11 +82,6 @@ export function resolveProjectCwd() {
   return { cwd: process.cwd(), warning: "PI_PROJECT_CWD 不是文件夹，已改用当前工作目录" };
 }
 
-function maskSecret(value) {
-  if (typeof value !== "string" || value.trim().length < 8) return "••••";
-  return `••••${value.trim().slice(-4)}`;
-}
-
 function scrubSecrets(text) {
   return String(text)
     .replace(/sk-[A-Za-z0-9_-]{8,}/g, "sk-…")
@@ -126,42 +98,14 @@ function clip(value, max = 4000) {
   return clean.length > max ? `${clean.slice(0, max)}…` : clean;
 }
 
-function envCredential() {
-  for (const [providerId, name] of ENV_PROVIDERS) {
-    const value = process.env[name];
-    if (typeof value === "string" && value.trim() !== "") {
-      return { configured: true, source: "environment", mask: name, providerId };
-    }
-  }
-  return null;
-}
-
-async function authStore() {
-  authStorePromise ??= (async () => {
-    const mod = await import(pathToFileURL(join(packageRoot(), "dist/core/auth-storage.js")).href);
-    return mod.AuthStorage.create();
-  })();
-  return authStorePromise;
-}
-
-/** Thin AuthStorage wrap. Returns status, source, and a mask — never the key. */
+/** Status, source, and a mask from AuthStorage / findEnvKeys. Never the key. */
 export async function readCredentialStatus() {
   try {
-    const store = await authStore();
-    const listed = await store.list();
-    const first = listed[0];
-    if (first) {
-      let mask = first.type === "oauth" ? "oauth ••••" : "••••";
-      if (first.type === "api_key") {
-        const cred = await store.read(first.providerId);
-        if (cred?.type === "api_key") mask = maskSecret(cred.key);
-      }
-      return { configured: true, source: "stored", mask, providerId: first.providerId };
-    }
+    const { summaryProbe } = await import("./credentials.mjs");
+    return await summaryProbe();
   } catch {
-    // Auth file can be missing. Environment keys still count.
+    return { ...emptyCredentials };
   }
-  return envCredential() ?? emptyCredentials;
 }
 
 function textFromContent(content) {
@@ -623,11 +567,39 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
     }
   }
 
+  function setCredentials(probe) {
+    if (!probe || typeof probe !== "object") return snapshot();
+    credentials = {
+      configured: Boolean(probe.configured),
+      source: probe.source === "environment" || probe.source === "stored" ? probe.source : null,
+      mask: typeof probe.mask === "string" ? probe.mask : null,
+      providerId: typeof probe.providerId === "string" ? probe.providerId : null,
+    };
+    if (credentials.configured && typeof detail === "string" && detail.includes("凭据未配置")) {
+      detail = cwdWarning;
+    }
+    publish();
+    return snapshot();
+  }
+
+  async function setModel(provider, modelId) {
+    if (!client || !ready || stopping) {
+      return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
+    }
+    const response = await client.setModel(provider, modelId);
+    const label = modelLabelFrom({ model: response }) || `${provider}/${modelId}`;
+    modelLabel = label;
+    publish();
+    return { ok: true, provider: response?.provider || provider, id: response?.id || modelId, label };
+  }
+
   return {
     start,
     stop,
     prompt,
     snapshot,
+    setCredentials,
+    setModel,
     isStopping: () => stopping,
   };
 }

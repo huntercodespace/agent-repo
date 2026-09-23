@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
@@ -13,6 +13,29 @@ if (process.env.ELECTRON_NO_SANDBOX === "1") {
 const sessions = new Map();
 
 const hostPromise = import("./rpc-host.mjs");
+const credentialsPromise = import("./credentials.mjs");
+
+function broadcast(channel, payload) {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.isDestroyed() || win.webContents.isDestroyed()) continue;
+    try {
+      win.webContents.send(channel, payload);
+    } catch {
+      // The frame can close between the destroyed check and send.
+    }
+  }
+}
+
+async function publishCredentials() {
+  const credentials = await credentialsPromise;
+  const providers = await credentials.getStatus();
+  const summary = credentials.summaryFrom(providers);
+  for (const session of sessions.values()) {
+    session.setCredentials?.(summary);
+  }
+  broadcast("credentials:status", { summary, providers });
+  return { summary, providers };
+}
 
 function windowFromEvent(event) {
   return BrowserWindow.fromWebContents(event.sender);
@@ -127,6 +150,86 @@ ipcMain.handle("rpc:prompt", async (event, message) => {
   const session = sessions.get(event.sender.id);
   if (!session) return { ok: false, code: "disconnected", message: "这个窗口没有 RPC 会话" };
   return session.prompt(message);
+});
+
+ipcMain.handle("credentials:listProviders", async () => {
+  const credentials = await credentialsPromise;
+  return credentials.listProviders();
+});
+
+ipcMain.handle("credentials:getStatus", async () => {
+  const credentials = await credentialsPromise;
+  return credentials.getStatus();
+});
+
+ipcMain.handle("credentials:saveApiKey", async (_event, payload) => {
+  const credentials = await credentialsPromise;
+  const result = await credentials.saveApiKey(payload?.providerId, payload?.apiKey);
+  if (result?.status !== "error") await publishCredentials();
+  return result;
+});
+
+ipcMain.handle("credentials:clear", async (_event, payload) => {
+  const credentials = await credentialsPromise;
+  const result = await credentials.clearCredential(payload?.providerId);
+  await publishCredentials();
+  return result;
+});
+
+ipcMain.handle("credentials:startOAuth", async (_event, payload) => {
+  const credentials = await credentialsPromise;
+  const result = await credentials.startOAuth(payload?.providerId);
+  if (result?.status !== "error") await publishCredentials();
+  return result;
+});
+
+ipcMain.handle("credentials:logoutOAuth", async (_event, payload) => {
+  const credentials = await credentialsPromise;
+  const result = await credentials.logoutOAuth(payload?.providerId);
+  await publishCredentials();
+  return result;
+});
+
+ipcMain.handle("credentials:detectEnv", async (_event, payload) => {
+  const credentials = await credentialsPromise;
+  const detected = await credentials.detectEnv(payload?.providerId);
+  await publishCredentials();
+  return detected;
+});
+
+ipcMain.handle("models:get", async () => {
+  const credentials = await credentialsPromise;
+  return credentials.getSelectedModel();
+});
+
+ipcMain.handle("models:set", async (event, payload) => {
+  const credentials = await credentialsPromise;
+  const saved = await credentials.setSelectedModel(payload?.providerId, payload?.modelId);
+  if (!saved.ok) return saved;
+  const session = sessions.get(event.sender.id);
+  let live = null;
+  if (session?.setModel) {
+    try {
+      live = await session.setModel(saved.providerId, saved.modelId);
+    } catch (error) {
+      live = {
+        ok: false,
+        message: error instanceof Error ? error.message : "模型切换失败",
+      };
+    }
+  }
+  broadcast("models:selected", {
+    providerId: saved.providerId,
+    modelId: saved.modelId,
+    name: saved.name,
+    live,
+  });
+  return { ...saved, live };
+});
+
+credentialsPromise.then((credentials) => {
+  credentials.setBrowserOpener((url) => shell.openExternal(url));
+  credentials.setOAuthEmitter((event) => broadcast("credentials:oauth-event", event));
 });
 
 let quitting = false;
