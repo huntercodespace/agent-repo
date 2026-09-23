@@ -162,10 +162,21 @@ ipcMain.handle("credentials:getStatus", async () => {
   return credentials.getStatus();
 });
 
-ipcMain.handle("credentials:saveApiKey", async (_event, payload) => {
+ipcMain.handle("credentials:saveApiKey", async (event, payload) => {
   const credentials = await credentialsPromise;
   const result = await credentials.saveApiKey(payload?.providerId, payload?.apiKey);
-  if (result?.status !== "error") await publishCredentials();
+  if (result?.status === "error") return result;
+  await publishCredentials();
+  const session = sessions.get(event.sender.id);
+  const applied = await credentials.afterApiKeySaved(result.providerId, session);
+  if (applied?.ok) {
+    broadcast("models:selected", {
+      providerId: applied.providerId,
+      modelId: applied.modelId,
+      name: applied.name,
+      live: applied.live,
+    });
+  }
   return result;
 });
 

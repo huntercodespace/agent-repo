@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { beginOAuth, clearProviderKey, endOAuth, modelChoiceLabel, saveProviderKey } from "../credentials/board";
+import { beginOAuth, clearProviderKey, endOAuth, saveProviderKey } from "../credentials/board";
 import type { OAuthEvent, ProviderInfo, ProviderStatus } from "../credentials/types";
 
 interface CredentialCardProps {
@@ -26,8 +26,7 @@ const toneClass = {
 };
 
 function subtitle(provider: ProviderInfo) {
-  const flash = provider.models.find((model) => model.id === "deepseek-flash");
-  if (flash) return `${modelChoiceLabel(provider.id, flash.id, flash.name)} · ${flash.id}`;
+  if (provider.id === "deepseek") return "DeepSeek Flash · deepseek-v4-flash";
   const names = provider.models.slice(0, 2).map((model) => model.name);
   if (names.length === 0) return provider.id;
   const extra = provider.models.length > 2 ? ` · +${provider.models.length - 2}` : "";

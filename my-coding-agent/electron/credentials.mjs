@@ -1,14 +1,19 @@
 /**
  * Thin main-process wrap over Pi AuthStorage.
  *
- * Writes go through ModelRuntime.login / logout, which persist with
- * AuthStorage (`~/.pi/agent/auth.json`, or PI_CODING_AGENT_DIR). The renderer
+ * API keys are written with AuthStorage.modify(providerId, fn) into
+ * ~/.pi/agent/auth.json (or PI_CODING_AGENT_DIR). The stored value is
+ * `{ "type": "api_key", "key": "..." }` under that provider id. The renderer
  * only ever receives a mask, a source, and a status.
  *
- * Provider ids and auth capabilities come from pi-ai's built-in registry
- * (ModelRuntime.getProviders → builtinProviders). Auth flow flags come from
- * each provider's auth.apiKey / auth.oauth login, not a hardcoded subset.
+ * Provider ids come from pi-ai via ModelRuntime.getProviders(). Model ids come
+ * from ModelRegistry.getAll() (the same pi-ai catalog). Auth flow flags come
+ * from each provider's auth.apiKey / auth.oauth login, not a hardcoded subset.
+ *
+ * DeepSeek is provider id `deepseek`. After that key is saved, the desktop
+ * host calls RPC set_model for `deepseek/deepseek-v4-flash`.
  */
+
 import { pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,10 +25,17 @@ const emptySummary = {
   providerId: null,
 };
 
+/** Locked Pi provider id. Not `deepseek-chat`. */
+export const DEEPSEEK_PROVIDER_ID = "deepseek";
+/** Locked built-in flash id: provider/model `deepseek/deepseek-v4-flash`. */
+export const DEEPSEEK_FLASH_MODEL_ID = "deepseek-v4-flash";
+
 let runtimePromise;
+let authStoragePromise;
 let findEnvKeysFn;
 let readStoredCredentialFn;
 let settingsManagerFn;
+let ModelRegistryCtor;
 let openExternal = async () => {};
 let emitOAuth = () => {};
 const flowCache = new Map();
@@ -73,6 +85,29 @@ async function getRuntime() {
     return ModelRuntime.create({ refreshOnCreate: false, allowModelNetwork: false });
   })();
   return runtimePromise;
+}
+
+/**
+ * AuthStorage is not on the package public export (only readStoredCredential is).
+ * modify(provider, fn) matches upstream: fn(current) returns the next credential,
+ * and the file becomes `{ [provider]: credential }`.
+ */
+async function authStorage() {
+  authStoragePromise ??= (async () => {
+    const href = pathToFileURL(join(packageRoot(), "dist/core/auth-storage.js")).href;
+    const mod = await import(href);
+    return mod.AuthStorage.create();
+  })();
+  return authStoragePromise;
+}
+
+async function modelRegistry() {
+  if (!ModelRegistryCtor) {
+    const coding = await import("@earendil-works/pi-coding-agent");
+    ModelRegistryCtor = coding.ModelRegistry;
+  }
+  const runtime = await getRuntime();
+  return new ModelRegistryCtor(runtime);
 }
 
 function maskSecret(value) {
@@ -146,22 +181,21 @@ async function classify(provider) {
   return flow;
 }
 
-function modelsOf(provider) {
-  let models = [];
-  try {
-    models = provider.getModels() ?? [];
-  } catch {
-    models = [];
-  }
-  return models
-    .filter((model) => model && typeof model.id === "string")
-    .map((model) => ({
+function modelsOf(models) {
+  const seen = new Set();
+  const rows = [];
+  for (const model of models ?? []) {
+    if (!model || typeof model.id !== "string" || seen.has(model.id)) continue;
+    seen.add(model.id);
+    rows.push({
       id: model.id,
       name: typeof model.name === "string" && model.name ? model.name : model.id,
-    }));
+    });
+  }
+  return rows;
 }
 
-function sealProvider(provider, flow, envVarNames) {
+function sealProvider(provider, flow, envVarNames, models) {
   return {
     id: provider.id,
     name: typeof provider.name === "string" && provider.name ? provider.name : provider.id,
@@ -171,7 +205,7 @@ function sealProvider(provider, flow, envVarNames) {
     oauthOnly: flow === "oauth",
     multiStep: flow === "multi-step",
     envVarNames,
-    models: modelsOf(provider),
+    models,
   };
 }
 
@@ -245,12 +279,24 @@ async function statusForProvider(runtime, findEnvKeys, provider, storedType) {
 }
 
 export async function listProviders() {
-  const [runtime, findEnvKeys] = await Promise.all([getRuntime(), piAiEnv()]);
-  const providers = runtime.getProviders();
+  const [runtime, findEnvKeys, registry] = await Promise.all([getRuntime(), piAiEnv(), modelRegistry()]);
+  const modelsByProvider = new Map();
+  for (const model of registry.getAll()) {
+    const providerId = model?.provider;
+    if (typeof providerId !== "string") continue;
+    const bucket = modelsByProvider.get(providerId);
+    if (bucket) bucket.push(model);
+    else modelsByProvider.set(providerId, [model]);
+  }
   const rows = [];
-  for (const provider of providers) {
+  for (const provider of runtime.getProviders()) {
     const flow = await classify(provider);
-    rows.push(sealProvider(provider, flow, knownEnvVarNames(findEnvKeys, provider.id)));
+    rows.push(sealProvider(
+      provider,
+      flow,
+      knownEnvVarNames(findEnvKeys, provider.id),
+      modelsOf(modelsByProvider.get(provider.id)),
+    ));
   }
   return rows;
 }
@@ -326,20 +372,22 @@ export async function saveApiKey(providerId, apiKey) {
           : "此服务商不能在此页保存 API Key";
       return failure(id, message);
     }
+    const storage = await authStorage();
     let wrote = false;
     try {
-      await runtime.login(id, "api_key", {
-        prompt: async () => key,
-        notify() {},
+      await storage.modify(id, async () => {
+        wrote = true;
+        return { type: "api_key", key };
       });
-      wrote = true;
       const check = await runtime.checkAuth(id);
-      if (!check) {
-        await runtime.logout(id).catch(() => {});
+      const listed = await runtime.listCredentials();
+      const storedType = listed.find((entry) => entry.providerId === id)?.type;
+      if (!check || storedType !== "api_key") {
+        if (wrote) await storage.delete(id).catch(() => {});
         return failure(id, "校验未通过，未保留本地保存");
       }
     } catch (error) {
-      if (wrote) await runtime.logout(id).catch(() => {});
+      if (wrote) await storage.delete(id).catch(() => {});
       return failure(id, `保存失败，请重试：${scrub(error instanceof Error ? error.message : error, key)}`);
     }
     const [findEnvKeys] = await Promise.all([piAiEnv()]);
@@ -495,8 +543,63 @@ export async function detectEnv(providerId) {
 }
 
 export function displayModelName(providerId, modelId, name) {
-  if (providerId === "deepseek" && modelId === "deepseek-flash") return "DeepSeek Flash";
+  if (providerId === DEEPSEEK_PROVIDER_ID && modelId === DEEPSEEK_FLASH_MODEL_ID) return "DeepSeek Flash";
   return name || modelId;
+}
+
+/** DeepSeek saves select the locked flash model. Other providers keep the current model. */
+export function modelAfterApiKeySave(providerId) {
+  if (providerId !== DEEPSEEK_PROVIDER_ID) return null;
+  return { providerId: DEEPSEEK_PROVIDER_ID, modelId: DEEPSEEK_FLASH_MODEL_ID };
+}
+
+export async function rememberSelectedModel(providerId, modelId) {
+  const id = requireProviderId(providerId);
+  if (typeof modelId !== "string" || !/^[A-Za-z0-9_.:/-]+$/.test(modelId)) {
+    return { ok: false, message: "未知模型" };
+  }
+  const SettingsManager = await settingsManager();
+  const settings = SettingsManager.create(process.cwd());
+  settings.setDefaultModelAndProvider(id, modelId);
+  await settings.flush();
+  const registry = await modelRegistry();
+  const model = registry.find(id, modelId);
+  return {
+    ok: true,
+    providerId: id,
+    modelId,
+    name: displayModelName(id, modelId, model?.name || modelId),
+    inRegistry: Boolean(model),
+  };
+}
+
+/**
+ * Persist the post-save model, then ask the live RPC session to set_model.
+ * `session.setModel` is RpcClient.setModel(provider, modelId) → `{ type: "set_model", provider, modelId }`.
+ */
+export async function afterApiKeySaved(providerId, session) {
+  const target = modelAfterApiKeySave(providerId);
+  if (!target) return null;
+  const saved = await rememberSelectedModel(target.providerId, target.modelId);
+  if (!saved.ok) return { ok: false, message: saved.message, live: null };
+  let live = { ok: false, code: "disconnected", message: "引擎未连接" };
+  if (session && typeof session.setModel === "function") {
+    try {
+      const result = await session.setModel(saved.providerId, saved.modelId);
+      live = result && typeof result === "object" ? result : { ok: true };
+      if (typeof live.message === "string") live = { ...live, message: scrub(live.message) };
+    } catch (error) {
+      live = { ok: false, message: scrub(error instanceof Error ? error.message : error) };
+    }
+  }
+  return {
+    ok: true,
+    providerId: saved.providerId,
+    modelId: saved.modelId,
+    name: saved.name,
+    inRegistry: saved.inRegistry,
+    live,
+  };
 }
 
 export async function getSelectedModel() {
@@ -505,9 +608,9 @@ export async function getSelectedModel() {
   const providerId = settings.getDefaultProvider() ?? null;
   const modelId = settings.getDefaultModel() ?? null;
   if (!providerId || !modelId) return { providerId: null, modelId: null, name: null };
-  const runtime = await getRuntime();
-  const model = runtime.getModel(providerId, modelId);
-  const name = model ? displayModelName(providerId, modelId, model.name) : displayModelName(providerId, modelId, modelId);
+  const registry = await modelRegistry();
+  const model = registry.find(providerId, modelId);
+  const name = displayModelName(providerId, modelId, model?.name || modelId);
   return { providerId, modelId, name };
 }
 
@@ -516,8 +619,8 @@ export async function setSelectedModel(providerId, modelId) {
   if (typeof modelId !== "string" || !/^[A-Za-z0-9_.:/-]+$/.test(modelId)) {
     return { ok: false, message: "未知模型" };
   }
-  const runtime = await getRuntime();
-  const model = runtime.getModel(id, modelId);
+  const registry = await modelRegistry();
+  const model = registry.find(id, modelId);
   if (!model) return { ok: false, message: "未知模型" };
   const SettingsManager = await settingsManager();
   const settings = SettingsManager.create(process.cwd());

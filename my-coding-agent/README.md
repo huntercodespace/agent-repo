@@ -103,7 +103,7 @@ Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the 
 
 ### Credentials
 
-Auth stays in the main process. The host wraps Pi `AuthStorage` (`~/.pi/agent/auth.json`). Saves call `ModelRuntime.login(providerId, "api_key", …)`, which prompts with the key you just typed and writes the credential through AuthStorage. `checkAuth` runs after that write. Clears and OAuth logout call `logout`, which deletes the stored credential. The renderer never receives the key.
+Auth stays in the main process. The host wraps Pi `AuthStorage` (`~/.pi/agent/auth.json`). An API-key save calls `AuthStorage.modify(providerId, fn)`, and `fn` returns `{ "type": "api_key", "key": "..." }`. The file is keyed by the pi-ai provider id, so DeepSeek is `auth.json` → `deepseek`. `checkAuth` runs after that write. Clears and OAuth logout call `logout`, which deletes the stored credential. OAuth login still goes through `ModelRuntime.login`, which persists with the same `modify` path. The renderer never receives the key.
 
 IPC:
 
@@ -118,22 +118,28 @@ IPC:
 
 There is no `retrySave`. A failed save leaves the key in the password field; saving again calls `saveApiKey`.
 
-Provider ids and auth flags come from pi-ai’s built-in registry (`ModelRuntime.getProviders()`, fed by `builtinProviders()` in `@earendil-works/pi-ai/providers/all`). Each provider’s `auth.apiKey.login` / `auth.oauth.login` decides the flags: single-secret API key, OAuth, both, or `authFlow: "multi-step"`. `openai-codex` is OAuth-only. Amazon Bedrock, Google Vertex, and the Cloudflare providers are multi-step and stay disabled on this page. OAuth is offered for every provider whose auth object has an OAuth login (Anthropic, OpenAI Codex, GitHub Copilot, OpenRouter, xAI, Kimi, Radius, Meta, and any later registry entry).
+Provider ids and auth flags come from pi-ai’s built-in registry (`ModelRuntime.getProviders()`, fed by `builtinProviders()`). Model ids come from `ModelRegistry.getAll()` over that same runtime. Nothing on this page is a hand-copied vendor list. Each provider’s `auth.apiKey.login` / `auth.oauth.login` decides the flags: single-secret API key, OAuth, both, or `authFlow: "multi-step"`. `openai-codex` is OAuth-only. Amazon Bedrock, Google Vertex, and the Cloudflare providers are multi-step and stay disabled on this page. OAuth is offered for every provider whose auth object has an OAuth login (Anthropic, OpenAI Codex, GitHub Copilot, OpenRouter, xAI, Kimi, Radius, Meta, and any later registry entry). Every single-secret provider is saved with the same `AuthStorage.modify(providerId, …)` call.
 
 A stored API key is masked to `••••` plus the last four characters (shorter values stay `••••`). OAuth is `oauth ••••`. An environment key is reported by variable name only, for example `DEEPSEEK_API_KEY`. If nothing is configured, the composer links to `#/credentials` and does not call `prompt`. After a successful save the main process pushes `credentials:status`, and the workspace gate clears without restarting the window.
 
 #### DeepSeek Flash
 
-DeepSeek is provider id `deepseek`. The flash model in the pi-ai catalog is `deepseek-flash` (catalog name “DeepSeek V4.1 Flash”). The model row labels it **DeepSeek Flash**.
+DeepSeek is provider id `deepseek` (not `deepseek-chat`). The built-in flash model id is `deepseek-v4-flash`, so the provider/model pair is `deepseek/deepseek-v4-flash`. The model row labels it **DeepSeek Flash**.
 
 In the desktop window:
 
 1. Open `#/credentials`.
 2. Find **DeepSeek** (search “DeepSeek”).
-3. Paste the API key and choose **保存密钥**. The card switches to 来自本地 and shows only the mask. The key is in `~/.pi/agent/auth.json`, not in `settings.json` and not in the IPC result.
-4. Open the workspace model chip or **设置 → 默认主模型** and choose **DeepSeek Flash**. That writes `defaultProvider: "deepseek"` and `defaultModel: "deepseek-flash"` via Pi `SettingsManager`.
+3. Paste the API key and choose **保存密钥**. The card switches to 来自本地 and shows only the mask. The key is in `~/.pi/agent/auth.json` as `{ "deepseek": { "type": "api_key", "key": "sk-..." } }`, not in `settings.json` and not in the IPC result.
+4. That save also calls RPC `set_model` with `{ type: "set_model", provider: "deepseek", modelId: "deepseek-v4-flash" }` on the window’s `RpcClient`, and writes `defaultProvider` / `defaultModel` through Pi `SettingsManager`. The workspace chip follows that selection. It does not stop at React state.
 
-Env keys still work. `重新检测 ENV` calls `detectEnv` → `findEnvKeys` and reports the variable name only:
+`AuthStorage` is not exported from the package index. This app imports `AuthStorage` from `dist/core/auth-storage.js`. `modify(provider, fn)` matches current upstream: `fn` receives the current credential and returns the next one (`undefined` leaves the file unchanged). The on-disk object is `{ [providerId]: credential }`.
+
+`RpcClient.setModel(provider, modelId)` sends `{ type: "set_model", provider, modelId }`. The RPC handler in `@earendil-works/pi-coding-agent@0.87.0` looks the model up with `modelRuntime.getAvailableSnapshot()`, then calls `session.setModel(model)`. That command shape matches the locked call.
+
+Published `@earendil-works/pi-ai@0.87.1` (the copy nested in `pi-coding-agent@0.87.0`) still catalogs this flash model as `deepseek-flash` (“DeepSeek V4.1 Flash”) plus `deepseek-v4-pro`. Upstream `earendil-works/pi` main and the locked id use `deepseek-v4-flash`. This app still sends `set_model` for `deepseek/deepseek-v4-flash`. Against the bundled 0.87 CLI that returns `Model not found: deepseek/deepseek-v4-flash` until the published catalog includes that id. The model picker continues to list whatever `ModelRegistry.getAll()` returns, and does not invent a second vendor table.
+
+Env keys still work. `重新检测 ENV` calls `detectEnv` → `findEnvKeys` and reports the variable name only. DeepSeek’s variable is `DEEPSEEK_API_KEY`:
 
 ```bash
 DEEPSEEK_API_KEY=sk-... npm run dev

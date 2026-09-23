@@ -16,13 +16,23 @@ const credentials = await import("../electron/credentials.mjs");
 
 try {
   const providers = await credentials.listProviders();
+  assert.ok(providers.length > 6, "provider list should be the pi-ai registry, not a six-card mock");
   const deepseek = providers.find((provider) => provider.id === "deepseek");
   assert.ok(deepseek, "deepseek missing from pi-ai registry");
+  assert.equal(deepseek.id, "deepseek");
+  assert.equal(providers.some((provider) => provider.id === "deepseek-chat"), false);
   assert.equal(deepseek.apiKey, true);
   assert.equal(deepseek.oauth, false);
   assert.equal(deepseek.multiStep, false);
-  assert.ok(deepseek.models.some((model) => model.id === "deepseek-flash"));
-  assert.equal(credentials.displayModelName("deepseek", "deepseek-flash", "DeepSeek V4.1 Flash"), "DeepSeek Flash");
+  assert.ok(deepseek.models.length > 0, "deepseek models should come from ModelRegistry");
+  assert.equal(credentials.DEEPSEEK_PROVIDER_ID, "deepseek");
+  assert.equal(credentials.DEEPSEEK_FLASH_MODEL_ID, "deepseek-v4-flash");
+  assert.deepEqual(credentials.modelAfterApiKeySave("deepseek"), {
+    providerId: "deepseek",
+    modelId: "deepseek-v4-flash",
+  });
+  assert.equal(credentials.modelAfterApiKeySave("anthropic"), null);
+  assert.equal(credentials.displayModelName("deepseek", "deepseek-v4-flash", "DeepSeek V4 Flash"), "DeepSeek Flash");
 
   const codex = providers.find((provider) => provider.id === "openai-codex");
   assert.equal(codex?.oauthOnly, true);
@@ -49,18 +59,43 @@ try {
   assert.equal(savedJson.includes("99zz"), true);
 
   const authFile = readFileSync(join(dir, "auth.json"), "utf8");
+  const auth = JSON.parse(authFile);
+  assert.deepEqual(auth.deepseek, { type: "api_key", key: secret });
   assert.equal(authFile.includes(secret), true);
-  assert.equal(authFile.includes("deepseek"), true);
 
-  const selected = await credentials.setSelectedModel("deepseek", "deepseek-flash");
-  assert.equal(selected.ok, true);
-  assert.equal(selected.name, "DeepSeek Flash");
+  const other = providers.find((provider) => provider.apiKey && provider.id !== "deepseek");
+  assert.ok(other, "expected another single-secret provider from the registry");
+  const otherSecret = "sk-other-vendor-demo-key-11aa";
+  const savedOther = await credentials.saveApiKey(other.id, otherSecret);
+  assert.equal(savedOther.status, "stored");
+  assert.equal(JSON.stringify(savedOther).includes(otherSecret), false);
+  const both = JSON.parse(readFileSync(join(dir, "auth.json"), "utf8"));
+  assert.deepEqual(both[other.id], { type: "api_key", key: otherSecret });
+  assert.deepEqual(both.deepseek, { type: "api_key", key: secret });
+  const clearedOther = await credentials.clearCredential(other.id);
+  assert.equal(clearedOther.status === "unconfigured" || clearedOther.status === "environment", true);
+  assert.equal(readFileSync(join(dir, "auth.json"), "utf8").includes(otherSecret), false);
+
+  const calls = [];
+  const applied = await credentials.afterApiKeySaved("deepseek", {
+    async setModel(provider, modelId) {
+      calls.push({ type: "set_model", provider, modelId });
+      return { ok: true, provider, id: modelId, label: `${provider}/${modelId}` };
+    },
+  });
+  assert.deepEqual(calls, [{ type: "set_model", provider: "deepseek", modelId: "deepseek-v4-flash" }]);
+  assert.equal(applied.ok, true);
+  assert.equal(applied.name, "DeepSeek Flash");
+  assert.equal(applied.providerId, "deepseek");
+  assert.equal(applied.modelId, "deepseek-v4-flash");
+  assert.equal(JSON.stringify(applied).includes(secret), false);
   const settingsFile = readFileSync(join(dir, "settings.json"), "utf8");
-  assert.equal(settingsFile.includes("deepseek-flash"), true);
+  assert.equal(settingsFile.includes("deepseek-v4-flash"), true);
   assert.equal(settingsFile.includes(secret), false);
   const current = await credentials.getSelectedModel();
-  assert.equal(current.modelId, "deepseek-flash");
+  assert.equal(current.modelId, "deepseek-v4-flash");
   assert.equal(current.providerId, "deepseek");
+  assert.equal(current.name, "DeepSeek Flash");
 
   const summary = credentials.summaryFrom(await credentials.getStatus());
   assert.equal(summary.configured, true);

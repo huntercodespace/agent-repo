@@ -100,7 +100,7 @@ export function CredentialsPage() {
                 </span>
               </div>
               <p className="text-pi-muted text-xs mt-1.5 leading-relaxed max-w-2xl">
-                服务商来自 Pi 的 ModelRuntime / pi-ai builtinProviders，不是写死的六张卡片。密钥经主进程写入 AuthStorage。DeepSeek Flash 的模型 id 是 deepseek-flash，保存 DeepSeek API Key 后可在工作区和设置里选中它。
+                服务商和模型来自 Pi 的 ModelRegistry / pi-ai，不是写死的厂商表。密钥经主进程 AuthStorage.modify 写入。DeepSeek 的 provider id 是 deepseek，Flash 是 deepseek-v4-flash。保存 DeepSeek API Key 后会调用 RPC set_model。
               </p>
             </div>
             <button
@@ -143,6 +143,7 @@ export function CredentialsPage() {
             onChange={(event) => setQuery(event.target.value)}
           />
           {detectNote ? <p className="text-[11px] font-mono text-pi-muted">{detectNote}</p> : null}
+          {board.modelNote ? <p className="text-[11px] font-mono text-amber-300">{board.modelNote}</p> : null}
           {board.loadError ? <p className="text-[11px] text-rose-300">{board.loadError}</p> : null}
           {!board.loaded ? <p className="text-xs text-pi-muted">正在读取 pi-ai 服务商…</p> : null}
           {board.loaded && !board.available ? (
