@@ -87,9 +87,7 @@ export function WorkspacePage() {
           modelLabel={live ? rpc.status.modelLabel : null}
           busy={live && (rpc.status.engine === "chatting" || rpc.status.engine === "reconnecting")}
           guide={guide}
-          onSend={(text) => {
-            void rpc.sendPrompt(text);
-          }}
+          onSend={(text) => rpc.sendPrompt(text)}
         />
       </section>
       <Inspector />

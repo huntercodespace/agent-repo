@@ -77,6 +77,8 @@ On Linux containers where Chromium’s sandbox cannot start, launch with:
 ELECTRON_NO_SANDBOX=1 npm run dev
 ```
 
+That flag also turns off the renderer sandbox so the preload bridge can load. A normal desktop launch keeps the renderer sandboxed.
+
 ## RPC engine
 
 Each window’s main process owns one session, keyed by `webContentsId`. Opening the window spawns pi, calls `get_state`, and drives the workspace status-bar engine chip (`空闲 · 已连接`, `对话中`, `重连中`, `已断开`). Sending from the workspace composer calls `prompt` and streams `message_*`, `tool_execution_*`, and `agent_end` into the session. Closing the window ends that RPC session and kills that child. The `#/engine` page stays a visual spec; its chips are not the live session.

@@ -278,7 +278,11 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   }
 
   function publish() {
-    send("rpc:status", snapshot());
+    try {
+      send("rpc:status", snapshot());
+    } catch {
+      // IPC can throw if the frame was disposed between the destroyed check and send.
+    }
   }
 
   function handleEvent(event) {
@@ -296,7 +300,12 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
       publish();
     }
     const wire = toWireEvent(event);
-    if (wire) send("rpc:event", wire);
+    if (!wire) return;
+    try {
+      send("rpc:event", wire);
+    } catch {
+      // Same as publish: a disposed frame must not fail the RPC session.
+    }
   }
 
   function scheduleRestart() {

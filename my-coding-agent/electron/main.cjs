@@ -33,7 +33,10 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      // Chromium’s sandbox cannot start in some Linux containers. The same
+      // ELECTRON_NO_SANDBOX=1 switch documented for the browser process also
+      // has to turn off the renderer sandbox or the preload bridge never loads.
+      sandbox: process.env.ELECTRON_NO_SANDBOX !== "1",
     },
   });
 
@@ -80,8 +83,12 @@ function createWindow() {
         cwd: project.cwd,
         cwdWarning: project.warning,
         send(channel, payload) {
-          if (win.isDestroyed() || win.webContents.isDestroyed()) return;
-          win.webContents.send(channel, payload);
+          try {
+            if (win.isDestroyed() || win.webContents.isDestroyed()) return;
+            win.webContents.send(channel, payload);
+          } catch {
+            // The first frame can be disposed while Chromium is still starting.
+          }
         },
       });
       sessions.set(webContentsId, session);
