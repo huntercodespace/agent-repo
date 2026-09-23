@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Composer } from "../components/Composer";
 import { Icon } from "../components/Icon";
-import { Inspector } from "../components/Inspector";
 import { LiveTranscript } from "../components/LiveTranscript";
 import { useRpc } from "../rpc/RpcProvider";
 
@@ -55,7 +54,6 @@ export function WorkspacePage() {
           onSend={(text) => rpc.sendPrompt(text)}
         />
       </section>
-      <Inspector />
     </main>
   );
 }
