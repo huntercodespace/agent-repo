@@ -85,7 +85,7 @@ export function WorkspacePage() {
         </div>
         <Composer
           modelLabel={live ? rpc.status.modelLabel : null}
-          busy={live && (rpc.status.engine === "chatting" || rpc.status.engine === "reconnecting")}
+          busy={live && rpc.status.engine === "reconnecting"}
           guide={guide}
           onSend={(text) => rpc.sendPrompt(text)}
         />

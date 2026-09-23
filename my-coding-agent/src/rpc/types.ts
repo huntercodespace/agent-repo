@@ -35,7 +35,8 @@ export interface PromptResult {
 export interface RpcWireEvent {
   type: string;
   role?: string | null;
-  text?: string;
+  /** Present only for `text_delta`. Blocks are joined in this order. */
+  contentIndex?: number;
   deltaKind?: string | null;
   delta?: string;
   toolName?: string | null;
@@ -48,7 +49,14 @@ export interface RpcWireEvent {
 
 export type TranscriptBlock =
   | { id: string; kind: "user"; text: string }
-  | { id: string; kind: "assistant"; text: string; thinking: string; pending: boolean }
+  | {
+      id: string;
+      kind: "assistant";
+      text: string;
+      /** `text_delta` chunks keyed by `contentIndex`. `text` is the joined display string. */
+      parts: Record<number, string>;
+      pending: boolean;
+    }
   | {
       id: string;
       kind: "tool";

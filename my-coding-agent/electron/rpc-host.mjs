@@ -183,26 +183,31 @@ function previewJson(value) {
   }
 }
 
+function contentIndexOf(value) {
+  return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
 export function toWireEvent(event) {
   if (!event || typeof event !== "object" || typeof event.type !== "string") return null;
   const type = event.type;
   if (type === "message_start" || type === "message_end") {
     const message = event.message && typeof event.message === "object" ? event.message : {};
+    // Role only. The current protocol has no cumulative message text on these events.
     return {
       type,
       role: typeof message.role === "string" ? message.role : null,
-      text: clip(textFromContent(message.content)),
     };
   }
   if (type === "message_update") {
     const inner = event.assistantMessageEvent && typeof event.assistantMessageEvent === "object"
       ? event.assistantMessageEvent
       : {};
+    if (inner.type !== "text_delta") return null;
     return {
       type,
-      deltaKind: typeof inner.type === "string" ? inner.type : null,
+      deltaKind: "text_delta",
+      contentIndex: contentIndexOf(inner.contentIndex),
       delta: clip(typeof inner.delta === "string" ? inner.delta : "", 2000),
-      toolName: typeof inner.toolName === "string" ? inner.toolName : null,
     };
   }
   if (type === "tool_execution_start" || type === "tool_execution_update" || type === "tool_execution_end") {
@@ -220,7 +225,18 @@ export function toWireEvent(event) {
   if (type === "agent_end") {
     return { type, willRetry: Boolean(event.willRetry) };
   }
-  if (type === "agent_start" || type === "agent_settled") return { type };
+  if (
+    type === "agent_start" ||
+    type === "agent_settled" ||
+    type === "turn_start" ||
+    type === "turn_end" ||
+    type === "auto_retry_start" ||
+    type === "auto_retry_end" ||
+    type === "compaction_start" ||
+    type === "compaction_end"
+  ) {
+    return { type };
+  }
   return null;
 }
 
@@ -250,6 +266,22 @@ export function disconnectedSnapshot(webContentsId, cwd = process.cwd()) {
   };
 }
 
+const CHATTING_EVENTS = new Set([
+  "agent_start",
+  "turn_start",
+  "auto_retry_start",
+  "compaction_start",
+]);
+
+const IDLE_CHECK_EVENTS = new Set([
+  "turn_end",
+  "agent_settled",
+  "auto_retry_end",
+  "compaction_end",
+]);
+
+const STREAM_POLL_MS = 1000;
+
 export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   let client = null;
   let generation = 0;
@@ -257,7 +289,12 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   let ready = false;
   let restarts = 0;
   let restartTimer = null;
+  let pollTimer = null;
+  let stateCheck = null;
+  let stateCheckQueued = false;
+  let queuedAllowIdle = false;
   let startPromise = null;
+  let promptBusy = false;
   let engine = "reconnecting";
   let pid = null;
   let modelLabel = null;
@@ -285,19 +322,86 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
     }
   }
 
-  function handleEvent(event) {
-    if (event?.type === "agent_start") {
-      engine = "chatting";
-      detail = null;
+  function stopPoll() {
+    if (!pollTimer) return;
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  function ensurePoll() {
+    if (pollTimer || stopping) return;
+    pollTimer = setInterval(() => {
+      void syncStreaming({ allowIdle: true });
+    }, STREAM_POLL_MS);
+    if (typeof pollTimer.unref === "function") pollTimer.unref();
+  }
+
+  function applyStreamingState(state, allowIdle) {
+    const streaming = Boolean(state?.isStreaming);
+    const label = modelLabelFrom(state);
+    if (label) modelLabel = label;
+    if (streaming) {
+      if (engine !== "disconnected") engine = "chatting";
+      ensurePoll();
       publish();
-    } else if (event?.type === "auto_retry_start") {
-      engine = "chatting";
-      detail = "正在重试模型请求";
-      publish();
-    } else if (event?.type === "agent_settled") {
+      return;
+    }
+    if (allowIdle && engine === "chatting") {
       engine = "idle";
-      detail = null;
+      promptBusy = false;
+      if (detail === "正在重试模型请求") detail = null;
+      stopPoll();
       publish();
+    }
+  }
+
+  /**
+   * Idle comes from `get_state.isStreaming === false`, not from `agent_end`.
+   * `allowIdle` is false immediately after a prompt ack: streaming may not have flipped yet.
+   */
+  function syncStreaming({ allowIdle = true } = {}) {
+    if (stopping || !client || !ready) return Promise.resolve();
+    if (stateCheck) {
+      stateCheckQueued = true;
+      queuedAllowIdle = queuedAllowIdle || allowIdle;
+      return stateCheck;
+    }
+    const gen = generation;
+    const current = client;
+    const permitIdle = allowIdle;
+    stateCheck = (async () => {
+      try {
+        const state = await current.getState();
+        if (gen !== generation || stopping || client !== current) return;
+        applyStreamingState(state, permitIdle);
+      } catch {
+        // The next poll or boundary retries the check.
+      } finally {
+        stateCheck = null;
+        if (stateCheckQueued && !stopping) {
+          const nextAllow = queuedAllowIdle;
+          stateCheckQueued = false;
+          queuedAllowIdle = false;
+          void syncStreaming({ allowIdle: nextAllow });
+        }
+      }
+    })();
+    return stateCheck;
+  }
+
+  function markChatting(nextDetail) {
+    engine = "chatting";
+    if (nextDetail !== undefined) detail = nextDetail;
+    ensurePoll();
+    publish();
+  }
+
+  function handleEvent(event) {
+    const type = event?.type;
+    if (CHATTING_EVENTS.has(type)) {
+      markChatting(type === "auto_retry_start" ? "正在重试模型请求" : type === "agent_start" ? null : undefined);
+    } else if (IDLE_CHECK_EVENTS.has(type)) {
+      void syncStreaming({ allowIdle: true });
     }
     const wire = toWireEvent(event);
     if (!wire) return;
@@ -309,6 +413,8 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   }
 
   function scheduleRestart() {
+    stopPoll();
+    promptBusy = false;
     if (stopping) return;
     if (restarts >= 1) {
       engine = "disconnected";
@@ -330,6 +436,8 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
 
   async function runStart() {
     const gen = ++generation;
+    stopPoll();
+    promptBusy = false;
     engine = "reconnecting";
     ready = false;
     pid = null;
@@ -363,6 +471,7 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
     const rpc = new RpcClient({
       cliPath,
       cwd,
+      // History is not persisted in this slice. Recoverable sessions require dropping --no-session.
       args: ["--no-session"],
       env: {
         ...process.env,
@@ -434,6 +543,10 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
   async function stop() {
     stopping = true;
     generation += 1;
+    stopPoll();
+    promptBusy = false;
+    stateCheckQueued = false;
+    queuedAllowIdle = false;
     if (restartTimer) {
       clearTimeout(restartTimer);
       restartTimer = null;
@@ -452,20 +565,47 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
     if (typeof message !== "string" || message.trim() === "") {
       return { ok: false, code: "empty" };
     }
-    credentials = await readCredentialStatus();
-    publish();
-    if (!credentials.configured) {
-      return { ok: false, code: "credentials", href: "#/credentials" };
-    }
-    if (!client || !ready) {
-      return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
-    }
+    // Set before any await so a second send during this call is a steer, not another plain prompt.
+    const steer = engine === "chatting" || promptBusy;
+    promptBusy = true;
     const gen = generation;
-    engine = "chatting";
-    detail = null;
-    publish();
     try {
-      await client.prompt(message.trim());
+      credentials = await readCredentialStatus();
+      publish();
+      if (!credentials.configured) {
+        return { ok: false, code: "credentials", href: "#/credentials" };
+      }
+      if (!client || !ready || gen !== generation || stopping) {
+        return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
+      }
+      const trimmed = message.trim();
+      let streaming = steer;
+      if (!steer) {
+        try {
+          const state = await client.getState();
+          if (gen !== generation || stopping || !client) {
+            return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
+          }
+          streaming = Boolean(state?.isStreaming);
+          const label = modelLabelFrom(state);
+          if (label) modelLabel = label;
+        } catch {
+          streaming = engine === "chatting";
+        }
+      }
+      if (!client || gen !== generation) {
+        return { ok: false, code: "disconnected", message: detail || "引擎未连接" };
+      }
+      // Steer is the mid-turn nudge. A plain prompt is rejected while isStreaming.
+      markChatting(streaming ? undefined : null);
+      const command = streaming
+        ? { type: "prompt", message: trimmed, streamingBehavior: "steer" }
+        : { type: "prompt", message: trimmed };
+      const response = await client.send(command);
+      if (!response?.success) {
+        throw new Error(typeof response?.error === "string" ? response.error : "prompt failed");
+      }
+      void syncStreaming({ allowIdle: false });
       return { ok: true };
     } catch (error) {
       const messageText = scrubSecrets(error instanceof Error ? error.message : String(error)).slice(0, 240);
@@ -473,11 +613,13 @@ export function createWindowSession({ webContentsId, cwd, cwdWarning, send }) {
         return { ok: false, code: "credentials", href: "#/credentials", message: messageText };
       }
       if (client && gen === generation) {
-        engine = "idle";
         detail = messageText;
         publish();
+        void syncStreaming({ allowIdle: true });
       }
       return { ok: false, code: client ? "error" : "disconnected", message: messageText };
+    } finally {
+      if (engine !== "chatting") promptBusy = false;
     }
   }
 

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { EMPTY_CREDENTIALS, type EngineSnapshot, type PromptResult, type RpcStatus, type TranscriptBlock } from "./types";
-import { appendUserBlock, applyRpcEvent } from "./transcript";
+import { appendUserBlock, applyRpcEvent, settleTranscript } from "./transcript";
 
 interface RpcContextValue {
   status: RpcStatus;
@@ -38,6 +38,11 @@ export function RpcProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [blocks, setBlocks] = useState<TranscriptBlock[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status.engine !== "idle") return;
+    setBlocks((current) => settleTranscript(current));
+  }, [status.engine]);
 
   useEffect(() => {
     const desktop = window.piDesktop;

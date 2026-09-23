@@ -17,16 +17,6 @@ function AssistantBlock({ block }: { block: Extract<TranscriptBlock, { kind: "as
             </span>
           ) : null}
         </div>
-        {block.thinking ? (
-          <details className="rounded-xl bg-surface-container-low shadow-sm">
-            <summary className="cursor-pointer list-none px-space-md py-space-sm font-label-sm text-label-sm text-on-surface-variant">
-              思考过程
-            </summary>
-            <p className="select-text whitespace-pre-wrap px-space-md pb-space-md font-code-sm text-code-sm text-on-surface/90">
-              {block.thinking}
-            </p>
-          </details>
-        ) : null}
         <div className="select-text whitespace-pre-wrap font-body-md text-body-md leading-relaxed text-on-surface">
           {block.text || (block.pending ? "…" : "")}
         </div>

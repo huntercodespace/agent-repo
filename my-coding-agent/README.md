@@ -81,7 +81,13 @@ That flag also turns off the renderer sandbox so the preload bridge can load. A 
 
 ## RPC engine
 
-Each window’s main process owns one session, keyed by `webContentsId`. Opening the window spawns pi, calls `get_state`, and drives the workspace status-bar engine chip (`空闲 · 已连接`, `对话中`, `重连中`, `已断开`). Sending from the workspace composer calls `prompt` and streams `message_*`, `tool_execution_*`, and `agent_end` into the session. Closing the window ends that RPC session and kills that child. The `#/engine` page stays a visual spec; its chips are not the live session.
+Each window’s main process owns one session, keyed by `webContentsId`. Opening the window spawns pi, calls `get_state`, and drives the workspace status-bar engine chip (`空闲 · 已连接`, `对话中`, `重连中`, `已断开`). Sending from the workspace composer calls `prompt` and streams assistant text, tool events, and turn boundaries into the session. Closing the window ends that RPC session and kills that child. The `#/engine` page stays a visual spec; its chips are not the live session.
+
+Assistant text is assembled only from `message_update` events whose `assistantMessageEvent.type` is `text_delta`. Chunks are stored by `contentIndex` and joined in index order. The new protocol has no cumulative `message` snapshot on `message_update`, and this shell does not read one from `message_start` or `message_end` either.
+
+The chip stays on `对话中` across `agent_end`. A retry or compaction can follow that event. It returns to idle when `turn_end` (or `agent_settled`) is followed by `get_state.isStreaming === false`, and a one-second poll repeats that check while a turn is open.
+
+Sending again while a turn is in flight calls `prompt` with `streamingBehavior: "steer"`. Steer is the mid-turn nudge: pi delivers it after the current assistant turn’s tool calls and before the next model request. A plain `prompt` (no `streamingBehavior`) is only used when `get_state` says the session is not streaming; without the field, a second `prompt` fails. The composer stays enabled during `对话中` so that nudge can be sent. It is disabled only while the engine is reconnecting.
 
 The client is the official `RpcClient` from `@earendil-works/pi-coding-agent`. It spawns `node <pi> --mode rpc` and splits stdout on `\n` only. That is the same entry as the package `pi` bin. This code does not use Node `readline` to frame JSONL.
 
@@ -93,7 +99,7 @@ pi resolution, in order:
 
 `RpcClient` always launches that file with `node`, so a standalone bun binary is not a valid `PI_CLI` here. Packaging a build-binaries `pi` into `extraResources` is a later step.
 
-Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the process cwd (`npm run dev` from `my-coding-agent` uses that folder). The child is started with `--no-session`.
+Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the process cwd (`npm run dev` from `my-coding-agent` uses that folder). The child is started with `--no-session`, so this slice does not persist history. Recoverable sessions require dropping that flag later so pi writes a session file.
 
 ### Credentials
 

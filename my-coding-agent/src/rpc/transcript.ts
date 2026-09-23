@@ -18,17 +18,40 @@ function lastPendingAssistant(blocks: TranscriptBlock[]) {
   return -1;
 }
 
-function ensureAssistant(blocks: TranscriptBlock[]) {
-  const index = lastPendingAssistant(blocks);
-  if (index !== -1) return { blocks, index };
+function joinedText(parts: Record<number, string>) {
+  return Object.keys(parts)
+    .map((key) => Number(key))
+    .filter((index) => Number.isInteger(index))
+    .sort((a, b) => a - b)
+    .map((index) => parts[index] ?? "")
+    .join("");
+}
+
+function contentIndexOf(event: RpcWireEvent) {
+  const index = event.contentIndex;
+  if (typeof index === "number" && Number.isInteger(index) && index >= 0) return index;
+  return 0;
+}
+
+function openAssistant(blocks: TranscriptBlock[]) {
   const next = blocks.concat({
     id: nextId(blocks, "assistant"),
     kind: "assistant",
     text: "",
-    thinking: "",
+    parts: {},
     pending: true,
   });
   return { blocks: next, index: next.length - 1 };
+}
+
+/** `fresh` starts a new bubble when the current pending assistant already has text. */
+function ensureAssistant(blocks: TranscriptBlock[], fresh: boolean) {
+  const index = lastPendingAssistant(blocks);
+  if (index === -1) return openAssistant(blocks);
+  const current = blocks[index];
+  if (current.kind !== "assistant") return openAssistant(blocks);
+  if (fresh && current.text !== "") return openAssistant(blocks);
+  return { blocks, index };
 }
 
 function findTool(blocks: TranscriptBlock[], toolCallId: string) {
@@ -40,33 +63,32 @@ function findTool(blocks: TranscriptBlock[], toolCallId: string) {
   return -1;
 }
 
-function settle(blocks: TranscriptBlock[]) {
+/** Clear pending flags once the engine is idle. `agent_end` must not do this. */
+export function settleTranscript(blocks: TranscriptBlock[]) {
   return blocks.map((block) => (block.kind === "user" || !block.pending ? block : { ...block, pending: false }));
 }
 
-/** Fold pi RPC stdout events into chat blocks. User echoes are ignored; the composer owns that bubble. */
+/**
+ * Fold pi RPC events into chat blocks.
+ * Assistant text comes only from `text_delta`, joined by `contentIndex`.
+ * User echoes are ignored; the composer owns that bubble.
+ */
 export function applyRpcEvent(blocks: TranscriptBlock[], event: RpcWireEvent): TranscriptBlock[] {
-  if (event.type === "message_start" || event.type === "message_end") {
+  if (event.type === "message_start") {
     if (event.role && event.role !== "assistant") return blocks;
-    const ensured = ensureAssistant(blocks);
-    const current = ensured.blocks[ensured.index];
-    if (current.kind !== "assistant") return blocks;
-    if (event.type === "message_end" && event.text) {
-      return patch(ensured.blocks, ensured.index, { ...current, text: event.text });
-    }
-    return ensured.blocks;
+    return ensureAssistant(blocks, true).blocks;
   }
 
+  if (event.type === "message_end") return blocks;
+
   if (event.type === "message_update") {
-    if (event.deltaKind !== "text_delta" && event.deltaKind !== "thinking_delta") return blocks;
-    if (!event.delta) return blocks;
-    const ensured = ensureAssistant(blocks);
+    if (event.deltaKind !== "text_delta" || !event.delta) return blocks;
+    const ensured = ensureAssistant(blocks, false);
     const current = ensured.blocks[ensured.index];
     if (current.kind !== "assistant") return blocks;
-    if (event.deltaKind === "thinking_delta") {
-      return patch(ensured.blocks, ensured.index, { ...current, thinking: current.thinking + event.delta });
-    }
-    return patch(ensured.blocks, ensured.index, { ...current, text: current.text + event.delta });
+    const index = contentIndexOf(event);
+    const parts = { ...current.parts, [index]: `${current.parts[index] ?? ""}${event.delta}` };
+    return patch(ensured.blocks, ensured.index, { ...current, parts, text: joinedText(parts) });
   }
 
   if (event.type === "tool_execution_start") {
@@ -96,8 +118,6 @@ export function applyRpcEvent(blocks: TranscriptBlock[], event: RpcWireEvent): T
     });
   }
 
-  if (event.type === "agent_end" && !event.willRetry) return settle(blocks);
-  if (event.type === "agent_settled") return settle(blocks);
   return blocks;
 }
 
