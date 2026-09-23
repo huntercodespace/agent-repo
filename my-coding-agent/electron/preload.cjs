@@ -4,6 +4,14 @@ contextBridge.exposeInMainWorld("piDesktop", {
   minimize: () => ipcRenderer.send("window:minimize"),
   toggleMaximize: () => ipcRenderer.send("window:toggle-maximize"),
   close: () => ipcRenderer.send("window:close"),
+  startTerminal: () => ipcRenderer.invoke("terminal:start"),
+  writeTerminal: (command) => ipcRenderer.invoke("terminal:write", command),
+  stopTerminal: () => ipcRenderer.invoke("terminal:stop"),
+  onTerminalEvent: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("terminal:event", listener);
+    return () => ipcRenderer.removeListener("terminal:event", listener);
+  },
   getEngineStatus: () => ipcRenderer.invoke("rpc:get-status"),
   sendPrompt: (message) => ipcRenderer.invoke("rpc:prompt", message),
   listSessions: () => ipcRenderer.invoke("rpc:list-sessions"),

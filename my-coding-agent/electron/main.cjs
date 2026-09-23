@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { createWorkspaceStore } = require("./workspace-store.cjs");
 const gitService = require("./git-service.cjs");
+const { createTerminalService } = require("./terminal-service.cjs");
 
 const isDev = process.env.ELECTRON_DEV === "1";
 
@@ -14,6 +15,10 @@ if (process.env.ELECTRON_NO_SANDBOX === "1") {
 /** @type {Map<number, { start: () => Promise<void>, stop: () => Promise<void>, prompt: (message: string) => Promise<unknown>, snapshot: () => unknown, isStopping: () => boolean }>} */
 const sessions = new Map();
 const switchingWorkspaces = new Set();
+const terminalService = createTerminalService((id, payload) => {
+  const win = BrowserWindow.getAllWindows().find((entry) => entry.webContents.id === id);
+  if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send("terminal:event", payload);
+});
 
 const hostPromise = import("./rpc-host.mjs");
 const credentialsPromise = import("./credentials.mjs");
@@ -95,6 +100,7 @@ async function switchWindowWorkspace(win, cwd) {
     const host = await hostPromise;
     const next = createRpcSession(win, host, known);
     const state = store.activate(known);
+    terminalService.stop(id);
     if (previous) {
       await previous.stop();
       if (sessions.get(id) === previous) sessions.delete(id);
@@ -148,6 +154,7 @@ function createWindow() {
   });
 
   win.on("close", (event) => {
+    terminalService.stop(webContentsId);
     const session = sessions.get(webContentsId);
     if (!session || session.isStopping()) return;
     event.preventDefault();
@@ -202,6 +209,16 @@ ipcMain.on("window:toggle-maximize", (event) => {
   else win.maximize();
 });
 ipcMain.on("window:close", (event) => windowFromEvent(event)?.close());
+
+ipcMain.handle("terminal:start", (event) => {
+  const cwd = sessions.get(event.sender.id)?.snapshot().cwd;
+  return cwd ? terminalService.start(event.sender.id, cwd) : { ok: false, message: "工作区尚未就绪" };
+});
+ipcMain.handle("terminal:write", (event, command) => terminalService.write(event.sender.id, command));
+ipcMain.handle("terminal:stop", (event) => {
+  terminalService.stop(event.sender.id);
+  return { ok: true };
+});
 
 ipcMain.handle("rpc:get-status", async (event) => {
   const session = sessions.get(event.sender.id);

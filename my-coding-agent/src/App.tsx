@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
+import { TerminalPanel } from "./components/TerminalPanel";
 import { BranchCanvas } from "./pages/BranchCanvas";
 import { BranchSwitcher } from "./pages/BranchSwitcher";
 import { CredentialsFrame } from "./pages/CredentialsFrame";
@@ -46,6 +47,13 @@ export default function App() {
   const [sandbox, setSandbox] = useState<SandboxState>(initial.sandbox);
   const [underlay, setUnderlay] = useState<Route>(initial.route === "branch" || initial.route === "onboarding" ? "workspace" : initial.route);
   const [branchDirty, setBranchDirty] = useState(initial.dirty);
+  const [terminalOpen, setTerminalOpen] = useState(false);
+
+  useEffect(() => {
+    const toggle = () => setTerminalOpen((open) => !open);
+    window.addEventListener("terminal:toggle", toggle);
+    return () => window.removeEventListener("terminal:toggle", toggle);
+  }, []);
 
   useEffect(() => {
     const sync = () => {
@@ -99,7 +107,12 @@ export default function App() {
       <TitleBar showTerminal={route === "diff" || route === "workspace"} />
       <Sidebar route={route === "branch" ? underlay : route} bottomClass={shell.side} />
       <div className={`h-full min-h-0 pl-60 pt-10 ${shell.pad}`}>
-        <div className="h-full min-h-0">{page}</div>
+        <div className="flex h-full min-h-0 min-w-0">
+          <div className="min-h-0 min-w-0 flex-1">{page}</div>
+          {terminalOpen && (route === "workspace" || route === "diff") ? (
+            <TerminalPanel cwd={rpc.status.cwd} onClose={() => setTerminalOpen(false)} />
+          ) : null}
+        </div>
       </div>
       {shell.bar === "none" ? null : (
         <StatusBar

@@ -8,6 +8,10 @@ export interface PiDesktopApi {
   minimize: () => void;
   toggleMaximize: () => void;
   close: () => void;
+  startTerminal: () => Promise<{ ok: boolean; cwd?: string; message?: string }>;
+  writeTerminal: (command: string) => Promise<{ ok: boolean; message?: string }>;
+  stopTerminal: () => Promise<{ ok: boolean }>;
+  onTerminalEvent: (callback: (event: { type: "output" | "error" | "exit"; data?: string; code?: number | null }) => void) => () => void;
   getEngineStatus: () => Promise<EngineSnapshot>;
   sendPrompt: (message: string) => Promise<PromptResult>;
   listSessions: () => Promise<SessionSummary[]>;

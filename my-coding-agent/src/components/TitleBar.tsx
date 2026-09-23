@@ -59,7 +59,7 @@ function WindowControl({
 function TerminalTab() {
   return (
     <div className="titlebar-no-drag flex items-center px-space-xs">
-      <button type="button" className="titlebar-no-drag flex h-8 shrink-0 items-center gap-1 rounded px-space-sm font-label-sm text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container/50 hover:text-on-surface" title="终端 Terminal">
+      <button type="button" onClick={() => window.dispatchEvent(new Event("terminal:toggle"))} className="titlebar-no-drag flex h-8 shrink-0 items-center gap-1 rounded px-space-sm font-label-sm text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container/50 hover:text-on-surface" title="终端 Terminal">
         <Icon name="terminal" className="text-[15px]" />
         <span>终端</span>
       </button>
