@@ -47,3 +47,10 @@ export function nextSandboxState(current: SandboxState): SandboxState {
   const index = SANDBOX_STATES.indexOf(current);
   return SANDBOX_STATES[(index + 1) % SANDBOX_STATES.length];
 }
+
+export function engineChipLabel(engine: EngineState): string {
+  if (engine === "idle") return "引擎 · RPC 空闲 · 已连接";
+  if (engine === "chatting") return "引擎 · RPC 对话中";
+  if (engine === "reconnecting") return "引擎 · RPC 重连中";
+  return "引擎 · RPC 已断开";
+}

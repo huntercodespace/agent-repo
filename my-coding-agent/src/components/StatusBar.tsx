@@ -1,22 +1,50 @@
 import { useEffect, useState } from "react";
 import { readLocationQuery } from "../router";
-import { nextSandboxState, readPolicyNoteOpen, type EngineState, type SandboxState } from "../status";
+import type { RpcStatus } from "../rpc/types";
+import { engineChipLabel, nextSandboxState, readPolicyNoteOpen, type EngineState, type SandboxState } from "../status";
 import { Icon } from "./Icon";
 
 interface StatusBarProps {
   variant: "workspace" | "branch" | "engine";
   engine: EngineState;
   sandbox: SandboxState;
+  connection?: RpcStatus | null;
   onEngineChange: (engine: EngineState) => void;
   onSandboxChange: (sandbox: SandboxState) => void;
 }
 
-const engineSamples: { id: EngineState; label: string; dot: string }[] = [
-  { id: "idle", label: "引擎 · RPC 空闲 · 已连接", dot: "bg-[#10b981]" },
-  { id: "chatting", label: "引擎 · RPC 对话中", dot: "bg-secondary animate-pulse" },
-  { id: "reconnecting", label: "引擎 · RPC 重连中", dot: "spin" },
-  { id: "disconnected", label: "引擎 · RPC 已断开", dot: "bg-error/60" },
+const engineSamples: { id: EngineState; dot: string }[] = [
+  { id: "idle", dot: "bg-[#10b981]" },
+  { id: "chatting", dot: "bg-secondary animate-pulse" },
+  { id: "reconnecting", dot: "spin" },
+  { id: "disconnected", dot: "bg-error/60" },
 ];
+
+function LiveEngineChip({ connection }: { connection: RpcStatus }) {
+  return (
+    <span
+      data-engine={connection.engine}
+      data-web-contents={connection.webContentsId ?? ""}
+      title={`每窗口独立进程${connection.webContentsId != null ? ` · #${connection.webContentsId}` : ""}`}
+      className="inline-flex items-center gap-1.5"
+    >
+      {connection.engine === "reconnecting" ? (
+        <span className="h-1.5 w-1.5 animate-spin rounded-full border border-primary border-t-transparent" />
+      ) : (
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            connection.engine === "idle"
+              ? "bg-[#10b981]"
+              : connection.engine === "chatting"
+                ? "bg-secondary animate-pulse"
+                : "bg-error/60"
+          }`}
+        />
+      )}
+      <span>{engineChipLabel(connection.engine)}</span>
+    </span>
+  );
+}
 
 function sandboxLabel(sandbox: SandboxState) {
   if (sandbox === "on") return "沙盒 · 命令隔离";
@@ -24,7 +52,7 @@ function sandboxLabel(sandbox: SandboxState) {
   return "沙盒 · 未启用";
 }
 
-export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxChange }: StatusBarProps) {
+export function StatusBar({ variant, engine, sandbox, connection, onEngineChange, onSandboxChange }: StatusBarProps) {
   const [policyOpen, setPolicyOpen] = useState(() => readPolicyNoteOpen(readLocationQuery()));
   const [hoveringSandbox, setHoveringSandbox] = useState(false);
 
@@ -47,8 +75,14 @@ export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxC
           </a>
           <span className="text-outline">·</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-tertiary" />
-            <span>Pi Engine · 已连接</span>
+            {connection?.available ? (
+              <LiveEngineChip connection={connection} />
+            ) : (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-tertiary" />
+                <span>Pi Engine · 已连接</span>
+              </>
+            )}
           </span>
           <span className="text-outline">|</span>
           <span>权限: 自动执行 (安全模式)</span>
@@ -103,7 +137,7 @@ export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxC
                         sample.id === "disconnected" ? "text-on-surface-variant" : "text-on-surface"
                       }`}
                     >
-                      {sample.label}
+                      {engineChipLabel(sample.id)}
                     </span>
                   </span>
                   <span className="mt-0.5 pl-3.5 font-label-xs text-[10px] font-normal leading-none text-outline">
@@ -211,7 +245,7 @@ export function StatusBar({ variant, engine, sandbox, onEngineChange, onSandboxC
           Git: main ✓
         </a>
         <span className="text-outline">|</span>
-        <span>Pi Engine: v2.4 (Ready)</span>
+        {connection?.available ? <LiveEngineChip connection={connection} /> : <span>Pi Engine: v2.4 (Ready)</span>}
         <span className="text-outline">|</span>
         <span>权限: 自动执行 (安全模式)</span>
       </div>
