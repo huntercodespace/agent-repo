@@ -69,7 +69,7 @@ export function WorkspacePage() {
         <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
           {rpc.blocks.length === 0 ? (
             <p className="mx-auto max-w-5xl px-space-lg pt-space-lg font-body-sm text-body-sm text-on-surface-variant">
-              发送一条需求后，助手回复和工具输出会从 Pi RPC 流式出现在这里。
+              发送一条需求后，助手回复会流式出现在这里。
             </p>
           ) : (
             <LiveTranscript blocks={rpc.blocks} />
