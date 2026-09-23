@@ -2,7 +2,40 @@
 
 Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Session data, credentials, and git state are static placeholders.
 
-Auth storage, a live RPC client, and a real command sandbox are not part of this shell.
+The UI shell is static today. The target architecture below is locked. Live wiring is not implemented yet.
+
+## Architecture
+
+### Agent engine
+
+Each Electron window talks to **pi-coding-agent** in RPC mode. The main process `spawn`s `pi --mode rpc` and uses the official **RpcClient** over stdin/stdout JSONL. v1 stays on that path. Experimental pi-server and Chord are out of v1.
+
+Closing a window ends that session and kills that RPC child. Engine status is scoped per window (`webContentsId`).
+
+### Sandbox
+
+Command isolation uses Anthropic’s sandbox, `@anthropic-ai/sandbox-runtime` (ASRT). That package is the cross-platform path for v1. Windows support is alpha. The UAC install is optional and cancelable. The sandbox is not built into Pi by default.
+
+UI chrome never shows the package names ASRT, srt, or Gondolin. Product copy says 「沙盒」.
+
+Scope for now is `bash` / command isolation. The workspace stays writable. The sandbox blocks writes outside the workspace and casual egress.
+
+Capability is `unsupported`, `available`, or `enabled`. Windows is not hardcoded as `unsupported`.
+
+### Credentials
+
+The main process is a thin wrap over Pi **AuthStorage** (`~/.pi/agent/auth.json`). Keys stay out of the renderer and out of `settings.json`. IPC returns a mask, a source, and a status only.
+
+### Packaging
+
+The app bundles a standalone `pi`, built with build-binaries, into `extraResources`. There is no forced WSL or Docker dependency.
+
+### Phasing
+
+1. UI shell first. This step is done, and the shell is still static.
+2. Credentials IPC.
+3. Real RpcClient spawn.
+4. Optional ASRT enable flow.
 
 ## Requirements
 
