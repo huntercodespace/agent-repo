@@ -1,5 +1,7 @@
 import type { TranscriptBlock } from "../rpc/types";
 import { Icon } from "./Icon";
+import { MarkdownContent } from "./MarkdownContent";
+import { groupTranscriptBlocks, type DisplayBlock } from "./groupTranscriptBlocks";
 
 function AssistantBlock({ block }: { block: Extract<TranscriptBlock, { kind: "assistant" }> }) {
   return (
@@ -17,46 +19,57 @@ function AssistantBlock({ block }: { block: Extract<TranscriptBlock, { kind: "as
             </span>
           ) : null}
         </div>
-        <div className="select-text whitespace-pre-wrap font-body-md text-body-md leading-relaxed text-on-surface">
-          {block.text || (block.pending ? "…" : "")}
-        </div>
+        {block.text ? <MarkdownContent text={block.text} /> : block.pending ? <span>…</span> : null}
       </div>
     </article>
   );
 }
 
-function ToolBlock({ block }: { block: Extract<TranscriptBlock, { kind: "tool" }> }) {
+function ToolGroup({ group }: { group: Extract<DisplayBlock, { kind: "tool_group" }> }) {
+  const running = group.tools.some((tool) => tool.pending);
+  const failed = group.tools.filter((tool) => tool.isError).length;
   return (
-    <article className="flex items-start gap-space-md">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-secondary">
-        <Icon name="terminal" className="text-[16px]" />
+    <details className="group ml-10 min-w-0 rounded-lg border border-outline-variant/50 bg-surface-container-low text-on-surface-variant">
+      <summary className="flex cursor-pointer list-none items-center gap-space-sm px-space-md py-space-sm hover:text-on-surface">
+        <Icon name="chevron_right" className="shrink-0 text-[16px] transition-transform group-open:rotate-90" />
+        <Icon name="terminal" className="shrink-0 text-[15px] text-secondary" />
+        <span className="shrink-0 font-label-sm text-label-sm font-medium">执行过程 · {group.tools.length} 次工具调用</span>
+        <span className="min-w-0 truncate font-code-sm text-code-sm text-outline">
+          {group.tools.map((tool) => tool.name).join(" · ")}
+        </span>
+        <span className={`ml-auto shrink-0 font-code-sm text-code-sm ${failed ? "text-error" : running ? "text-secondary" : "text-tertiary"}`}>
+          {running ? `运行中${failed ? ` · ${failed} 次失败` : ""}` : failed ? `${failed} 次失败` : "已完成"}
+        </span>
+      </summary>
+      <div className="space-y-space-xs border-t border-outline-variant/50 p-space-sm">
+        {group.tools.map((tool) => (
+          <details key={tool.id} className="rounded bg-surface-container-lowest">
+            <summary className="flex cursor-pointer list-none items-center gap-space-sm px-space-sm py-space-xs font-label-sm text-label-sm">
+              <Icon name="chevron_right" className="text-[14px]" />
+              <span className="min-w-0 truncate">{tool.name}</span>
+              <span className={`ml-auto shrink-0 ${tool.isError ? "text-error" : tool.pending ? "text-secondary" : "text-tertiary"}`}>
+                {tool.pending ? "运行中" : tool.isError ? "失败" : "完成"}
+              </span>
+            </summary>
+            <div className="space-y-space-xs border-t border-outline-variant/30 p-space-sm">
+              {tool.args ? (
+                <pre className="max-h-48 select-text overflow-auto whitespace-pre-wrap break-all font-code-sm text-code-sm text-on-surface-variant">{tool.args}</pre>
+              ) : null}
+              {tool.output ? (
+                <pre className="max-h-64 select-text overflow-auto whitespace-pre-wrap break-all rounded bg-surface-container p-space-sm font-code-sm text-code-sm text-on-surface">{tool.output}</pre>
+              ) : null}
+            </div>
+          </details>
+        ))}
       </div>
-      <div className="min-w-0 flex-1 rounded-xl bg-surface-container-low p-space-md shadow-sm">
-        <div className="flex items-center justify-between gap-space-sm">
-          <span className="font-label-sm text-label-sm font-medium text-on-surface">工具 · {block.name}</span>
-          <span className={`font-code-sm text-code-sm ${block.isError ? "text-error" : "text-tertiary"}`}>
-            {block.pending ? "运行中" : block.isError ? "失败" : "完成"}
-          </span>
-        </div>
-        {block.args ? (
-          <pre className="mt-space-xs select-text overflow-x-auto whitespace-pre-wrap font-code-sm text-code-sm text-on-surface-variant">
-            {block.args}
-          </pre>
-        ) : null}
-        {block.output ? (
-          <pre className="mt-space-xs select-text overflow-x-auto whitespace-pre-wrap rounded bg-surface-container-lowest p-space-sm font-code-sm text-code-sm text-on-surface">
-            {block.output}
-          </pre>
-        ) : null}
-      </div>
-    </article>
+    </details>
   );
 }
 
 export function LiveTranscript({ blocks }: { blocks: TranscriptBlock[] }) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-space-lg p-space-lg lg:p-space-xl">
-      {blocks.map((block) => {
+      {groupTranscriptBlocks(blocks).map((block) => {
         if (block.kind === "user") {
           return (
             <article key={block.id} className="flex items-start gap-space-md">
@@ -72,7 +85,7 @@ export function LiveTranscript({ blocks }: { blocks: TranscriptBlock[] }) {
             </article>
           );
         }
-        if (block.kind === "tool") return <ToolBlock key={block.id} block={block} />;
+        if (block.kind === "tool_group") return <ToolGroup key={block.id} group={block} />;
         return <AssistantBlock key={block.id} block={block} />;
       })}
     </div>

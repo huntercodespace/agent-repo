@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { applyRpcEvent, appendUserBlock, settleTranscript } from "../src/rpc/transcript.ts";
+import { groupTranscriptBlocks } from "../src/components/groupTranscriptBlocks.ts";
 
 const user = appendUserBlock([], "ping");
 assert.equal(user[0].kind, "user");
@@ -56,6 +57,16 @@ assert.equal(blocks[1].pending, true);
 assert.equal(blocks[2].kind, "tool");
 assert.equal(blocks[2].output, "hi\n");
 assert.equal(blocks[2].pending, false);
+
+const grouped = groupTranscriptBlocks([
+  ...blocks,
+  { ...blocks[2], id: "tool-4", isError: true },
+  { id: "user-next", kind: "user", text: "next" },
+  { ...blocks[2], id: "tool-5" },
+]);
+assert.deepEqual(grouped.map((block) => block.kind), ["user", "assistant", "tool_group", "user", "tool_group"]);
+assert.equal(grouped[2].tools.length, 2);
+assert.equal(grouped[2].id, groupTranscriptBlocks(blocks)[2].id);
 
 const settled = settleTranscript(blocks);
 assert.equal(settled[1].pending, false);
