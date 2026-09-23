@@ -11,6 +11,7 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StatusSpecPage } from "./pages/StatusSpecPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
+import { useRpc } from "./rpc/RpcProvider";
 import { readLocationQuery, readRoute, type Route } from "./router";
 import {
   readDirtyWorktree,
@@ -38,6 +39,7 @@ function shellFor(route: Route): { pad: string; side: string; bar: "workspace" |
 }
 
 export default function App() {
+  const rpc = useRpc();
   const initial = readShellFromLocation();
   const [route, setRoute] = useState<Route>(initial.route);
   const [engine, setEngine] = useState<EngineState>(initial.engine);
@@ -110,6 +112,7 @@ export default function App() {
           variant={shell.bar}
           engine={engine}
           sandbox={sandbox}
+          connection={rpc.status}
           onEngineChange={setEngine}
           onSandboxChange={setSandbox}
         />

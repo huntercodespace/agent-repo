@@ -2,7 +2,7 @@
 
 Electron workspace for the Pi coding agent. The shell includes the main workspace, diff review, settings, onboarding, model-credential states, and the branch switcher. Copy and layout follow the Stitch screens. Session data, credentials, and git state are static placeholders.
 
-The UI shell is static today. The target architecture below is locked. Live wiring is not implemented yet.
+The target architecture below is locked. This slice wires the per-window RPC loop and a main-process AuthStorage probe. The sandbox is still not enabled.
 
 ## Architecture
 
@@ -32,10 +32,10 @@ The app bundles a standalone `pi`, built with build-binaries, into `extraResourc
 
 ### Phasing
 
-1. UI shell first. This step is done, and the shell is still static.
-2. Credentials IPC.
-3. Real RpcClient spawn.
-4. Optional ASRT enable flow.
+1. UI shell first. Done.
+2. Credentials IPC. This slice probes AuthStorage in the main process and returns a mask, a source, and a status. The credentials screen is still the Stitch mock; it does not write keys.
+3. Real RpcClient spawn. The minimal per-window loop (spawn, `get_state`, `prompt`, stream, stop) is in.
+4. Optional ASRT enable flow. Not in this slice.
 
 ## Requirements
 
@@ -77,6 +77,52 @@ On Linux containers where Chromium’s sandbox cannot start, launch with:
 ELECTRON_NO_SANDBOX=1 npm run dev
 ```
 
+## RPC engine
+
+Each window’s main process owns one session, keyed by `webContentsId`. Opening the window spawns pi, calls `get_state`, and drives the workspace status-bar engine chip (`空闲 · 已连接`, `对话中`, `重连中`, `已断开`). Sending from the workspace composer calls `prompt` and streams `message_*`, `tool_execution_*`, and `agent_end` into the session. Closing the window ends that RPC session and kills that child. The `#/engine` page stays a visual spec; its chips are not the live session.
+
+The client is the official `RpcClient` from `@earendil-works/pi-coding-agent`. It spawns `node <pi> --mode rpc` and splits stdout on `\n` only. That is the same entry as the package `pi` bin. This code does not use Node `readline` to frame JSONL.
+
+pi resolution, in order:
+
+1. `PI_CLI` — absolute or cwd-relative path to a Node entry (the package bin, or a local fixture).
+2. The bundled bin from the dependency: `node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js`.
+3. A `pi` on `PATH` whose file is a Node script (shebang or `.js` / `.mjs` / `.cjs`).
+
+`RpcClient` always launches that file with `node`, so a standalone bun binary is not a valid `PI_CLI` here. Packaging a build-binaries `pi` into `extraResources` is a later step.
+
+Working directory is `PI_PROJECT_CWD` when that path is a folder, otherwise the process cwd (`npm run dev` from `my-coding-agent` uses that folder). The child is started with `--no-session`.
+
+### Credentials
+
+Auth stays in the main process. The host wraps Pi `AuthStorage` (`~/.pi/agent/auth.json` via `AuthStorage.create()`). IPC returns `configured`, `source` (`stored` or `environment`), `mask`, and `providerId`. The renderer never receives the key.
+
+A stored API key is masked to `••••` plus the last four characters (shorter values stay `••••`). OAuth is `oauth ••••`. An environment key is reported by variable name only, for example `ANTHROPIC_API_KEY`. If nothing is configured, the composer links to `#/credentials` and does not call `prompt`.
+
+Put a key in either place:
+
+```bash
+# ~/.pi/agent/auth.json  (written by `pi` login / AuthStorage, not by this shell)
+# or, for one shell:
+ANTHROPIC_API_KEY=sk-... npm run dev
+```
+
+Other recognized variables include `OPENAI_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, and `XAI_API_KEY`. The child inherits the environment. Do not put keys in `settings.json` or in the renderer.
+
+`@earendil-works/pi-coding-agent` asks for Node `>=22.19`. This shell still runs the bundled CLI on the Node that is on `PATH` (the same `node` `RpcClient` spawns).
+
+### Smoke without a model key
+
+`get_state` connects with no key; the chip goes idle and the composer explains how to open credentials. A real streamed model reply needs a configured provider.
+
+To exercise the stream UI without a key, point `PI_CLI` at the fixture (it speaks a few JSONL events and does not call a provider):
+
+```bash
+PI_CLI=scripts/pi-rpc-fixture.mjs ELECTRON_NO_SANDBOX=1 npm run dev
+```
+
+The fixture is not the engine. Quit that session before using a real `pi`.
+
 ## Pages
 
 Routes are hashes, so they work in the browser and in the Electron window.
@@ -103,7 +149,7 @@ Inside the window:
 
 ## Status bar
 
-Workspace, diff, and settings use the 24px footer from those screens: `Git: main ✓ | Pi Engine: v2.4 (Ready) | 权限: 自动执行 (安全模式)`. Credentials uses its own footer (`凭据存储: 本地 AuthStorage 就绪`). The branch screen uses `⎇ main`.
+Workspace, diff, and settings use the 24px footer from those screens: `Git: main ✓ | Pi Engine: v2.4 (Ready) | 权限: 自动执行 (安全模式)`. In the Electron window that middle chip follows the live RPC session instead. Credentials uses its own footer (`凭据存储: 本地 AuthStorage 就绪`). The branch screen uses `⎇ main`, and the same live chip when the shell is connected.
 
 `#/engine` uses the taller status bar: four engine chips at once, plus a sandbox chip.
 
