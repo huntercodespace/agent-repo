@@ -5,8 +5,8 @@ const path = require("node:path");
 
 const exec = promisify(execFile);
 
-async function git(cwd, args) {
-  const { stdout } = await exec("git", args, { cwd, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+async function git(cwd, args, options = {}) {
+  const { stdout } = await exec("git", args, { cwd, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, ...options });
   return stdout;
 }
 
@@ -99,4 +99,33 @@ async function commit(cwd, message) {
   }
 }
 
-module.exports = { status, diff, stage, commit };
+async function push(cwd) {
+  const current = await status(cwd);
+  if (!current.ok) return current;
+  if (current.branch === "HEAD") return { ok: false, message: "当前处于分离 HEAD 状态，请先切换到分支" };
+  try {
+    const root = (await git(cwd, ["rev-parse", "--show-toplevel"])).trim();
+    await git(root, ["rev-parse", "--verify", "HEAD"]);
+    const pushOptions = { timeout: 120000, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } };
+    let upstream = false;
+    try {
+      await git(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]);
+      upstream = true;
+    } catch {
+      // A new branch may not have a remote tracking branch yet.
+    }
+    if (upstream) {
+      await git(root, ["push"], pushOptions);
+      return { ok: true, message: `已推送 ${current.branch} 到远程仓库` };
+    }
+    const remotes = (await git(root, ["remote"])).trim().split("\n").filter(Boolean);
+    if (remotes.length === 0) return { ok: false, message: "尚未配置远程仓库，请先添加 Git remote" };
+    if (remotes.length > 1) return { ok: false, message: "当前分支没有上游分支，且存在多个远程仓库。请先在终端指定要推送的远程仓库" };
+    await git(root, ["push", "--set-upstream", remotes[0], "HEAD"], pushOptions);
+    return { ok: true, message: `已推送 ${current.branch} 到 ${remotes[0]}，并设置上游分支` };
+  } catch (error) {
+    return { ok: false, message: errorMessage(error) };
+  }
+}
+
+module.exports = { status, diff, stage, commit, push };

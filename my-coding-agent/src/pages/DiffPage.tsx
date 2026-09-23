@@ -24,6 +24,7 @@ export function DiffPage() {
   const [diff, setDiff] = useState<{ cwd: string; path: string; text: string } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -126,6 +127,29 @@ export function DiffPage() {
     }
   };
 
+  const push = async () => {
+    const desktop = window.piDesktop;
+    if (!desktop?.pushGitChanges) return;
+    requestId.current += 1;
+    const cwd = cwdRef.current;
+    setLoading(false);
+    setBusy(true);
+    setPushing(true);
+    setError("");
+    setSuccess("");
+    try {
+      const result = await desktop.pushGitChanges();
+      if (cwd !== cwdRef.current) return;
+      if (!result.ok) throw new Error(result.message || "推送失败");
+      setSuccess(result.message || "推送成功");
+    } catch (cause) {
+      if (cwd === cwdRef.current) setError(cause instanceof Error ? cause.message : "推送失败");
+    } finally {
+      setBusy(false);
+      setPushing(false);
+    }
+  };
+
   const files = git?.files ?? [];
   const stagedCount = files.filter((file) => file.staged).length;
   const visibleDiff = diff?.cwd === engine.cwd && diff.path === selectedPath ? diff.text : "正在读取差异…";
@@ -181,6 +205,9 @@ export function DiffPage() {
           <textarea id="git-commit-message" value={message} onChange={(event) => setMessage(event.target.value)} rows={2} placeholder="描述这次更改" className="w-full resize-none rounded bg-surface-container px-space-sm py-2 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary" />
           <button type="button" onClick={() => void commit()} disabled={busy || !git?.ok || stagedCount === 0 || !message.trim()} className="mt-space-sm rounded bg-primary px-space-md py-2 font-label-sm text-label-sm text-on-primary hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50">
             {busy ? "处理中…" : `提交 ${stagedCount} 个已暂存文件`}
+          </button>
+          <button type="button" onClick={() => void push()} disabled={busy || !git?.ok || git.branch === "HEAD"} className="ml-space-sm mt-space-sm rounded bg-surface-container-high px-space-md py-2 font-label-sm text-label-sm text-on-surface hover:bg-surface-bright disabled:cursor-not-allowed disabled:opacity-50">
+            {pushing ? "正在推送…" : "推送到远程"}
           </button>
         </div>
       </section>

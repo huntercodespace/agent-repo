@@ -274,6 +274,10 @@ ipcMain.handle("git:commit", (event, message) => {
   const cwd = gitCwd(event);
   return cwd ? gitService.commit(cwd, message) : { ok: false, message: "这个窗口没有工作区" };
 });
+ipcMain.handle("git:push", (event) => {
+  const cwd = gitCwd(event);
+  return cwd ? gitService.push(cwd) : { ok: false, message: "这个窗口没有工作区" };
+});
 
 ipcMain.handle("credentials:listProviders", async () => {
   const credentials = await credentialsPromise;

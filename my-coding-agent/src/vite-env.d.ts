@@ -20,6 +20,7 @@ export interface PiDesktopApi {
   getGitDiff: (filePath: string) => Promise<GitResult & { text?: string }>;
   stageGitFile: (filePath: string | null, selected: boolean) => Promise<GitStatus>;
   commitGitChanges: (message: string) => Promise<GitStatus & { hash?: string }>;
+  pushGitChanges: () => Promise<GitResult>;
   onWorkspacesChanged: (callback: (state: WorkspaceState) => void) => () => void;
   onEngineStatus: (callback: (status: EngineSnapshot) => void) => () => void;
   onRpcEvent: (callback: (event: RpcWireEvent) => void) => () => void;

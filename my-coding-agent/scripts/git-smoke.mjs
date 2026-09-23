@@ -8,6 +8,7 @@ import gitService from "../electron/git-service.cjs";
 
 const run = promisify(execFile);
 const cwd = await mkdtemp(join(tmpdir(), "pi-git-smoke-"));
+const remote = await mkdtemp(join(tmpdir(), "pi-git-remote-"));
 const git = (...args) => run("git", args, { cwd });
 
 try {
@@ -44,7 +45,30 @@ try {
   assert.equal(state.files[0].staged, true);
   assert.equal((await gitService.commit(nested, "test: stage from subdirectory")).ok, true);
   assert.equal((await gitService.status(cwd)).files.length, 0);
-  console.log("Git commit smoke test passed");
+
+  assert.match((await gitService.push(cwd)).message, /尚未配置远程仓库/);
+  await run("git", ["init", "--bare", "-q", remote]);
+  await git("remote", "add", "origin", remote);
+  const firstPush = await gitService.push(cwd);
+  assert.equal(firstPush.ok, true, firstPush.message);
+  const branch = (await git("branch", "--show-current")).stdout.trim();
+  assert.equal((await git("rev-parse", "@{upstream}")).stdout.trim(), (await git("rev-parse", "HEAD")).stdout.trim());
+
+  await writeFile(join(cwd, "later.txt"), "later\n");
+  await gitService.stage(cwd, "later.txt", true);
+  assert.equal((await gitService.commit(cwd, "test: push again")).ok, true);
+  const secondPush = await gitService.push(cwd);
+  assert.equal(secondPush.ok, true, secondPush.message);
+  const remoteHead = await run("git", ["--git-dir", remote, "rev-parse", `refs/heads/${branch}`]);
+  assert.equal(remoteHead.stdout.trim(), (await git("rev-parse", "HEAD")).stdout.trim());
+
+  await git("checkout", "-q", "-b", "untracked-upstream");
+  await git("remote", "add", "backup", remote);
+  assert.match((await gitService.push(cwd)).message, /多个远程仓库/);
+  await git("checkout", "-q", "--detach");
+  assert.match((await gitService.push(cwd)).message, /分离 HEAD/);
+  console.log("Git commit and push smoke test passed");
 } finally {
   await rm(cwd, { recursive: true, force: true });
+  await rm(remote, { recursive: true, force: true });
 }
