@@ -38,34 +38,7 @@ export function WorkspacePage() {
   return (
     <main className="flex h-full min-h-0 w-full flex-col bg-surface lg:flex-row">
       <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
-        <div className="flex h-9 items-center justify-between bg-surface-container-low/60 px-space-lg backdrop-blur">
-          <div className="flex items-center gap-space-sm font-code-sm text-code-sm">
-            <span className="inline-flex items-center gap-1 text-secondary">
-              <Icon name="terminal" className="text-[14px]" />
-              <span title={live ? rpc.status.cwd : undefined}>
-                {live ? `project://${basename(rpc.status.cwd)}` : "task://refactor-sse-parser"}
-              </span>
-            </span>
-            <span className="text-outline">/</span>
-            <span className="font-medium text-on-surface-variant">{rpc.activeSessionId ? `会话 ${rpc.activeSessionId.slice(0, 8)}` : "新会话"}</span>
-            <span className="rounded bg-surface-container-high px-1.5 py-0.5 font-label-xs text-label-xs font-semibold uppercase tracking-wider text-tertiary">
-              Active Run
-            </span>
-          </div>
-          <div className="flex items-center gap-space-sm font-label-sm text-label-sm text-on-surface-variant">
-            {live && rpc.status.credentials.configured ? (
-              <span className="font-code-sm text-code-sm text-outline" title="主进程 AuthStorage，仅掩码">
-                凭据 {rpc.status.credentials.providerId} · {rpc.status.credentials.mask}
-              </span>
-            ) : null}
-            <span className="flex items-center gap-1">
-              <span className={`h-1.5 w-1.5 rounded-full bg-tertiary ${rpc.status.engine === "disconnected" && live ? "" : "animate-pulse"}`} />
-              {readyLabel}
-            </span>
-            <span className="text-outline">|</span>
-            <span className="font-code-sm text-code-sm text-outline">PID: {pid}</span>
-          </div>
-        </div>
+        
         <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
           {rpc.blocks.length === 0 ? (
             <p className="mx-auto max-w-5xl px-space-lg pt-space-lg font-body-sm text-body-sm text-on-surface-variant">
