@@ -2,6 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron")
 const fs = require("fs");
 const path = require("path");
 const { createWorkspaceStore } = require("./workspace-store.cjs");
+const gitService = require("./git-service.cjs");
 
 const isDev = process.env.ELECTRON_DEV === "1";
 
@@ -252,6 +253,27 @@ ipcMain.handle("workspaces:add", async (event) => {
 });
 
 ipcMain.handle("workspaces:switch", async (event, cwd) => switchWindowWorkspace(windowFromEvent(event), cwd));
+
+function gitCwd(event) {
+  return sessions.get(event.sender.id)?.snapshot().cwd || null;
+}
+
+ipcMain.handle("git:status", (event) => {
+  const cwd = gitCwd(event);
+  return cwd ? gitService.status(cwd) : { ok: false, message: "这个窗口没有工作区", files: [], branch: "" };
+});
+ipcMain.handle("git:diff", (event, filePath) => {
+  const cwd = gitCwd(event);
+  return cwd ? gitService.diff(cwd, filePath) : { ok: false, message: "这个窗口没有工作区" };
+});
+ipcMain.handle("git:stage", (event, filePath, selected) => {
+  const cwd = gitCwd(event);
+  return cwd ? gitService.stage(cwd, filePath, selected) : { ok: false, message: "这个窗口没有工作区" };
+});
+ipcMain.handle("git:commit", (event, message) => {
+  const cwd = gitCwd(event);
+  return cwd ? gitService.commit(cwd, message) : { ok: false, message: "这个窗口没有工作区" };
+});
 
 ipcMain.handle("credentials:listProviders", async () => {
   const credentials = await credentialsPromise;

@@ -2,6 +2,7 @@
 
 import type { CredentialBroadcast, EnvHit, OAuthEvent, ProviderInfo, ProviderStatus, SelectedModel, SetModelResult } from "./credentials/types";
 import type { EngineSnapshot, PromptResult, RpcWireEvent, SessionSummary, SessionView, WorkspaceActionResult, WorkspaceState } from "./rpc/types";
+import type { GitResult, GitStatus } from "./git/types";
 
 export interface PiDesktopApi {
   minimize: () => void;
@@ -15,6 +16,10 @@ export interface PiDesktopApi {
   listWorkspaces: () => Promise<WorkspaceState>;
   addWorkspace: () => Promise<WorkspaceActionResult>;
   switchWorkspace: (cwd: string) => Promise<WorkspaceActionResult>;
+  getGitStatus: () => Promise<GitStatus>;
+  getGitDiff: (filePath: string) => Promise<GitResult & { text?: string }>;
+  stageGitFile: (filePath: string | null, selected: boolean) => Promise<GitStatus>;
+  commitGitChanges: (message: string) => Promise<GitStatus & { hash?: string }>;
   onWorkspacesChanged: (callback: (state: WorkspaceState) => void) => () => void;
   onEngineStatus: (callback: (status: EngineSnapshot) => void) => () => void;
   onRpcEvent: (callback: (event: RpcWireEvent) => void) => () => void;

@@ -181,7 +181,7 @@ Routes are hashes, so they work in the browser and in the Electron window.
 
 Inside the window:
 
-- **Fix auth token race condition** or **提交更改** opens diff review.
+- **提交更改** opens the current workspace's Git review. Select files to stage, inspect their diffs, enter a commit message, and commit the staged files locally. The action does not push.
 - **设置** opens preferences. **模型与计算** and the primary model row open credentials.
 - **打开文件夹** opens the project picker. A recent project returns to the workspace.
 - The **main** badge in the title bar, and the branch chip on the status bar, open the branch switcher. It opens on the dirty worktree from the HTML export. `#/branch?dirty=0` hides that warning. A real search string still works (`?dirty=0#/branch`). **刷新** toggles the warning. The chip stays `main*`.

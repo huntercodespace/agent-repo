@@ -58,7 +58,7 @@ export function CredentialsFrame() {
           </button>
           <a href="#/diff" className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text">
             <span className="text-emerald-400">✓</span>
-            <span>提交更改 (3)</span>
+            <span>提交更改</span>
           </a>
           <a href="#/branch" className="inline-flex items-center gap-1 rounded border border-pi-border bg-pi-card px-1.5 py-0.5 font-mono text-[10px] text-pi-muted">
             <svg className="h-3 w-3 text-pi-accent" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">

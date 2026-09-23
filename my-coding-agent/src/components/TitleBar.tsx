@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRpc } from "../rpc/RpcProvider";
 import { Icon } from "./Icon";
 import { PiLogo } from "./PiLogo";
@@ -102,7 +102,30 @@ function WindowControls({ desktop }: { desktop?: Window["piDesktop"] }) {
 
 export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
   const desktop = window.piDesktop;
-  const { addWorkspace, workspaceBusy } = useRpc();
+  const { addWorkspace, workspaceBusy, status } = useRpc();
+  const [gitCount, setGitCount] = useState<number | null>(null);
+  const [branch, setBranch] = useState<string | null>(null);
+
+  useEffect(() => {
+    const desktop = window.piDesktop;
+    if (!desktop?.getGitStatus) return;
+    let active = true;
+    const refresh = () => {
+      void desktop.getGitStatus().then((result) => {
+        if (!active) return;
+        setGitCount(result.ok ? result.files.length : null);
+        setBranch(result.ok ? result.branch : null);
+      }).catch(() => { if (active) setGitCount(null); });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("git:changed", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("git:changed", refresh);
+    };
+  }, [status.cwd]);
 
   return (
     <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center overflow-hidden bg-surface-container-lowest pl-space-md">
@@ -125,7 +148,7 @@ export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
             className="flex h-7 items-center gap-1.5 rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface transition-colors hover:bg-surface-container-high"
           >
             <Icon name="commit" className="text-[15px] text-tertiary" />
-            <span>提交更改 (3)</span>
+            <span>提交更改{gitCount === null ? "" : ` (${gitCount})`}</span>
           </a>
         </div>
         <div className="flex shrink-0 items-center gap-space-sm" onDoubleClick={() => desktop?.toggleMaximize()}>
@@ -135,7 +158,7 @@ export function TitleBar({ rightRail }: { rightRail?: RightRailTab | null }) {
             title="切换分支"
             className="titlebar-no-drag flex shrink-0 items-center gap-1 rounded bg-surface-container-high px-1.5 py-0.5 font-code-sm text-code-sm text-secondary transition-colors hover:bg-surface-bright"
           >
-            <span>main</span>
+            <span>{branch || "main"}</span>
             <span className="text-outline">⌥</span>
           </a>
         </div>

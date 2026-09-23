@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld("piDesktop", {
   listWorkspaces: () => ipcRenderer.invoke("workspaces:list"),
   addWorkspace: () => ipcRenderer.invoke("workspaces:add"),
   switchWorkspace: (cwd) => ipcRenderer.invoke("workspaces:switch", cwd),
+  getGitStatus: () => ipcRenderer.invoke("git:status"),
+  getGitDiff: (filePath) => ipcRenderer.invoke("git:diff", filePath),
+  stageGitFile: (filePath, selected) => ipcRenderer.invoke("git:stage", filePath, selected),
+  commitGitChanges: (message) => ipcRenderer.invoke("git:commit", message),
   onWorkspacesChanged: (callback) => {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on("workspaces:changed", listener);
