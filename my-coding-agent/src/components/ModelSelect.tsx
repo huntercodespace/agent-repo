@@ -22,6 +22,7 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
     || (board.selected.providerId && board.selected.modelId
       ? modelChoiceLabel(board.selected.providerId, board.selected.modelId, board.selected.modelId)
       : null);
+  const flashSelected = board.selected.providerId === "deepseek" && board.selected.modelId === "deepseek-v4-flash";
 
   async function onChange(event: ChangeEvent<HTMLSelectElement>) {
     const next = event.target.value;
@@ -46,13 +47,13 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
     ? "h-8 max-w-[16rem] rounded bg-surface-container px-space-sm font-label-sm text-label-sm text-on-surface outline-none hover:bg-surface-container-high"
     : "h-10 w-full rounded bg-surface-container px-space-md font-code-sm text-code-sm text-on-surface font-semibold outline-none hover:bg-surface-container-high";
 
-  return (
+  const select = (
     <select
       aria-label="选择模型"
       className={className}
       value={value}
       onChange={onChange}
-      title={selectedName || fallback}
+      title={flashSelected ? "deepseek/deepseek-v4-flash" : selectedName || fallback}
     >
       <option value="">{selectedName || fallback}</option>
       {configured.map((provider) => (
@@ -69,4 +70,15 @@ export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelect
       ))}
     </select>
   );
+
+  if (variant === "chip" && flashSelected) {
+    return (
+      <span className="flex max-w-[18rem] flex-col justify-center leading-none">
+        {select}
+        <span className="px-space-sm font-mono text-[10px] text-outline">deepseek/deepseek-v4-flash</span>
+      </span>
+    );
+  }
+
+  return select;
 }

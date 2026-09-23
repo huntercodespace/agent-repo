@@ -122,9 +122,9 @@ Provider ids and auth flags come from pi-ai’s built-in registry (`ModelRuntime
 
 A stored API key is masked to `••••` plus the last four characters (shorter values stay `••••`). OAuth is `oauth ••••`. An environment key is reported by variable name only, for example `DEEPSEEK_API_KEY`. If nothing is configured, the composer links to `#/credentials` and does not call `prompt`. After a successful save the main process pushes `credentials:status`, and the workspace gate clears without restarting the window.
 
-#### DeepSeek Flash
+#### DeepSeek V4 Flash
 
-DeepSeek is provider id `deepseek` (not `deepseek-chat`). The built-in flash model id is `deepseek-v4-flash`, so the provider/model pair is `deepseek/deepseek-v4-flash`. The model row labels it **DeepSeek Flash**.
+DeepSeek is provider id `deepseek` (not `deepseek-chat`). The built-in flash model id is `deepseek-v4-flash`, so the provider/model pair is `deepseek/deepseek-v4-flash`. The readable label is **DeepSeek V4 Flash**, with the small subtitle `deepseek/deepseek-v4-flash`. The DeepSeek card uses the Stitch resting states: 未配置, 已保存 (stored key), and 校验失败 (check or save error). In-progress still uses 验证与保存中, and an env key still uses 来自环境变量.
 
 In the desktop window:
 

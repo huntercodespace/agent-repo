@@ -543,7 +543,7 @@ export async function detectEnv(providerId) {
 }
 
 export function displayModelName(providerId, modelId, name) {
-  if (providerId === DEEPSEEK_PROVIDER_ID && modelId === DEEPSEEK_FLASH_MODEL_ID) return "DeepSeek Flash";
+  if (providerId === DEEPSEEK_PROVIDER_ID && modelId === DEEPSEEK_FLASH_MODEL_ID) return "DeepSeek V4 Flash";
   return name || modelId;
 }
 

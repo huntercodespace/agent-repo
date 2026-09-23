@@ -8,12 +8,14 @@ interface CredentialCardProps {
   oauth: OAuthEvent | undefined;
 }
 
-function badge(status: ProviderStatus | undefined, saving: boolean, failed: boolean) {
+function badge(providerId: string, status: ProviderStatus | undefined, saving: boolean, failed: boolean) {
+  const deepseek = providerId === "deepseek";
   if (saving) return { label: "验证与保存中", tone: "accent" as const };
-  if (failed) return { label: "保存失败请重试", tone: "rose" as const };
+  // DeepSeek uses the Stitch resting states: 未配置, 已保存 (stored), 校验失败 (save error).
+  if (failed) return { label: deepseek ? "校验失败" : "保存失败请重试", tone: "rose" as const };
   if (status?.status === "oauth") return { label: "OAuth 已登录", tone: "ok" as const };
   if (status?.status === "environment") return { label: "来自环境变量", tone: "cyan" as const };
-  if (status?.status === "stored") return { label: "来自本地", tone: "ok" as const };
+  if (status?.status === "stored") return { label: deepseek ? "已保存" : "来自本地", tone: "ok" as const };
   return { label: "未配置", tone: "amber" as const };
 }
 
@@ -25,12 +27,14 @@ const toneClass = {
   amber: "bg-amber-500/10 border-amber-500/30 text-amber-300",
 };
 
-function subtitle(provider: ProviderInfo) {
-  if (provider.id === "deepseek") return "DeepSeek Flash · deepseek-v4-flash";
+function heading(provider: ProviderInfo) {
+  if (provider.id === "deepseek") {
+    return { title: "DeepSeek V4 Flash", subtitle: "deepseek/deepseek-v4-flash" };
+  }
   const names = provider.models.slice(0, 2).map((model) => model.name);
-  if (names.length === 0) return provider.id;
+  if (names.length === 0) return { title: provider.name, subtitle: provider.id };
   const extra = provider.models.length > 2 ? ` · +${provider.models.length - 2}` : "";
-  return `${names.join(" / ")}${extra}`;
+  return { title: provider.name, subtitle: `${names.join(" / ")}${extra}` };
 }
 
 export function CredentialCard({ provider, status, oauth }: CredentialCardProps) {
@@ -51,7 +55,8 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
     }
   }, [status?.status, status?.mask]);
 
-  const state = badge(status, saving || oauthBusy, failed);
+  const state = badge(provider.id, status, saving || oauthBusy, failed);
+  const head = heading(provider);
   const showInput = provider.apiKey && !provider.multiStep && (
     editing || failed || (status?.status !== "stored" && status?.status !== "environment" && status?.status !== "oauth")
   );
@@ -129,8 +134,8 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
               {provider.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">{provider.name}</div>
-              <div className="text-[10px] text-pi-muted font-mono truncate">{subtitle(provider)}</div>
+              <div className="text-xs font-semibold text-white truncate">{head.title}</div>
+              <div className="text-[10px] text-pi-muted font-mono truncate">{head.subtitle}</div>
             </div>
           </div>
           <span className={`px-2 py-0.5 rounded text-[10px] font-mono border shrink-0 ${toneClass[state.tone]}`}>
@@ -194,7 +199,7 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
 
         {failed && error ? (
           <div className="mt-2 p-2 rounded bg-rose-950/40 border border-rose-800/40 text-rose-300 text-[11px]">
-            <span className="font-semibold">保存失败，请重试：</span>
+            <span className="font-semibold">{provider.id === "deepseek" ? "校验失败" : "保存失败，请重试"}：</span>
             <span className="font-mono text-[10px] block text-rose-300/80 mt-0.5">{error}</span>
           </div>
         ) : null}

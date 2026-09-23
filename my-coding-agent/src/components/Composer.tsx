@@ -55,7 +55,7 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
             >
               <Icon name="attach_file" className="text-[18px]" />
             </button>
-            <div className="flex h-8 items-center gap-1">
+            <div className="flex min-h-8 items-center gap-1">
               <Icon name="model_training" className="text-[15px] text-primary" />
               <ModelSelect variant="chip" fallback={label} />
             </div>

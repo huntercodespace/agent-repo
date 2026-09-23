@@ -32,7 +32,7 @@ try {
     modelId: "deepseek-v4-flash",
   });
   assert.equal(credentials.modelAfterApiKeySave("anthropic"), null);
-  assert.equal(credentials.displayModelName("deepseek", "deepseek-v4-flash", "DeepSeek V4 Flash"), "DeepSeek Flash");
+  assert.equal(credentials.displayModelName("deepseek", "deepseek-v4-flash", "DeepSeek V4.1 Flash"), "DeepSeek V4 Flash");
 
   const codex = providers.find((provider) => provider.id === "openai-codex");
   assert.equal(codex?.oauthOnly, true);
@@ -85,7 +85,7 @@ try {
   });
   assert.deepEqual(calls, [{ type: "set_model", provider: "deepseek", modelId: "deepseek-v4-flash" }]);
   assert.equal(applied.ok, true);
-  assert.equal(applied.name, "DeepSeek Flash");
+  assert.equal(applied.name, "DeepSeek V4 Flash");
   assert.equal(applied.providerId, "deepseek");
   assert.equal(applied.modelId, "deepseek-v4-flash");
   assert.equal(JSON.stringify(applied).includes(secret), false);
@@ -95,7 +95,7 @@ try {
   const current = await credentials.getSelectedModel();
   assert.equal(current.modelId, "deepseek-v4-flash");
   assert.equal(current.providerId, "deepseek");
-  assert.equal(current.name, "DeepSeek Flash");
+  assert.equal(current.name, "DeepSeek V4 Flash");
 
   const summary = credentials.summaryFrom(await credentials.getStatus());
   assert.equal(summary.configured, true);

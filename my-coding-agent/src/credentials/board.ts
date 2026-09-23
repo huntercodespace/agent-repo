@@ -182,6 +182,6 @@ export async function chooseModel(providerId: string, modelId: string): Promise<
 }
 
 export function modelChoiceLabel(providerId: string, modelId: string, name: string) {
-  if (providerId === "deepseek" && modelId === "deepseek-v4-flash") return "DeepSeek Flash";
+  if (providerId === "deepseek" && modelId === "deepseek-v4-flash") return "DeepSeek V4 Flash";
   return name || modelId;
 }

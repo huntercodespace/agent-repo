@@ -399,7 +399,8 @@ export function SettingsPage() {
               </label>
               <ModelSelect variant="field" fallback="Pi-Sonnet-3.5" />
               <span className="font-code-sm text-code-sm text-outline">
-                保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek Flash（deepseek / deepseek-v4-flash）。
+                保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek V4 Flash。
+                <span className="mt-0.5 block font-mono text-[10px]">deepseek/deepseek-v4-flash</span>
                 <a className="ml-2 text-primary hover:underline" href="#/credentials">管理密钥</a>
               </span>
             </div>
