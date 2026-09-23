@@ -3,7 +3,6 @@ import { Composer } from "../components/Composer";
 import { Icon } from "../components/Icon";
 import { Inspector } from "../components/Inspector";
 import { LiveTranscript } from "../components/LiveTranscript";
-import { MessageStream } from "../components/MessageStream";
 import { useRpc } from "../rpc/RpcProvider";
 
 function basename(cwd: string) {
@@ -68,19 +67,12 @@ export function WorkspacePage() {
           </div>
         </div>
         <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
-          {live && rpc.blocks.length === 0 ? (
+          {rpc.blocks.length === 0 ? (
             <p className="mx-auto max-w-5xl px-space-lg pt-space-lg font-body-sm text-body-sm text-on-surface-variant">
               发送一条需求后，助手回复和工具输出会从 Pi RPC 流式出现在这里。
             </p>
-          ) : null}
-          {rpc.blocks.length > 0 ? <LiveTranscript blocks={rpc.blocks} /> : null}
-          {rpc.blocks.length > 0 ? (
-            <details className="mx-auto mb-space-lg max-w-5xl px-space-lg">
-              <summary className="cursor-pointer font-label-sm text-label-sm text-outline">示例会话</summary>
-              <MessageStream />
-            </details>
           ) : (
-            <MessageStream />
+            <LiveTranscript blocks={rpc.blocks} />
           )}
         </div>
         <Composer
