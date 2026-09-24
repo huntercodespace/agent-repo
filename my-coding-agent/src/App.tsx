@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Sidebar } from "./components/Sidebar";
+import { MainShellLayout } from "./components/MainShellLayout";
 import { StatusBar } from "./components/StatusBar";
 import { TitleBar } from "./components/TitleBar";
-import { TerminalPanel } from "./components/TerminalPanel";
 import { BranchCanvas } from "./pages/BranchCanvas";
 import { BranchSwitcher } from "./pages/BranchSwitcher";
 import { CredentialsFrame } from "./pages/CredentialsFrame";
@@ -32,11 +31,11 @@ function readShellFromLocation() {
   };
 }
 
-function shellFor(route: Route): { pad: string; side: string; bar: "workspace" | "branch" | "engine" | "none" } {
-  if (route === "engine") return { pad: "pb-12", side: "bottom-12", bar: "engine" };
-  if (route === "status") return { pad: "pb-0", side: "bottom-0", bar: "none" };
-  if (route === "branch") return { pad: "pb-6", side: "bottom-6", bar: "branch" };
-  return { pad: "pb-6", side: "bottom-6", bar: "workspace" };
+function shellFor(route: Route): { pad: string; bar: "workspace" | "branch" | "engine" | "none" } {
+  if (route === "engine") return { pad: "pb-12", bar: "engine" };
+  if (route === "status") return { pad: "pb-0", bar: "none" };
+  if (route === "branch") return { pad: "pb-6", bar: "branch" };
+  return { pad: "pb-6", bar: "workspace" };
 }
 
 export default function App() {
@@ -105,15 +104,16 @@ export default function App() {
   return (
     <div className="h-screen overflow-hidden bg-surface font-body-md text-body-md text-on-surface antialiased">
       <TitleBar showTerminal={route === "diff" || route === "workspace"} />
-      <Sidebar route={route === "branch" ? underlay : route} bottomClass={shell.side} />
-      <div className={`h-full min-h-0 pl-60 pt-10 ${shell.pad}`}>
-        <div className="flex h-full min-h-0 min-w-0">
-          <div className="min-h-0 min-w-0 flex-1">{page}</div>
-          {terminalOpen && (route === "workspace" || route === "diff") ? (
-            <TerminalPanel cwd={rpc.status.cwd} onClose={() => setTerminalOpen(false)} />
-          ) : null}
-        </div>
-      </div>
+      <MainShellLayout
+        route={route}
+        underlayRoute={underlay}
+        contentPadClass={shell.pad}
+        showTerminal={terminalOpen && (route === "workspace" || route === "diff")}
+        terminalCwd={rpc.status.cwd}
+        onCloseTerminal={() => setTerminalOpen(false)}
+      >
+        {page}
+      </MainShellLayout>
       {shell.bar === "none" ? null : (
         <StatusBar
           variant={shell.bar}

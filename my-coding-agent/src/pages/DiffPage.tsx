@@ -1,17 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRpc } from "../rpc/RpcProvider";
-import { withStableFileOrder } from "../git/fileOrder";
-import type { GitFile, GitStatus } from "../git/types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GitChangeFileRow } from "../components/GitChangeFileRow";
 import { Icon } from "../components/Icon";
-import { StageCheckbox } from "../components/ui/StageCheckbox";
-
-function fileLabel(file: GitFile) {
-  if (file.index === "?" && file.worktree === "?") return "未跟踪";
-  if (file.index === "D" || file.worktree === "D") return "已删除";
-  if (file.index === "A") return "新增";
-  if (file.index === "R" || file.worktree === "R") return "重命名";
-  return "已修改";
-}
+import { withStableFileOrder } from "../git/fileOrder";
+import type { GitStatus } from "../git/types";
+import { useRpc } from "../rpc/RpcProvider";
 
 function optimisticStage(status: GitStatus, filePath: string | null, selected: boolean): GitStatus {
   if (!status.ok) return status;
@@ -78,6 +70,13 @@ export function DiffPage() {
     return () => window.removeEventListener("focus", onFocus);
   }, [engine.cwd, refresh]);
 
+  const selectedFileRevision = useMemo(() => {
+    if (!selectedPath || !git?.ok) return "";
+    const file = git.files.find((item) => item.path === selectedPath);
+    if (!file) return `missing:${selectedPath}`;
+    return `${file.path}\0${file.index}${file.worktree}`;
+  }, [git, selectedPath]);
+
   useEffect(() => {
     if (!selectedPath || !window.piDesktop?.getGitDiff) {
       setDiff(null);
@@ -92,7 +91,7 @@ export function DiffPage() {
       if (active) setDiff({ cwd, path, text: cause instanceof Error ? cause.message : "读取差异失败" });
     });
     return () => { active = false; };
-  }, [engine.cwd, selectedPath, git]);
+  }, [engine.cwd, selectedPath, selectedFileRevision]);
 
   const stage = async (filePath: string | null, selected: boolean) => {
     const desktop = window.piDesktop;
@@ -170,7 +169,7 @@ export function DiffPage() {
 
   const files = git?.files ?? [];
   const stagedCount = files.filter((file) => file.staged).length;
-  const visibleDiff = diff?.cwd === engine.cwd && diff.path === selectedPath ? diff.text : "正在读取差异…";
+  const diffText = diff && diff.cwd === engine.cwd && diff.path === selectedPath ? diff.text : null;
   return (
     <main className="flex h-full min-h-0 w-full overflow-hidden bg-surface text-on-surface">
       <section className="flex w-[300px] shrink-0 flex-col border-r border-surface-container-high bg-surface-container-lowest">
@@ -193,20 +192,15 @@ export function DiffPage() {
           {loading && !git ? <p className="p-space-md text-on-surface-variant">正在读取变更…</p> : null}
           {git?.ok && files.length === 0 ? <p className="p-space-md text-on-surface-variant">工作区没有待提交的更改。</p> : null}
           {files.map((file) => (
-            <div key={file.path} className={`flex items-center gap-2 rounded px-space-sm py-2 ${selectedPath === file.path ? "bg-surface-container-high" : "hover:bg-surface-container"}`}>
-              <StageCheckbox
-                checked={file.staged}
-                onChange={(event) => void stage(file.path, event.target.checked)}
-                aria-label={`${file.staged ? "取消暂存" : "暂存"} ${file.path}`}
-              />
-              <button type="button" onClick={() => setSelectedPath(file.path)} className="min-w-0 flex-1 text-left">
-                <span className="block truncate font-code-sm text-code-sm" title={file.path}>{file.path}</span>
-                <span className="font-label-xs text-label-xs text-on-surface-variant">{fileLabel(file)}{file.staged ? " · 已暂存" : ""}{file.staged && file.worktree !== " " ? " · 还有未暂存改动" : ""}</span>
-              </button>
-              {file.staged && file.worktree !== " " ? (
-                <button type="button" disabled={busy} onClick={() => void stage(file.path, true)} title={`暂存 ${file.path} 的最新改动`} aria-label={`暂存 ${file.path} 的最新改动`} className="shrink-0 rounded px-1.5 text-secondary hover:bg-surface-container-high disabled:opacity-50">+</button>
-              ) : null}
-            </div>
+            <GitChangeFileRow
+              key={file.path}
+              file={file}
+              selected={selectedPath === file.path}
+              stageBusy={stagingRef.current}
+              onSelect={setSelectedPath}
+              onToggleStage={(path, staged) => void stage(path, staged)}
+              onStageLatest={(path) => void stage(path, true)}
+            />
           ))}
         </div>
         <div className="border-t border-surface-container-high p-space-md font-label-sm text-label-sm text-on-surface-variant">已暂存 {stagedCount} 个文件</div>
@@ -216,9 +210,15 @@ export function DiffPage() {
           {selectedPath || "选择文件查看差异"}
         </div>
         <div className="min-h-0 flex-1 overflow-auto bg-surface py-space-sm font-code-sm text-code-sm select-text">
-          {selectedPath ? visibleDiff.split("\n").map((line, index) => (
-            <div key={index} className={`whitespace-pre px-space-md ${diffTone(line)}`}>{line || " "}</div>
-          )) : <p className="px-space-md text-on-surface-variant">选择一个变更文件。</p>}
+          {selectedPath ? (
+            diffText !== null ? diffText.split("\n").map((line, index) => (
+              <div key={index} className={`whitespace-pre px-space-md ${diffTone(line)}`}>{line || " "}</div>
+            )) : (
+              <p className="px-space-md text-on-surface-variant/60">正在读取差异…</p>
+            )
+          ) : (
+            <p className="px-space-md text-on-surface-variant">选择一个变更文件。</p>
+          )}
         </div>
         <div className="border-t border-surface-container-high bg-surface-container-low p-space-md">
           {error ? <p role="alert" className="mb-space-sm whitespace-pre-wrap text-error">{error}</p> : null}

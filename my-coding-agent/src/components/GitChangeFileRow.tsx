@@ -10,10 +10,6 @@ function fileLabel(file: GitFile) {
   return "已修改";
 }
 
-function statusLine(file: GitFile) {
-  return `${fileLabel(file)}${file.staged ? " · 已暂存" : ""}${file.staged && file.worktree !== " " ? " · 还有未暂存改动" : ""}`;
-}
-
 export interface GitChangeFileRowProps {
   file: GitFile;
   selected: boolean;
@@ -51,7 +47,7 @@ export const GitChangeFileRow = memo(function GitChangeFileRow({
           {file.path}
         </span>
         <span className="block min-h-4 truncate font-label-xs text-label-xs leading-4 text-on-surface-variant">
-          {statusLine(file)}
+          {fileLabel(file)}
         </span>
       </button>
       <div className="flex h-8 w-7 shrink-0 items-center justify-center">
