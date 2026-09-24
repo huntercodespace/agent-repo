@@ -1,12 +1,26 @@
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Icon } from "../components/Icon";
 import { ModelSelect } from "../components/ModelSelect";
 import { useCredentialBoard } from "../credentials/board";
+
+type SettingsDomain = "general" | "appearance" | "models" | "permissions" | "keybindings" | "plugins";
+
+function navItemClass(active: boolean) {
+  return active
+    ? "w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all bg-surface-container-high text-primary shadow-sm group"
+    : "w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group";
+}
 
 export function SettingsPage() {
   const board = useCredentialBoard();
   const flashModelId = board.providers.find((provider) => provider.id === "deepseek")?.flashModelId ?? null;
   const [fontSizeLabel, setFontSizeLabel] = useState("14px (Default)");
+  const [activeDomain, setActiveDomain] = useState<SettingsDomain>("appearance");
+  const contentScrollerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    contentScrollerRef.current?.scrollTo({ top: 0 });
+  }, [activeDomain]);
 
   function onFontSize(event: ChangeEvent<HTMLInputElement>) {
     const value = event.currentTarget.value;
@@ -15,12 +29,12 @@ export function SettingsPage() {
   }
 
   return (
-  <div className="relative w-full overflow-hidden h-full overflow-y-auto">
-    <div className="absolute -top-24 right-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl pointer-events-none">
+  <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden">
+    <div className="pointer-events-none absolute -top-24 right-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl">
     </div>
-    <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-secondary/5 blur-3xl pointer-events-none">
+    <div className="pointer-events-none absolute top-1/3 -left-20 h-80 w-80 rounded-full bg-secondary/5 blur-3xl">
     </div>
-    <div className="px-space-lg py-space-md border-b border-transparent bg-surface-container-lowest/60 backdrop-blur flex items-center justify-between">
+    <header className="relative z-10 flex shrink-0 items-center justify-between border-b border-outline-variant/20 bg-surface-container-lowest/60 px-space-lg py-space-md backdrop-blur">
       <div className="flex items-center gap-space-md">
         <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shadow-sm">
           <Icon name="tune" className="text-[18px]" />
@@ -54,83 +68,91 @@ export function SettingsPage() {
           </span>
         </button>
       </div>
-    </div>
-    <div className="grid grid-cols-12 gap-0 min-h-full">
+    </header>
+    <div className="relative flex min-h-0 flex-1 overflow-hidden">
       {/* Left Navigation Dock */}
-      <nav className="col-span-12 md:col-span-3 lg:col-span-3 bg-surface-container-lowest/40 p-space-md flex flex-col justify-between">
+      <nav className="hidden shrink-0 flex-col justify-between overflow-y-auto border-r border-outline-variant/20 bg-surface-container-lowest/40 p-space-md md:flex md:w-[280px] lg:w-[300px]">
         <div className="flex flex-col gap-space-xs">
           <div className="px-space-sm py-space-xs text-outline font-label-xs text-label-xs uppercase tracking-wider font-semibold">
             配置范畴 DOMAINS
           </div>
-          <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <Icon name="settings" className="text-[17px] text-outline group-hover:text-on-surface" />
+          <button type="button" onClick={() => setActiveDomain("general")} className={navItemClass(activeDomain === "general")}>
+            <Icon name="settings" className={`text-[17px] ${activeDomain === "general" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md">
+              <span className={`font-label-md text-label-md ${activeDomain === "general" ? "font-semibold text-on-surface" : ""}`}>
                 通用 General
               </span>
-              <span className="font-code-sm text-code-sm text-outline">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "general" ? "text-primary/80" : "text-outline"}`}>
                 Telemetry, Updates, Sync
               </span>
             </div>
+            {activeDomain === "general" ? <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" /> : null}
           </button>
-          <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all bg-surface-container-high text-primary shadow-sm group" type="button">
-            <Icon name="palette" className="text-[17px] text-primary" fill />
+          <button type="button" onClick={() => setActiveDomain("appearance")} className={navItemClass(activeDomain === "appearance")}>
+            <Icon name="palette" className={`text-[17px] ${activeDomain === "appearance" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} fill={activeDomain === "appearance"} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md font-semibold text-on-surface">
+              <span className={`font-label-md text-label-md ${activeDomain === "appearance" ? "font-semibold text-on-surface" : ""}`}>
                 外观与主题 Appearance
               </span>
-              <span className="font-code-sm text-code-sm text-primary/80">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "appearance" ? "text-primary/80" : "text-outline"}`}>
                 Theme, Typography, Density
               </span>
             </div>
-            <Icon name="chevron_right" className="text-[16px] ml-auto text-primary" />
+            {activeDomain === "appearance" ? <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" /> : null}
           </button>
-          <a className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" href="#/credentials">
-            <Icon name="psychology" className="text-[17px] text-outline group-hover:text-on-surface" />
+          <button type="button" onClick={() => setActiveDomain("models")} className={navItemClass(activeDomain === "models")}>
+            <Icon name="psychology" className={`text-[17px] ${activeDomain === "models" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md">
+              <span className={`font-label-md text-label-md ${activeDomain === "models" ? "font-semibold text-on-surface" : ""}`}>
                 模型与计算 Models &amp; Inference
               </span>
-              <span className="font-code-sm text-code-sm text-outline">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "models" ? "text-primary/80" : "text-outline"}`}>
                 Routing, Reasoning, Context
               </span>
             </div>
-          </a>
-          <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <Icon name="shield" className="text-[17px] text-outline group-hover:text-on-surface" />
+            {activeDomain === "models" ? <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" /> : null}
+          </button>
+          <button type="button" onClick={() => setActiveDomain("permissions")} className={navItemClass(activeDomain === "permissions")}>
+            <Icon name="shield" className={`text-[17px] ${activeDomain === "permissions" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md">
+              <span className={`font-label-md text-label-md ${activeDomain === "permissions" ? "font-semibold text-on-surface" : ""}`}>
                 权限与安全沙箱 Permissions
               </span>
-              <span className="font-code-sm text-code-sm text-outline">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "permissions" ? "text-primary/80" : "text-outline"}`}>
                 Terminal, Shell, File Guards
               </span>
             </div>
+            {activeDomain === "permissions" ? <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" /> : null}
           </button>
-          <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <Icon name="keyboard" className="text-[17px] text-outline group-hover:text-on-surface" />
+          <button type="button" onClick={() => setActiveDomain("keybindings")} className={navItemClass(activeDomain === "keybindings")}>
+            <Icon name="keyboard" className={`text-[17px] ${activeDomain === "keybindings" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md">
+              <span className={`font-label-md text-label-md ${activeDomain === "keybindings" ? "font-semibold text-on-surface" : ""}`}>
                 快捷键 Keybindings
               </span>
-              <span className="font-code-sm text-code-sm text-outline">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "keybindings" ? "text-primary/80" : "text-outline"}`}>
                 Vim mode, Hotkeys
               </span>
             </div>
+            {activeDomain === "keybindings" ? <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" /> : null}
           </button>
-          <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <Icon name="hub" className="text-[17px] text-outline group-hover:text-on-surface" />
+          <button type="button" onClick={() => setActiveDomain("plugins")} className={navItemClass(activeDomain === "plugins")}>
+            <Icon name="hub" className={`text-[17px] ${activeDomain === "plugins" ? "text-primary" : "text-outline group-hover:text-on-surface"}`} />
             <div className="flex flex-col">
-              <span className="font-label-md text-label-md">
+              <span className={`font-label-md text-label-md ${activeDomain === "plugins" ? "font-semibold text-on-surface" : ""}`}>
                 扩展与 MCP 服务 Plugins &amp; MCP
               </span>
-              <span className="font-code-sm text-code-sm text-outline">
+              <span className={`font-code-sm text-code-sm ${activeDomain === "plugins" ? "text-primary/80" : "text-outline"}`}>
                 Model Context Protocol
               </span>
             </div>
-            <span className="font-code-sm text-code-sm px-1.5 py-0.2 rounded bg-tertiary-container/30 text-tertiary ml-auto">
-              3 Active
-            </span>
+            {activeDomain === "plugins" ? (
+              <Icon name="chevron_right" className="ml-auto text-[16px] text-primary" />
+            ) : (
+              <span className="ml-auto rounded bg-tertiary-container/30 px-1.5 py-0.5 font-code-sm text-code-sm text-tertiary">
+                3 Active
+              </span>
+            )}
           </button>
         </div>
         <div className="mt-space-lg p-space-md rounded-xl bg-surface-container-low flex flex-col gap-2">
@@ -151,9 +173,16 @@ export function SettingsPage() {
           </span>
         </div>
       </nav>
-      {/* Right Main Workspace */}
-      <div className="col-span-12 md:col-span-9 lg:col-span-9 p-space-xl overflow-y-auto space-y-space-xl">
-        {/* Section 1: 外观与主题 */}
+      {/* Right Main Workspace — only this column scrolls */}
+      <div ref={contentScrollerRef} className="min-h-0 min-w-0 flex-1 overflow-y-auto p-space-xl">
+        <div className="space-y-space-xl">
+        {activeDomain === "general" ? (
+          <section className="flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-xl shadow-sm">
+            <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">通用 General</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">遥测、更新与同步选项将在此配置。</p>
+          </section>
+        ) : null}
+        {activeDomain === "appearance" ? (
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
@@ -346,7 +375,8 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
-        {/* Section 2: 模型与推理配置 */}
+        ) : null}
+        {activeDomain === "models" ? (
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
@@ -370,11 +400,18 @@ export function SettingsPage() {
                 默认主模型 Primary Agent Model
               </label>
               <ModelSelect variant="field" fallback="Sonnet-3.5" />
-              <span className="font-code-sm text-code-sm text-outline">
+              <p className="font-code-sm text-code-sm text-outline">
                 保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek V4 Flash。
-                {flashModelId ? <span className="mt-0.5 block font-mono text-[10px]">deepseek/{flashModelId}</span> : null}
-                <a className="ml-2 text-primary hover:underline" href="#/credentials">管理密钥</a>
-              </span>
+                {flashModelId ? <span className="mt-0.5 block font-mono text-[10px] text-on-surface-variant">deepseek/{flashModelId}</span> : null}
+              </p>
+              <a
+                href="#/credentials"
+                className="mt-space-xs inline-flex w-fit items-center gap-2 rounded-lg border border-primary/50 bg-primary/15 px-space-md py-2 font-label-sm text-label-sm font-semibold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary/25 hover:text-on-primary-container"
+              >
+                <Icon name="vpn_key" className="text-[18px]" />
+                <span>管理密钥</span>
+                <Icon name="chevron_right" className="text-[16px] opacity-80" />
+              </a>
             </div>
             {/* Fast Model */}
             <div className="flex flex-col gap-space-xs">
@@ -446,7 +483,8 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
-        {/* Section 3: 安全与命令执行权限 (Security Sandbox) */}
+        ) : null}
+        {activeDomain === "permissions" ? (
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
@@ -606,10 +644,23 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
+        ) : null}
+        {activeDomain === "keybindings" ? (
+          <section className="flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-xl shadow-sm">
+            <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">快捷键 Keybindings</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">Vim 模式与快捷键映射将在此配置。</p>
+          </section>
+        ) : null}
+        {activeDomain === "plugins" ? (
+          <section className="flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-xl shadow-sm">
+            <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">扩展与 MCP 服务</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">Model Context Protocol 扩展将在此管理。</p>
+          </section>
+        ) : null}
+        </div>
       </div>
     </div>
-    {/* Bottom Sticky Save Bar */}
-    <div className="sticky bottom-0 left-0 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur px-space-xl flex items-center justify-between shadow-xl z-20">
+    <footer className="relative z-10 flex h-14 shrink-0 items-center justify-between border-t border-outline-variant/20 bg-surface-container-lowest/90 px-space-xl shadow-xl backdrop-blur">
       <div className="flex items-center gap-space-md">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-tertiary">
@@ -639,7 +690,7 @@ export function SettingsPage() {
           </span>
         </button>
       </div>
-    </div>
+    </footer>
   </div>
   );
 }
