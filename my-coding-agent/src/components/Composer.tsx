@@ -40,18 +40,18 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
           </a>
         </div>
       ) : null}
-      <div className="mx-auto flex min-h-11 max-w-5xl items-end gap-2 rounded-[24px] border border-[#3b3b3b] bg-[#232323] px-3 py-2 shadow-sm transition-colors focus-within:border-[#606060] sm:items-center">
+      <div className="mx-auto flex min-h-11 max-w-5xl items-end gap-2 rounded-pill border border-composer-border bg-composer-surface px-3 py-2 shadow-sm transition-colors focus-within:border-composer-border-focus sm:items-center">
         <button
           type="button"
           title="添加文件"
           aria-label="添加文件"
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3b3b3b] text-[#d4d4d4] transition-colors hover:bg-[#505050]"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-composer-chip text-composer-text-secondary transition-colors hover:bg-composer-chip-hover"
         >
           <Icon name="add" className="text-[18px]" />
         </button>
         <textarea
           ref={textareaRef}
-          className="min-h-6 max-h-32 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-0 text-[14px] leading-6 text-[#f1f1f1] outline-none placeholder:text-[#8f8f8f]"
+          className="scrollbar-hidden min-h-6 max-h-32 min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-0 font-body-md text-body-md leading-6 text-composer-text outline-none placeholder:text-composer-muted"
           placeholder="继续提问…"
           aria-label="消息内容；按 Enter 发送，Shift+Enter 换行"
           rows={1}
@@ -64,7 +64,7 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
           }}
           onKeyDown={onKeyDown}
         />
-        <div className="mb-0.5 flex shrink-0 items-center gap-2 border-l border-[#3b3b3b] pl-2 sm:mb-0">
+        <div className="mb-0.5 flex shrink-0 items-center gap-2 border-l border-composer-border pl-2 sm:mb-0">
           <ModelSelect variant="composer" fallback={label} />
           <button
             type="button"
@@ -72,7 +72,7 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
             aria-label="发送"
             disabled={!text.trim() || busy}
             onClick={() => void send()}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#222] transition-opacity enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-inverse-surface text-inverse-on-surface transition-opacity enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
           >
             <Icon name="arrow_upward" className="text-[20px] leading-none" fill />
           </button>

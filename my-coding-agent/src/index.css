@@ -122,12 +122,45 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #464653 transparent;
+}
+
 ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: #464653;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #908f9f;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
 
 summary::-webkit-details-marker {
   display: none;
+}
+
+@layer components {
+  .popover-panel {
+    @apply max-h-64 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface-container-high py-1 shadow-[0_8px_24px_rgba(0,0,0,0.45)];
+  }
 }
 
 @layer base {

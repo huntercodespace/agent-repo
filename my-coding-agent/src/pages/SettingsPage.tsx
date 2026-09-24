@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from "react";
+import { Icon } from "../components/Icon";
 import { ModelSelect } from "../components/ModelSelect";
 import { useCredentialBoard } from "../credentials/board";
 
@@ -22,9 +23,7 @@ export function SettingsPage() {
     <div className="px-space-lg py-space-md border-b border-transparent bg-surface-container-lowest/60 backdrop-blur flex items-center justify-between">
       <div className="flex items-center gap-space-md">
         <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shadow-sm">
-          <span className="material-symbols-outlined text-[18px]">
-            tune
-          </span>
+          <Icon name="tune" className="text-[18px]" />
         </div>
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -49,9 +48,7 @@ export function SettingsPage() {
           </span>
         </span>
         <button className="h-8 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex items-center gap-1.5 transition-colors" type="button">
-          <span className="material-symbols-outlined text-[15px]">
-            file_download
-          </span>
+          <Icon name="file_download" className="text-[15px]" />
           <span>
             导出 JSON
           </span>
@@ -66,9 +63,7 @@ export function SettingsPage() {
             配置范畴 DOMAINS
           </div>
           <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <span className="material-symbols-outlined text-[17px] text-outline group-hover:text-on-surface">
-              settings
-            </span>
+            <Icon name="settings" className="text-[17px] text-outline group-hover:text-on-surface" />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md">
                 通用 General
@@ -79,9 +74,7 @@ export function SettingsPage() {
             </div>
           </button>
           <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all bg-surface-container-high text-primary shadow-sm group" type="button">
-            <span className="material-symbols-outlined text-[17px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              palette
-            </span>
+            <Icon name="palette" className="text-[17px] text-primary" fill />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md font-semibold text-on-surface">
                 外观与主题 Appearance
@@ -90,14 +83,10 @@ export function SettingsPage() {
                 Theme, Typography, Density
               </span>
             </div>
-            <span className="material-symbols-outlined text-[16px] ml-auto text-primary">
-              chevron_right
-            </span>
+            <Icon name="chevron_right" className="text-[16px] ml-auto text-primary" />
           </button>
           <a className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" href="#/credentials">
-            <span className="material-symbols-outlined text-[17px] text-outline group-hover:text-on-surface">
-              psychology
-            </span>
+            <Icon name="psychology" className="text-[17px] text-outline group-hover:text-on-surface" />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md">
                 模型与计算 Models &amp; Inference
@@ -108,9 +97,7 @@ export function SettingsPage() {
             </div>
           </a>
           <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <span className="material-symbols-outlined text-[17px] text-outline group-hover:text-on-surface">
-              shield
-            </span>
+            <Icon name="shield" className="text-[17px] text-outline group-hover:text-on-surface" />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md">
                 权限与安全沙箱 Permissions
@@ -121,9 +108,7 @@ export function SettingsPage() {
             </div>
           </button>
           <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <span className="material-symbols-outlined text-[17px] text-outline group-hover:text-on-surface">
-              keyboard
-            </span>
+            <Icon name="keyboard" className="text-[17px] text-outline group-hover:text-on-surface" />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md">
                 快捷键 Keybindings
@@ -134,9 +119,7 @@ export function SettingsPage() {
             </div>
           </button>
           <button className="w-full flex items-center gap-space-sm px-space-md py-2.5 rounded text-left transition-all text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface group" type="button">
-            <span className="material-symbols-outlined text-[17px] text-outline group-hover:text-on-surface">
-              hub
-            </span>
+            <Icon name="hub" className="text-[17px] text-outline group-hover:text-on-surface" />
             <div className="flex flex-col">
               <span className="font-label-md text-label-md">
                 扩展与 MCP 服务 Plugins &amp; MCP
@@ -174,9 +157,7 @@ export function SettingsPage() {
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
-              <span className="material-symbols-outlined text-primary text-[20px]">
-                palette
-              </span>
+              <Icon name="palette" className="text-primary text-[20px]" />
               <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
                 外观与主题 Appearance
               </h2>
@@ -194,9 +175,7 @@ export function SettingsPage() {
               {/* Option 1 (Selected) */}
               <div className="p-space-md rounded-lg bg-surface-container-high shadow-md flex flex-col gap-space-sm relative cursor-pointer group">
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center text-on-primary">
-                  <span className="material-symbols-outlined text-[11px] font-bold">
-                    check
-                  </span>
+                  <Icon name="check" className="text-[11px] font-bold" />
                 </div>
                 <div className="h-16 rounded bg-surface-container-lowest p-2 flex flex-col justify-between">
                   <div className="flex gap-1">
@@ -310,17 +289,13 @@ export function SettingsPage() {
                   <span className="font-code-md text-code-md text-on-surface">
                     JetBrains Mono (Code)
                   </span>
-                  <span className="material-symbols-outlined text-outline text-[16px]">
-                    expand_more
-                  </span>
+                  <Icon name="expand_more" className="text-outline text-[16px]" />
                 </div>
                 <div className="flex-1 h-9 rounded bg-surface-container px-space-md flex items-center justify-between">
                   <span className="font-body-md text-body-md text-on-surface">
                     Inter / PingFang (UI)
                   </span>
-                  <span className="material-symbols-outlined text-outline text-[16px]">
-                    expand_more
-                  </span>
+                  <Icon name="expand_more" className="text-outline text-[16px]" />
                 </div>
               </div>
               <span className="font-code-sm text-code-sm text-outline">
@@ -357,17 +332,13 @@ export function SettingsPage() {
             </label>
             <div className="flex items-center gap-space-sm max-w-md">
               <button className="flex-1 h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center gap-2 transition-colors" type="button">
-                <span className="material-symbols-outlined text-[15px]">
-                  density_small
-                </span>
+                <Icon name="density_small" className="text-[15px]" />
                 <span>
                   紧凑 Compact (4px grid)
                 </span>
               </button>
               <button className="flex-1 h-8 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center justify-center gap-2 shadow-sm" type="button">
-                <span className="material-symbols-outlined text-[15px]">
-                  density_medium
-                </span>
+                <Icon name="density_medium" className="text-[15px]" />
                 <span>
                   舒适 Cozy (8px/12px)
                 </span>
@@ -379,9 +350,7 @@ export function SettingsPage() {
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
-              <span className="material-symbols-outlined text-secondary text-[20px]">
-                cognition
-              </span>
+              <Icon name="cognition" className="text-secondary text-[20px]" />
               <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
                 模型与推理配置 Models &amp; Inference
               </h2>
@@ -423,9 +392,7 @@ export function SettingsPage() {
                     (Low latency autocomplete)
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-outline text-[16px]">
-                  unfold_more
-                </span>
+                <Icon name="unfold_more" className="text-outline text-[16px]" />
               </div>
               <span className="font-code-sm text-code-sm text-outline">
                 行内代码预测补全及次秒级单行指令解析
@@ -448,9 +415,7 @@ export function SettingsPage() {
                 <span className="font-code-md text-code-md text-on-surface">
                   128k (Dynamic Compression Active)
                 </span>
-                <span className="material-symbols-outlined text-outline text-[16px]">
-                  compress
-                </span>
+                <Icon name="compress" className="text-outline text-[16px]" />
               </div>
               <span className="font-code-sm text-code-sm text-outline">
                 自动触发 RAG 语意剪枝以控制单次推理 Token 账单
@@ -469,9 +434,7 @@ export function SettingsPage() {
                   中 Medium
                 </button>
                 <button className="rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1 shadow-sm" type="button">
-                  <span className="material-symbols-outlined text-[14px]">
-                    auto_awesome
-                  </span>
+                  <Icon name="auto_awesome" className="text-[14px]" />
                   <span>
                     高 (深入推理)
                   </span>
@@ -487,9 +450,7 @@ export function SettingsPage() {
         <section className="flex flex-col gap-space-md bg-surface-container-low p-space-xl rounded-xl shadow-sm">
           <div className="flex items-center justify-between pb-space-xs">
             <div className="flex items-center gap-space-sm">
-              <span className="material-symbols-outlined text-tertiary text-[20px]">
-                security
-              </span>
+              <Icon name="security" className="text-tertiary text-[20px]" />
               <h2 className="font-headline-sm text-headline-sm font-semibold text-on-surface">
                 安全与命令执行权限 (Security Sandbox)
               </h2>
@@ -587,9 +548,7 @@ export function SettingsPage() {
             <div className="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-outline text-[16px]">
-                    lock
-                  </span>
+                  <Icon name="lock" className="text-outline text-[16px]" />
                   <span className="font-body-sm text-body-sm text-on-surface">
                     默认屏蔽读取的环境机密文件：
                   </span>
@@ -600,64 +559,42 @@ export function SettingsPage() {
               </div>
               <div className="flex flex-wrap gap-space-xs items-center">
                 <span className="font-code-sm text-code-sm px-2 py-1 rounded bg-surface-container-high text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-error">
-                    key
-                  </span>
+                  <Icon name="key" className="text-[13px] text-error" />
                   <span>
                     .env
                   </span>
-                  <span className="material-symbols-outlined text-[13px] text-outline hover:text-on-surface cursor-pointer">
-                    close
-                  </span>
+                  <Icon name="close" className="text-[13px] text-outline hover:text-on-surface cursor-pointer" />
                 </span>
                 <span className="font-code-sm text-code-sm px-2 py-1 rounded bg-surface-container-high text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-error">
-                    key
-                  </span>
+                  <Icon name="key" className="text-[13px] text-error" />
                   <span>
                     .env.production
                   </span>
-                  <span className="material-symbols-outlined text-[13px] text-outline hover:text-on-surface cursor-pointer">
-                    close
-                  </span>
+                  <Icon name="close" className="text-[13px] text-outline hover:text-on-surface cursor-pointer" />
                 </span>
                 <span className="font-code-sm text-code-sm px-2 py-1 rounded bg-surface-container-high text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-error">
-                    vpn_key
-                  </span>
+                  <Icon name="vpn_key" className="text-[13px] text-error" />
                   <span>
                     id_rsa
                   </span>
-                  <span className="material-symbols-outlined text-[13px] text-outline hover:text-on-surface cursor-pointer">
-                    close
-                  </span>
+                  <Icon name="close" className="text-[13px] text-outline hover:text-on-surface cursor-pointer" />
                 </span>
                 <span className="font-code-sm text-code-sm px-2 py-1 rounded bg-surface-container-high text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-error">
-                    vpn_key
-                  </span>
+                  <Icon name="vpn_key" className="text-[13px] text-error" />
                   <span>
                     id_ed25519
                   </span>
-                  <span className="material-symbols-outlined text-[13px] text-outline hover:text-on-surface cursor-pointer">
-                    close
-                  </span>
+                  <Icon name="close" className="text-[13px] text-outline hover:text-on-surface cursor-pointer" />
                 </span>
                 <span className="font-code-sm text-code-sm px-2 py-1 rounded bg-surface-container-high text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-outline">
-                    description
-                  </span>
+                  <Icon name="description" className="text-[13px] text-outline" />
                   <span>
                     *.pem
                   </span>
-                  <span className="material-symbols-outlined text-[13px] text-outline hover:text-on-surface cursor-pointer">
-                    close
-                  </span>
+                  <Icon name="close" className="text-[13px] text-outline hover:text-on-surface cursor-pointer" />
                 </span>
                 <button className="h-7 px-2.5 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-xs text-label-xs flex items-center gap-1 transition-colors" type="button">
-                  <span className="material-symbols-outlined text-[14px]">
-                    add
-                  </span>
+                  <Icon name="add" className="text-[14px]" />
                   <span>
                     添加规则模式
                   </span>
@@ -690,17 +627,13 @@ export function SettingsPage() {
       </div>
       <div className="flex items-center gap-space-sm">
         <button className="h-8 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1.5 transition-colors" type="button">
-          <span className="material-symbols-outlined text-[15px]">
-            restart_alt
-          </span>
+          <Icon name="restart_alt" className="text-[15px]" />
           <span>
             重置为默认值 (Restore Defaults)
           </span>
         </button>
         <button className="h-8 px-space-lg rounded bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-label-sm text-label-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors" type="button">
-          <span className="material-symbols-outlined text-[15px]">
-            check
-          </span>
+          <Icon name="check" className="text-[15px]" />
           <span>
             同步到远程团队策略
           </span>

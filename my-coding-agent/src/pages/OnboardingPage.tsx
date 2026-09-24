@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon } from "../components/Icon";
 import { useRpc } from "../rpc/RpcProvider";
 
 export function OnboardingPage() {
@@ -95,9 +96,7 @@ export function OnboardingPage() {
             </div>
             <div className="flex items-center gap-space-md">
               <button className="flex items-center gap-space-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" onClick={() => setModal((current) => (current === "shortcut" ? null : "shortcut"))}>
-                <span className="material-symbols-outlined text-[16px]">
-                  keyboard
-                </span>
+                <Icon name="keyboard" className="text-[16px]" />
                 <span className="font-label-sm text-label-sm">
                   快捷键清单
                 </span>
@@ -154,9 +153,7 @@ export function OnboardingPage() {
               {/* Rapid Command Trigger Strip */}
               <div className="mt-space-lg w-full max-w-md bg-surface-container-low rounded-lg p-1.5 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-space-sm pl-space-sm min-w-0">
-                  <span className="material-symbols-outlined text-outline text-[18px] flex-shrink-0">
-                    terminal
-                  </span>
+                  <Icon name="terminal" className="text-outline text-[18px] flex-shrink-0" />
                   <input className="bg-transparent border-0 outline-none text-on-surface font-body-sm text-body-sm w-full placeholder:text-outline/60 truncate" placeholder="输入自然语言需求或快捷操作..." readOnly={true} type="text" onClick={() => showToast("请先载入或创建工程目录")} />
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -176,9 +173,7 @@ export function OnboardingPage() {
               <div>
                 <div className="flex items-center justify-between mb-space-md">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-[22px]">
-                      folder_open
-                    </span>
+                    <Icon name="folder_open" className="text-[22px]" />
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded bg-surface-container-highest text-primary font-label-xs text-label-xs font-medium">
@@ -199,9 +194,7 @@ export function OnboardingPage() {
               <div className="pt-space-md flex items-center justify-between font-label-sm text-label-sm text-primary font-medium">
                 <span className="flex items-center gap-1">
                   浏览本地存储
-                  <span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">
-                    arrow_forward
-                  </span>
+                  <Icon name="arrow_forward" className="text-[16px] group-hover:translate-x-0.5 transition-transform" />
                 </span>
                 <span className="font-code-sm text-code-sm text-outline">
                   AUTO_INDEX
@@ -213,9 +206,7 @@ export function OnboardingPage() {
               <div>
                 <div className="flex items-center justify-between mb-space-md">
                   <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-[22px]">
-                      cloud_download
-                    </span>
+                    <Icon name="cloud_download" className="text-[22px]" />
                   </div>
                   <span className="font-code-sm text-code-sm text-outline">
                     HTTPS / SSH
@@ -231,9 +222,7 @@ export function OnboardingPage() {
               <div className="pt-space-md flex items-center justify-between font-label-sm text-label-sm text-secondary font-medium">
                 <span className="flex items-center gap-1">
                   克隆远程仓库
-                  <span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">
-                    arrow_forward
-                  </span>
+                  <Icon name="arrow_forward" className="text-[16px] group-hover:translate-x-0.5 transition-transform" />
                 </span>
                 <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-outline font-label-xs text-label-xs">
                   SSH_KEY
@@ -245,9 +234,7 @@ export function OnboardingPage() {
               <div>
                 <div className="flex items-center justify-between mb-space-md">
                   <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-[22px]">
-                      dataset
-                    </span>
+                    <Icon name="dataset" className="text-[22px]" />
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-tertiary">
@@ -267,9 +254,7 @@ export function OnboardingPage() {
               <div className="pt-space-md flex items-center justify-between font-label-sm text-label-sm text-tertiary font-medium">
                 <span className="flex items-center gap-1">
                   模板工厂
-                  <span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">
-                    arrow_forward
-                  </span>
+                  <Icon name="arrow_forward" className="text-[16px] group-hover:translate-x-0.5 transition-transform" />
                 </span>
                 <span className="font-code-sm text-code-sm text-outline">
                   TEMPLATES (12)
@@ -283,9 +268,7 @@ export function OnboardingPage() {
             <div className="lg:col-span-8 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-space-md pb-space-sm">
                 <div className="flex items-center gap-space-sm">
-                  <span className="material-symbols-outlined text-primary text-[20px]">
-                    history
-                  </span>
+                  <Icon name="history" className="text-primary text-[20px]" />
                   <h2 className="font-headline-sm text-headline-sm text-on-surface">
                     近期打开的工程
                   </h2>
@@ -305,9 +288,7 @@ export function OnboardingPage() {
                 <div className="group flex items-center justify-between p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer" onClick={() => openProject("demo-monorepo")}>
                   <div className="flex items-center gap-space-md min-w-0">
                     <div className="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors flex-shrink-0">
-                      <span className="material-symbols-outlined text-[18px]">
-                        account_tree
-                      </span>
+                      <Icon name="account_tree" className="text-[18px]" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-space-sm">
@@ -337,9 +318,7 @@ export function OnboardingPage() {
                       </span>
                     </div>
                     <button className="w-8 h-8 rounded bg-surface-container hover:bg-primary-container text-on-surface-variant hover:text-on-primary transition-colors flex items-center justify-center" title="进入工程">
-                      <span className="material-symbols-outlined text-[18px]">
-                        arrow_forward
-                      </span>
+                      <Icon name="arrow_forward" className="text-[18px]" />
                     </button>
                   </div>
                 </div>
@@ -347,9 +326,7 @@ export function OnboardingPage() {
                 <div className="group flex items-center justify-between p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer" onClick={() => openProject("payment-core")}>
                   <div className="flex items-center gap-space-md min-w-0">
                     <div className="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors flex-shrink-0">
-                      <span className="material-symbols-outlined text-[18px]">
-                        lock
-                      </span>
+                      <Icon name="lock" className="text-[18px]" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-space-sm">
@@ -377,9 +354,7 @@ export function OnboardingPage() {
                       </span>
                     </div>
                     <button className="w-8 h-8 rounded bg-surface-container hover:bg-secondary-container text-on-surface-variant hover:text-on-secondary transition-colors flex items-center justify-center" title="进入工程">
-                      <span className="material-symbols-outlined text-[18px]">
-                        arrow_forward
-                      </span>
+                      <Icon name="arrow_forward" className="text-[18px]" />
                     </button>
                   </div>
                 </div>
@@ -387,9 +362,7 @@ export function OnboardingPage() {
                 <div className="group flex items-center justify-between p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer" onClick={() => openProject("ml-pipeline")}>
                   <div className="flex items-center gap-space-md min-w-0">
                     <div className="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-on-tertiary transition-colors flex-shrink-0">
-                      <span className="material-symbols-outlined text-[18px]">
-                        memory
-                      </span>
+                      <Icon name="memory" className="text-[18px]" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-space-sm">
@@ -417,9 +390,7 @@ export function OnboardingPage() {
                       </span>
                     </div>
                     <button className="w-8 h-8 rounded bg-surface-container hover:bg-tertiary-container text-on-surface-variant hover:text-on-tertiary transition-colors flex items-center justify-center" title="进入工程">
-                      <span className="material-symbols-outlined text-[18px]">
-                        arrow_forward
-                      </span>
+                      <Icon name="arrow_forward" className="text-[18px]" />
                     </button>
                   </div>
                 </div>
@@ -427,9 +398,7 @@ export function OnboardingPage() {
               {/* Bottom micro actions */}
               <div className="mt-space-md pt-space-sm flex items-center justify-between font-label-sm text-label-sm text-outline">
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">
-                    tune
-                  </span>
+                  <Icon name="tune" className="text-[14px]" />
                   本地缓存索引占用: 48.2 MB
                 </span>
                 <button className="hover:text-on-surface transition-colors cursor-pointer" onClick={() => showToast("已清除历史缓存")}>
@@ -515,9 +484,7 @@ export function OnboardingPage() {
               </div>
               <div className="mt-space-lg pt-space-md">
                 <button className="w-full py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-space-xs" onClick={() => showToast("内存与上下文索引自检通过 (0 警告)")}>
-                  <span className="material-symbols-outlined text-[16px]">
-                    speed
-                  </span>
+                  <Icon name="speed" className="text-[16px]" />
                   <span>
                     运行工作区性能自检
                   </span>
@@ -531,9 +498,7 @@ export function OnboardingPage() {
               {/* Tip 1 */}
               <div className="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest/60">
                 <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
-                  <span className="material-symbols-outlined text-[18px]">
-                    lightbulb
-                  </span>
+                  <Icon name="lightbulb" className="text-[18px]" />
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-space-xs mb-0.5">
@@ -552,9 +517,7 @@ export function OnboardingPage() {
               {/* Tip 2 */}
               <div className="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest/60">
                 <div className="w-7 h-7 rounded bg-secondary/10 flex items-center justify-center text-secondary flex-shrink-0 mt-0.5">
-                  <span className="material-symbols-outlined text-[18px]">
-                    bolt
-                  </span>
+                  <Icon name="bolt" className="text-[18px]" />
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-space-xs mb-0.5">
@@ -573,9 +536,7 @@ export function OnboardingPage() {
               {/* Tip 3 */}
               <div className="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest/60">
                 <div className="w-7 h-7 rounded bg-tertiary/10 flex items-center justify-center text-tertiary flex-shrink-0 mt-0.5">
-                  <span className="material-symbols-outlined text-[18px]">
-                    difference
-                  </span>
+                  <Icon name="difference" className="text-[18px]" />
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-space-xs mb-0.5">
@@ -617,9 +578,7 @@ export function OnboardingPage() {
             </div>
             <div className="flex items-center gap-space-sm">
               <span className="flex items-center gap-1 text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px]">
-                  terminal
-                </span>
+                <Icon name="terminal" className="text-[14px]" />
                 Shell: zsh / bash
               </span>
               <span>
@@ -633,21 +592,17 @@ export function OnboardingPage() {
         </div>
       </div>
       {/* Interactive Modal: Git Clone Prompt (Hidden by default) */}
-      <div className={modal === "clone" ? "fixed inset-0 bg-surface/80 backdrop-blur-sm z-50 flex items-center justify-center p-margin" : "hidden"} id="cloneModal">
+      <div className={modal === "clone" ? "fixed inset-0 bg-surface/80 backdrop-blur-sm z-dropdown flex items-center justify-center p-margin" : "hidden"} id="cloneModal">
         <div className="bg-surface-container-lowest rounded-xl max-w-lg w-full p-space-xl shadow-2xl relative">
           <div className="flex items-center justify-between mb-space-md">
             <div className="flex items-center gap-space-sm">
-              <span className="material-symbols-outlined text-secondary text-[22px]">
-                cloud_download
-              </span>
+              <Icon name="cloud_download" className="text-secondary text-[22px]" />
               <h3 className="font-headline-sm text-headline-sm text-on-surface font-medium">
                 克隆远程 Git 仓库
               </h3>
             </div>
             <button className="text-outline hover:text-on-surface transition-colors cursor-pointer" onClick={() => setModal((current) => (current === "clone" ? null : "clone"))}>
-              <span className="material-symbols-outlined text-[20px]">
-                close
-              </span>
+              <Icon name="close" className="text-[20px]" />
             </button>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
@@ -677,9 +632,7 @@ export function OnboardingPage() {
               取消
             </button>
             <button className="px-space-xl py-2 rounded-lg bg-primary-container hover:bg-primary text-on-primary-container hover:text-on-primary font-label-md text-label-md font-semibold transition-colors flex items-center gap-space-xs" onClick={startClone}>
-              <span className="material-symbols-outlined text-[18px]">
-                downloading
-              </span>
+              <Icon name="downloading" className="text-[18px]" />
               <span>
                 开始克隆
               </span>
@@ -688,16 +641,14 @@ export function OnboardingPage() {
         </div>
       </div>
       {/* Interactive Modal: Shortcuts (Hidden by default) */}
-      <div className={modal === "shortcut" ? "fixed inset-0 bg-surface/80 backdrop-blur-sm z-50 flex items-center justify-center p-margin" : "hidden"} id="shortcutModal">
+      <div className={modal === "shortcut" ? "fixed inset-0 bg-surface/80 backdrop-blur-sm z-dropdown flex items-center justify-center p-margin" : "hidden"} id="shortcutModal">
         <div className="bg-surface-container-lowest rounded-xl max-w-md w-full p-space-xl shadow-2xl relative">
           <div className="flex items-center justify-between mb-space-md">
             <h3 className="font-headline-sm text-headline-sm text-on-surface font-medium">
               键盘快捷键
             </h3>
             <button className="text-outline hover:text-on-surface transition-colors cursor-pointer" onClick={() => setModal((current) => (current === "shortcut" ? null : "shortcut"))}>
-              <span className="material-symbols-outlined text-[20px]">
-                close
-              </span>
+              <Icon name="close" className="text-[20px]" />
             </button>
           </div>
           <div className="flex flex-col gap-space-sm font-body-sm text-body-sm">
@@ -742,10 +693,8 @@ export function OnboardingPage() {
         </div>
       </div>
       {/* Micro Notification Toast Container */}
-      <div className={"fixed bottom-space-lg right-space-lg z-50 transform transition-all duration-300 flex items-center gap-space-sm px-space-md py-space-sm rounded-lg bg-surface-container-highest text-on-surface shadow-2xl" + (toast ? "" : " translate-y-12 opacity-0 pointer-events-none")} id="quickToast">
-        <span className="material-symbols-outlined text-primary text-[18px]">
-          info
-        </span>
+      <div className={"fixed bottom-space-lg right-space-lg z-dropdown transform transition-all duration-300 flex items-center gap-space-sm px-space-md py-space-sm rounded-lg bg-surface-container-highest text-on-surface shadow-2xl" + (toast ? "" : " translate-y-12 opacity-0 pointer-events-none")} id="quickToast">
+        <Icon name="info" className="text-primary text-[18px]" />
         <span className="font-body-sm text-body-sm" id="toastMsg">
           {toast ?? "系统就绪"}
         </span>

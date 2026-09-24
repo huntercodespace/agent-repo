@@ -84,7 +84,7 @@ export default function App() {
 
   if (route === "onboarding") {
     return (
-      <div className="h-screen overflow-hidden bg-surface font-body-md text-body-md text-on-surface">
+      <div className="h-screen overflow-hidden bg-surface font-body-md text-body-md text-on-surface antialiased">
         <OnboardingPage />
       </div>
     );
@@ -103,7 +103,7 @@ export default function App() {
     : <WorkspacePage />;
 
   return (
-    <div className="h-screen select-none overflow-hidden bg-surface font-body-md text-body-md text-on-surface">
+    <div className="h-screen overflow-hidden bg-surface font-body-md text-body-md text-on-surface antialiased">
       <TitleBar showTerminal={route === "diff" || route === "workspace"} />
       <Sidebar route={route === "branch" ? underlay : route} bottomClass={shell.side} />
       <div className={`h-full min-h-0 pl-60 pt-10 ${shell.pad}`}>

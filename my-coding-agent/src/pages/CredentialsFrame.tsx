@@ -38,7 +38,7 @@ export function CredentialsFrame() {
   const cwd = status.available ? status.cwd : "";
   const paths = workspaceState.paths.length ? workspaceState.paths : cwd ? [cwd] : [];
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-pi-bg font-sans text-xs text-[#c9d1d9] antialiased selection:bg-pi-accent selection:text-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-pi-bg font-sans text-xs text-pi-text antialiased selection:bg-pi-accent selection:text-white">
       <header className="flex h-10 shrink-0 select-none items-center justify-between border-b border-pi-border bg-pi-surface pl-3">
         <div className="flex min-w-0 flex-1 items-center gap-4 text-[11px]">
           <button type="button" disabled={workspaceBusy} onClick={() => void addWorkspace()} className="flex items-center gap-1.5 rounded border border-pi-border bg-pi-card px-2.5 py-1 text-pi-muted transition-colors hover:bg-pi-cardHover hover:text-pi-text disabled:cursor-not-allowed disabled:opacity-50">

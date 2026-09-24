@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRpc } from "../rpc/RpcProvider";
 import type { GitFile, GitStatus } from "../git/types";
+import { Icon } from "../components/Icon";
 
 function fileLabel(file: GitFile) {
   if (file.index === "?" && file.worktree === "?") return "未跟踪";
@@ -164,7 +165,7 @@ export function DiffPage() {
             </p>
           </div>
           <button type="button" onClick={() => void refresh()} disabled={busy || loading} title="刷新 Git 状态" className="rounded p-1 text-on-surface-variant hover:bg-surface-container-high disabled:opacity-50">
-            <span className="material-symbols-outlined text-[18px]">refresh</span>
+            <Icon name="refresh" className="text-[18px]" />
           </button>
         </div>
         <div className="flex items-center justify-between px-space-md py-space-sm font-label-sm text-label-sm text-on-surface-variant">

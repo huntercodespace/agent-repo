@@ -32,7 +32,7 @@ export function Sidebar({ route, bottomClass = "bottom-6" }: { route: Route; bot
   }
 
   return (
-    <aside className={`fixed left-0 top-10 z-40 flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest ${bottomClass}`}>
+    <aside className={`fixed left-0 top-10 z-sidebar flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest ${bottomClass}`}>
       <div className="flex flex-col">
         <nav aria-label="工作区" className="flex flex-col gap-space-xs px-space-sm py-space-xs">
           <div className="px-space-sm pb-space-xs pt-space-sm font-label-xs text-label-xs font-semibold uppercase tracking-wider text-outline">

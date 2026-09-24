@@ -1,3 +1,5 @@
+import { Icon } from "../components/Icon";
+
 export function EngineStatusPage() {
   return (
     <div className="relative w-full h-full min-h-0 flex flex-col justify-between overflow-hidden">
@@ -7,9 +9,7 @@ export function EngineStatusPage() {
         <div className="h-9 bg-surface-container-low flex items-center justify-between px-space-md shadow-sm">
           <div className="flex items-center gap-space-xs">
             <div className="flex items-center gap-space-xs bg-surface-container px-space-md py-1 rounded-t text-on-surface">
-              <span className="material-symbols-outlined text-[15px] text-primary">
-                code
-              </span>
+              <Icon name="code" className="text-[15px] text-primary" />
               <span className="font-code-sm text-code-sm">
                 sse-pipeline.ts
               </span>
@@ -17,9 +17,7 @@ export function EngineStatusPage() {
               </span>
             </div>
             <div className="flex items-center gap-space-xs px-space-md py-1 text-outline hover:text-on-surface">
-              <span className="material-symbols-outlined text-[15px]">
-                terminal
-              </span>
+              <Icon name="terminal" className="text-[15px]" />
               <span className="font-code-sm text-code-sm">
                 agent-runner.test.ts
               </span>
@@ -131,9 +129,7 @@ export function EngineStatusPage() {
               已定位到事件流循环中 2 处潜在分配瓶颈。现已应用零内存拷贝环形缓冲区（RingBuffer），正在编译并运行针对性回归测试集...
             </div>
             <div className="bg-surface-container-lowest p-space-xs rounded font-code-sm text-code-sm text-on-surface-variant flex items-center gap-space-xs">
-              <span className="material-symbols-outlined text-[14px] text-tertiary">
-                check_circle
-              </span>
+              <Icon name="check_circle" className="text-[14px] text-tertiary" />
               <span className="">
                 tests/unit/sse-pipeline.test.ts [14 passed]
               </span>
@@ -147,9 +143,7 @@ export function EngineStatusPage() {
       <div className="absolute bottom-2 left-64 z-30 flex flex-col w-[380px] bg-surface-container-high/95 backdrop-blur-md border border-tertiary/40 rounded-lg shadow-2xl p-space-md pointer-events-auto">
         <div className="flex items-center justify-between pb-1.5 border-b border-outline-variant/30 mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-tertiary text-[18px]">
-              shield_with_heart
-            </span>
+            <Icon name="shield_with_heart" className="text-tertiary text-[18px]" />
             <span className="font-headline-sm text-[13px] font-semibold text-on-surface">
               沙盒隔离策略
             </span>
@@ -215,9 +209,7 @@ export function EngineStatusPage() {
         </div>
         <div className="flex items-center justify-between px-2 py-1 rounded bg-surface-container border border-secondary-container/40">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[13px] text-secondary">
-              refresh
-            </span>
+            <Icon name="refresh" className="text-[13px] text-secondary" />
             <span className="font-label-xs text-secondary font-medium">
               可重试
             </span>

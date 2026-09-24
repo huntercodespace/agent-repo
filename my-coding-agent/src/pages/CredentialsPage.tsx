@@ -130,7 +130,7 @@ export function CredentialsPage() {
           </div>
 
           <input
-            className="w-full bg-[#0d1017] border border-pi-border rounded px-3 py-1.5 text-xs text-pi-text font-mono focus:border-pi-accent focus:outline-none"
+            className="w-full rounded border border-pi-border bg-pi-input px-3 py-1.5 font-mono text-xs text-pi-text focus:border-pi-accent focus:outline-none"
             placeholder="搜索服务商或模型，例如 DeepSeek V4 Flash"
             value={query}
             onChange={(event) => setQuery(event.target.value)}

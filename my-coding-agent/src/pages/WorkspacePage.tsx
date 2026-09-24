@@ -1,26 +1,13 @@
 import { useEffect, useRef } from "react";
 import { Composer } from "../components/Composer";
-import { Icon } from "../components/Icon";
 import { LiveTranscript } from "../components/LiveTranscript";
 import { useRpc } from "../rpc/RpcProvider";
-
-function basename(cwd: string) {
-  const parts = cwd.split(/[\\/]/).filter(Boolean);
-  return parts[parts.length - 1] || cwd;
-}
 
 export function WorkspacePage() {
   const rpc = useRpc();
   const { hydrated } = rpc;
   const scroller = useRef<HTMLDivElement>(null);
   const live = rpc.status.available;
-  const readyLabel =
-    !live ? "Agent Ready"
-    : rpc.status.engine === "chatting" ? "对话中"
-    : rpc.status.engine === "reconnecting" ? "重连中"
-    : rpc.status.engine === "disconnected" ? "未连接"
-    : "Agent Ready";
-  const pid = live ? (rpc.status.pid ? String(rpc.status.pid) : "—") : "39420";
   const credentialGuide = live && hydrated && !rpc.status.credentials.configured
     ? "模型凭据未配置。API 密钥只留在主进程 AuthStorage（~/.pi/agent/auth.json）或环境变量里，不会进入这个窗口。"
     : null;

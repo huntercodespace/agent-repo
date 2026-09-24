@@ -152,7 +152,7 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
         {status?.status === "stored" && !editing && !failed ? (
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono text-pi-muted">当前指纹 (FINGERPRINT)</div>
-            <div className="flex items-center justify-between bg-[#0d1017] border border-pi-border rounded px-3 py-1.5">
+            <div className="flex items-center justify-between bg-pi-input border border-pi-border rounded px-3 py-1.5">
               <span className="font-mono text-xs text-emerald-400 tracking-wider">{status.mask}</span>
             </div>
             <p className="text-[10px] text-pi-muted font-mono">存储于本地 AuthStorage（~/.pi/agent/auth.json）</p>
@@ -162,7 +162,7 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
         {status?.status === "environment" && !editing && !failed ? (
           <div className="space-y-1.5">
             <div className="text-[11px] font-mono text-pi-muted">环境变量键名 (SYSTEM ENV)</div>
-            <div className="flex items-center justify-between bg-[#0d1017] border border-cyan-900/40 rounded px-3 py-1.5 input-disabled-stripes">
+            <div className="flex items-center justify-between bg-pi-input border border-cyan-900/40 rounded px-3 py-1.5 input-disabled-stripes">
               <span className="font-mono text-xs text-cyan-300 tracking-wide">${status.mask}</span>
             </div>
             <p className="text-[10px] text-pi-muted leading-tight">检测到环境变量已生效。保存本地密钥会覆盖它。</p>
@@ -171,7 +171,7 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
 
         {status?.status === "oauth" && !failed ? (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between bg-[#0d1017] border border-pi-border rounded px-3 py-1.5">
+            <div className="flex items-center justify-between bg-pi-input border border-pi-border rounded px-3 py-1.5">
               <span className="font-mono text-xs text-emerald-300">{status.mask}</span>
             </div>
             <p className="text-[10px] text-pi-muted">令牌只留在主进程 AuthStorage，界面不显示 access token。</p>
@@ -185,7 +185,7 @@ export function CredentialCard({ provider, status, oauth }: CredentialCardProps)
             </label>
             <input
               id={`key-${provider.id}`}
-              className={`w-full bg-[#0d1017] border rounded px-3 py-1.5 text-xs text-pi-text font-mono focus:outline-none ${failed ? "border-rose-500/40" : "border-pi-border focus:border-pi-accent"}`}
+              className={`w-full bg-pi-input border rounded px-3 py-1.5 text-xs text-pi-text font-mono focus:outline-none ${failed ? "border-rose-500/40" : "border-pi-border focus:border-pi-accent"}`}
               placeholder="只在保存时发到主进程"
               type="password"
               autoComplete="off"

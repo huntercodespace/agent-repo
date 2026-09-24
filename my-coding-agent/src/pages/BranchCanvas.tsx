@@ -1,3 +1,5 @@
+import { Icon } from "../components/Icon";
+
 export function BranchCanvas() {
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden text-on-surface">
@@ -9,9 +11,7 @@ export function BranchCanvas() {
   <section className="col-span-7 flex h-full min-h-0 flex-col overflow-hidden bg-surface border-r border-surface-container-high/40 min-w-0">
     <div className="h-10 px-space-md bg-surface-container-lowest flex items-center justify-between border-b border-surface-container-high/30">
       <div className="flex items-center gap-space-sm min-w-0">
-        <span className="material-symbols-outlined text-secondary text-[16px]">
-          terminal
-        </span>
+        <Icon name="terminal" className="text-secondary text-[16px]" />
         <span className="font-code-sm text-code-sm text-on-surface font-medium truncate">
           packages/core/src/parser/sse-stream.ts
         </span>
@@ -34,9 +34,7 @@ export function BranchCanvas() {
       <div className="rounded-xl bg-surface-container-low p-space-md shadow-md">
         <div className="flex items-center justify-between pb-2 border-b border-surface-container-high/40">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[18px]">
-              neurology
-            </span>
+            <Icon name="neurology" className="text-primary text-[18px]" />
             <span className="font-headline-sm text-body-md font-medium text-on-surface">
               优化建议: 零内存拷贝解析流
             </span>
@@ -185,9 +183,7 @@ export function BranchCanvas() {
     <div className="h-10 px-space-md bg-surface-container-lowest flex items-center justify-between border-b border-surface-container-high/30">
       <div className="flex items-center gap-2">
         <span className="px-2 py-1 rounded bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
-          <span className="material-symbols-outlined text-[14px]">
-            smart_toy
-          </span>
+          <Icon name="smart_toy" className="text-[14px]" />
           Agent 会话
         </span>
         <span className="px-2 py-1 rounded hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm cursor-pointer">
@@ -198,9 +194,7 @@ export function BranchCanvas() {
         </span>
       </div>
       <button className="h-6 w-6 rounded hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface">
-        <span className="material-symbols-outlined text-[16px]">
-          more_vert
-        </span>
+        <Icon name="more_vert" className="text-[16px]" />
       </button>
     </div>
     <div className="flex-1 overflow-y-auto p-space-md flex flex-col gap-space-md">
@@ -234,25 +228,19 @@ export function BranchCanvas() {
         </p>
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
-            <span className="material-symbols-outlined text-tertiary text-[16px]">
-              check_circle
-            </span>
+            <Icon name="check_circle" className="text-tertiary text-[16px]" />
             <span>
               消除中间 Buffer.concat 调用
             </span>
           </div>
           <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
-            <span className="material-symbols-outlined text-tertiary text-[16px]">
-              check_circle
-            </span>
+            <Icon name="check_circle" className="text-tertiary text-[16px]" />
             <span>
               新增循环双端队列以应对超长事件分包
             </span>
           </div>
           <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
-            <span className="material-symbols-outlined text-primary text-[16px]">
-              radio_button_checked
-            </span>
+            <Icon name="radio_button_checked" className="text-primary text-[16px]" />
             <span className="text-on-surface font-medium">
               已生成补丁，等待合并检阅
             </span>
@@ -260,9 +248,7 @@ export function BranchCanvas() {
         </div>
         <div className="flex items-center gap-2 pt-2">
           <button className="h-7 px-space-md rounded bg-primary text-on-primary hover:bg-primary-container font-label-sm text-label-sm font-semibold flex items-center gap-1 shadow transition-colors">
-            <span className="material-symbols-outlined text-[15px]">
-              done_all
-            </span>
+            <Icon name="done_all" className="text-[15px]" />
             接受全部建议
           </button>
           <button className="h-7 px-space-md rounded bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-sm text-label-sm transition-colors">
@@ -277,14 +263,10 @@ export function BranchCanvas() {
         <div className="flex items-center justify-between pt-1 text-outline font-label-xs">
           <div className="flex items-center gap-2">
             <button className="p-1 hover:text-on-surface rounded transition-colors" title="添加引用文件">
-              <span className="material-symbols-outlined text-[15px]">
-                attach_file
-              </span>
+              <Icon name="attach_file" className="text-[15px]" />
             </button>
             <button className="p-1 hover:text-on-surface rounded transition-colors" title="运行终端">
-              <span className="material-symbols-outlined text-[15px]">
-                terminal
-              </span>
+              <Icon name="terminal" className="text-[15px]" />
             </button>
             <span className="text-outline/60 font-code-sm">
               @agent-runtime

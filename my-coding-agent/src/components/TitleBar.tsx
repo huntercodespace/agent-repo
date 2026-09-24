@@ -110,7 +110,7 @@ export function TitleBar({ showTerminal = false }: { showTerminal?: boolean }) {
   }, [status.cwd]);
 
   return (
-    <header className="titlebar-drag fixed left-0 right-0 top-0 z-50 flex h-10 select-none items-center overflow-hidden bg-surface-container-lowest pl-space-md">
+    <header className="titlebar-drag fixed left-0 right-0 top-0 z-chrome flex h-10 select-none items-center overflow-hidden bg-surface-container-lowest pl-space-md">
       <div className="flex min-w-0 flex-1 items-center gap-space-md">
         <div className="titlebar-no-drag flex shrink-0 items-center gap-space-xs">
           <button

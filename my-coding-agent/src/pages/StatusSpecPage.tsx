@@ -1,3 +1,5 @@
+import { Icon } from "../components/Icon";
+
 export function StatusSpecPage() {
   return (
     <div className="h-full overflow-y-auto bg-surface-container-lowest">
@@ -7,9 +9,7 @@ export function StatusSpecPage() {
           <div className="flex flex-wrap items-center justify-between gap-space-md">
             <div className="flex items-center gap-space-md">
               <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined text-[18px]">
-                  dns
-                </span>
+                <Icon name="dns" className="text-[18px]" />
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-space-xs">
@@ -39,9 +39,7 @@ export function StatusSpecPage() {
                 </span>
               </div>
               <div className="flex items-center gap-space-xs px-2.5 py-1 rounded-DEFAULT bg-surface-container text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px] text-secondary">
-                  memory
-                </span>
+                <Icon name="memory" className="text-[14px] text-secondary" />
                 <span>
                   隔离级别: 
                   <span className="text-on-surface font-medium">
@@ -50,9 +48,7 @@ export function StatusSpecPage() {
                 </span>
               </div>
               <div className="flex items-center gap-space-xs px-2.5 py-1 rounded-DEFAULT bg-surface-container-high text-on-surface">
-                <span className="material-symbols-outlined text-[14px]">
-                  tune
-                </span>
+                <Icon name="tune" className="text-[14px]" />
                 <span className="font-label-sm text-label-sm">
                   规范视图: 4-States Grid
                 </span>
@@ -91,9 +87,7 @@ export function StatusSpecPage() {
               <span>
                 查看 IPC 通讯协议白皮书
               </span>
-              <span className="material-symbols-outlined text-[14px]">
-                arrow_outward
-              </span>
+              <Icon name="arrow_outward" className="text-[14px]" />
             </a>
           </div>
         </div>
@@ -143,7 +137,7 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* Editor Code Canvas Mockup (Lines 142-150) */}
-          <div className="bg-[#0b0e13] px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
+          <div className="bg-surface-container-lowest px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
             <div className="flex items-center gap-space-md leading-relaxed opacity-75">
               <span className="w-8 text-right font-code-sm text-[11px] text-outline-variant select-none">
                 142
@@ -311,20 +305,16 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* STATUS BAR 1 (EXACT RENDERING) */}
-          <div className="h-9 px-space-md bg-[#111318] flex items-center justify-between select-none">
+          <div className="h-9 px-space-md bg-surface-container-low flex items-center justify-between select-none">
             {/* Left Group: Branch & Distinct Process Chips */}
             <div className="flex items-center gap-space-xs">
               {/* 1. Left Branch Switcher */}
               <button className="h-6 px-2 rounded-DEFAULT bg-surface-container hover:bg-surface-container-high transition-colors flex items-center gap-1.5 text-on-surface font-code-sm text-[12px] group">
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary">
-                  fork_left
-                </span>
+                <Icon name="fork_left" className="text-[14px] text-on-surface-variant group-hover:text-primary" />
                 <span className="font-medium">
                   main*
                 </span>
-                <span className="material-symbols-outlined text-[12px] text-outline">
-                  expand_more
-                </span>
+                <Icon name="expand_more" className="text-[12px] text-outline" />
               </button>
               {/* 2. Independent Engine RPC Chip (IDLE STATE) */}
               <div className="relative group">
@@ -346,7 +336,7 @@ export function StatusSpecPage() {
                   </span>
                 </div>
                 {/* Detailed Tooltip Inspection Badge */}
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-72 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-72 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-dropdown pointer-events-none">
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 bg-surface-container-high/40 px-1 rounded-DEFAULT">
                     <span className="font-label-xs text-tertiary font-semibold">
                       ● 每窗口独立进程 · 就绪
@@ -371,14 +361,12 @@ export function StatusSpecPage() {
               {/* 3. Independent Sandbox Chip (STRICTLY SEPARATE) */}
               <div className="relative group">
                 <div className="h-6 px-2 rounded-DEFAULT bg-surface-container-low flex items-center gap-1.5 cursor-pointer hover:bg-surface-container transition-colors">
-                  <span className="material-symbols-outlined text-[13px] text-outline">
-                    shield_with_heart
-                  </span>
+                  <Icon name="shield_with_heart" className="text-[13px] text-outline" />
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
                     沙盒 · 未启用
                   </span>
                 </div>
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-dropdown pointer-events-none">
                   <span className="font-label-xs text-on-surface font-semibold mb-1">
                     宿主直通模式 (Host Direct)
                   </span>
@@ -391,17 +379,13 @@ export function StatusSpecPage() {
             {/* Right Group: Telemetry Metrics */}
             <div className="flex items-center gap-space-md font-code-sm text-[11px] text-on-surface-variant">
               <div className="flex items-center gap-1 hover:text-on-surface cursor-pointer">
-                <span className="material-symbols-outlined text-[13px] text-tertiary">
-                  speed
-                </span>
+                <Icon name="speed" className="text-[13px] text-tertiary" />
                 <span>
                   延迟 18ms
                 </span>
               </div>
               <div className="flex items-center gap-1 hover:text-on-surface cursor-pointer">
-                <span className="material-symbols-outlined text-[13px] text-primary">
-                  data_usage
-                </span>
+                <Icon name="data_usage" className="text-[13px] text-primary" />
                 <span>
                   已消耗 4.2k tokens
                 </span>
@@ -413,9 +397,7 @@ export function StatusSpecPage() {
                 LF
               </span>
               <button className="w-6 h-6 rounded-DEFAULT flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-[14px]">
-                  notifications
-                </span>
+                <Icon name="notifications" className="text-[14px]" />
               </button>
             </div>
           </div>
@@ -463,7 +445,7 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* Editor Code Canvas Mockup */}
-          <div className="bg-[#0b0e13] px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
+          <div className="bg-surface-container-lowest px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
             <div className="flex items-center gap-space-md leading-relaxed opacity-75">
               <span className="w-8 text-right font-code-sm text-[11px] text-outline-variant select-none">
                 142
@@ -574,27 +556,21 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* STATUS BAR 2 (ACTIVE STREAMING) */}
-          <div className="h-9 px-space-md bg-[#111318] flex items-center justify-between select-none">
+          <div className="h-9 px-space-md bg-surface-container-low flex items-center justify-between select-none">
             {/* Left Group */}
             <div className="flex items-center gap-space-xs">
               {/* 1. Left Branch Switcher */}
               <button className="h-6 px-2 rounded-DEFAULT bg-surface-container hover:bg-surface-container-high transition-colors flex items-center gap-1.5 text-on-surface font-code-sm text-[12px] group">
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary">
-                  fork_left
-                </span>
+                <Icon name="fork_left" className="text-[14px] text-on-surface-variant group-hover:text-primary" />
                 <span className="font-medium">
                   feat/agent-rpc
                 </span>
-                <span className="material-symbols-outlined text-[12px] text-outline">
-                  expand_more
-                </span>
+                <Icon name="expand_more" className="text-[12px] text-outline" />
               </button>
               {/* 2. Independent Engine RPC Chip (ACTIVE STREAMING) */}
               <div className="relative group">
                 <div className="h-6 px-2.5 rounded-DEFAULT bg-primary/20 flex items-center gap-2 cursor-pointer shadow-[0_0_12px_rgba(127,133,249,0.25)] hover:bg-primary/25 transition-all">
-                  <span className="material-symbols-outlined text-[15px] text-primary animate-pulse">
-                    radio_button_checked
-                  </span>
+                  <Icon name="radio_button_checked" className="text-[15px] text-primary animate-pulse" />
                   <span className="font-label-sm text-[11px] font-semibold text-on-surface">
                     引擎 · RPC:
                   </span>
@@ -606,7 +582,7 @@ export function StatusSpecPage() {
                   </span>
                 </div>
                 {/* Floating Active Info Tooltip */}
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-dropdown pointer-events-none">
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 bg-primary/10 px-1 rounded-DEFAULT">
                     <span className="font-label-xs text-primary font-semibold">
                       ◉ 每窗口独立进程 · 正在执行推理与上下文同步
@@ -628,14 +604,12 @@ export function StatusSpecPage() {
               {/* 3. Independent Sandbox Chip */}
               <div className="relative group">
                 <div className="h-6 px-2 rounded-DEFAULT bg-surface-container-low flex items-center gap-1.5 cursor-pointer hover:bg-surface-container transition-colors">
-                  <span className="material-symbols-outlined text-[13px] text-outline">
-                    shield_with_heart
-                  </span>
+                  <Icon name="shield_with_heart" className="text-[13px] text-outline" />
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
                     沙盒 · 未启用
                   </span>
                 </div>
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-dropdown pointer-events-none">
                   <span className="font-label-xs text-on-surface font-semibold mb-1">
                     宿主直通模式 (Host Direct)
                   </span>
@@ -648,17 +622,13 @@ export function StatusSpecPage() {
             {/* Right Group: Telemetry Metrics */}
             <div className="flex items-center gap-space-md font-code-sm text-[11px] text-on-surface-variant">
               <div className="flex items-center gap-1 text-primary">
-                <span className="material-symbols-outlined text-[13px] animate-spin">
-                  sync
-                </span>
+                <Icon name="sync" className="text-[13px] animate-spin" />
                 <span>
                   延迟 32ms
                 </span>
               </div>
               <div className="flex items-center gap-1 text-primary font-medium">
-                <span className="material-symbols-outlined text-[13px]">
-                  bolt
-                </span>
+                <Icon name="bolt" className="text-[13px]" />
                 <span>
                   已消耗 8.9k tokens
                 </span>
@@ -670,9 +640,7 @@ export function StatusSpecPage() {
                 LF
               </span>
               <button className="w-6 h-6 rounded-DEFAULT flex items-center justify-center hover:bg-surface-container-high text-primary transition-colors">
-                <span className="material-symbols-outlined text-[14px]">
-                  graphic_eq
-                </span>
+                <Icon name="graphic_eq" className="text-[14px]" />
               </button>
             </div>
           </div>
@@ -720,7 +688,7 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* Editor Code Canvas Mockup */}
-          <div className="bg-[#0b0e13] px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
+          <div className="bg-surface-container-lowest px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
             <div className="flex items-center gap-space-md leading-relaxed opacity-50">
               <span className="w-8 text-right font-code-sm text-[11px] text-outline-variant select-none">
                 142
@@ -777,27 +745,21 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* STATUS BAR 3 (RECONNECTING) */}
-          <div className="h-9 px-space-md bg-[#111318] flex items-center justify-between select-none">
+          <div className="h-9 px-space-md bg-surface-container-low flex items-center justify-between select-none">
             {/* Left Group */}
             <div className="flex items-center gap-space-xs">
               {/* 1. Left Branch Switcher */}
               <button className="h-6 px-2 rounded-DEFAULT bg-surface-container hover:bg-surface-container-high transition-colors flex items-center gap-1.5 text-on-surface font-code-sm text-[12px] group">
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary">
-                  fork_left
-                </span>
+                <Icon name="fork_left" className="text-[14px] text-on-surface-variant group-hover:text-primary" />
                 <span className="font-medium">
                   main*
                 </span>
-                <span className="material-symbols-outlined text-[12px] text-outline">
-                  expand_more
-                </span>
+                <Icon name="expand_more" className="text-[12px] text-outline" />
               </button>
               {/* 2. Independent Engine RPC Chip (RECONNECTING) */}
               <div className="relative group">
                 <div className="h-6 px-2.5 rounded-DEFAULT bg-surface-container-high flex items-center gap-2 cursor-pointer shadow-sm hover:bg-surface-bright transition-all">
-                  <span className="material-symbols-outlined text-[14px] text-secondary animate-spin">
-                    sync
-                  </span>
+                  <Icon name="sync" className="text-[14px] text-secondary animate-spin" />
                   <span className="font-label-sm text-[11px] font-semibold text-on-surface">
                     引擎 · RPC:
                   </span>
@@ -809,7 +771,7 @@ export function StatusSpecPage() {
                   </span>
                 </div>
                 {/* Tooltip */}
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-dropdown pointer-events-none">
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 bg-surface-container-high/40 px-1 rounded-DEFAULT">
                     <span className="font-label-xs text-secondary font-semibold">
                       ↻ 每窗口独立进程 · 子进程心跳超时，自动拉起中...
@@ -831,14 +793,12 @@ export function StatusSpecPage() {
               {/* 3. Independent Sandbox Chip */}
               <div className="relative group">
                 <div className="h-6 px-2 rounded-DEFAULT bg-surface-container-low flex items-center gap-1.5 cursor-pointer hover:bg-surface-container transition-colors">
-                  <span className="material-symbols-outlined text-[13px] text-outline">
-                    shield_with_heart
-                  </span>
+                  <Icon name="shield_with_heart" className="text-[13px] text-outline" />
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
                     沙盒 · 未启用
                   </span>
                 </div>
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-dropdown pointer-events-none">
                   <span className="font-label-xs text-on-surface font-semibold mb-1">
                     宿主直通模式 (Host Direct)
                   </span>
@@ -851,17 +811,13 @@ export function StatusSpecPage() {
             {/* Right Group: Telemetry Metrics */}
             <div className="flex items-center gap-space-md font-code-sm text-[11px] text-on-surface-variant">
               <div className="flex items-center gap-1 text-secondary">
-                <span className="material-symbols-outlined text-[13px]">
-                  hourglass_empty
-                </span>
+                <Icon name="hourglass_empty" className="text-[13px]" />
                 <span>
                   延迟 -- ms
                 </span>
               </div>
               <div className="flex items-center gap-1 text-on-surface-variant">
-                <span className="material-symbols-outlined text-[13px]">
-                  data_usage
-                </span>
+                <Icon name="data_usage" className="text-[13px]" />
                 <span>
                   已消耗 4.2k tokens
                 </span>
@@ -873,9 +829,7 @@ export function StatusSpecPage() {
                 LF
               </span>
               <button className="w-6 h-6 rounded-DEFAULT flex items-center justify-center hover:bg-surface-container-high text-secondary transition-colors">
-                <span className="material-symbols-outlined text-[14px]">
-                  sync_problem
-                </span>
+                <Icon name="sync_problem" className="text-[14px]" />
               </button>
             </div>
           </div>
@@ -923,7 +877,7 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* Editor Code Canvas Mockup */}
-          <div className="bg-[#0b0e13] px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
+          <div className="bg-surface-container-lowest px-space-md py-space-sm font-code-sm text-code-sm text-on-surface-variant select-none">
             <div className="flex items-center gap-space-md leading-relaxed opacity-50">
               <span className="w-8 text-right font-code-sm text-[11px] text-outline-variant select-none">
                 142
@@ -971,27 +925,21 @@ export function StatusSpecPage() {
             </div>
           </div>
           {/* STATUS BAR 4 (DISCONNECTED & RECOVER BUTTON) */}
-          <div className="h-9 px-space-md bg-[#111318] flex items-center justify-between select-none">
+          <div className="h-9 px-space-md bg-surface-container-low flex items-center justify-between select-none">
             {/* Left Group */}
             <div className="flex items-center gap-space-xs">
               {/* 1. Left Branch Switcher */}
               <button className="h-6 px-2 rounded-DEFAULT bg-surface-container hover:bg-surface-container-high transition-colors flex items-center gap-1.5 text-on-surface font-code-sm text-[12px] group">
-                <span className="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary">
-                  fork_left
-                </span>
+                <Icon name="fork_left" className="text-[14px] text-on-surface-variant group-hover:text-primary" />
                 <span className="font-medium">
                   main*
                 </span>
-                <span className="material-symbols-outlined text-[12px] text-outline">
-                  expand_more
-                </span>
+                <Icon name="expand_more" className="text-[12px] text-outline" />
               </button>
               {/* 2. Independent Engine RPC Chip (DISCONNECTED) */}
               <div className="relative group">
                 <div className="h-6 px-2.5 rounded-DEFAULT bg-surface-container-high flex items-center gap-2 cursor-pointer shadow-sm hover:bg-surface-bright transition-all">
-                  <span className="material-symbols-outlined text-[13px] text-error">
-                    cancel
-                  </span>
+                  <Icon name="cancel" className="text-[13px] text-error" />
                   <span className="font-label-sm text-[11px] font-semibold text-on-surface">
                     引擎 · RPC:
                   </span>
@@ -1000,16 +948,14 @@ export function StatusSpecPage() {
                   </span>
                   {/* Quick Reconnect Inline Action Pill */}
                   <button className="ml-1 px-1.5 py-0.5 rounded-DEFAULT bg-surface-bright hover:bg-primary hover:text-on-primary text-on-surface font-label-xs text-[10px] flex items-center gap-1 transition-colors">
-                    <span className="material-symbols-outlined text-[11px]">
-                      refresh
-                    </span>
+                    <Icon name="refresh" className="text-[11px]" />
                     <span>
                       重新连接 (R)
                     </span>
                   </button>
                 </div>
                 {/* Crash Reason Tooltip */}
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-80 p-2.5 rounded-lg bg-surface-container-highest shadow-2xl z-dropdown pointer-events-none">
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 bg-error/10 px-1 rounded-DEFAULT">
                     <span className="font-label-xs text-error font-semibold">
                       ✕ 每窗口独立进程 · 内存溢出或被手动终止
@@ -1034,14 +980,12 @@ export function StatusSpecPage() {
               {/* 3. Independent Sandbox Chip */}
               <div className="relative group">
                 <div className="h-6 px-2 rounded-DEFAULT bg-surface-container-low flex items-center gap-1.5 cursor-pointer hover:bg-surface-container transition-colors">
-                  <span className="material-symbols-outlined text-[13px] text-outline">
-                    shield_with_heart
-                  </span>
+                  <Icon name="shield_with_heart" className="text-[13px] text-outline" />
                   <span className="font-label-sm text-[11px] text-on-surface-variant">
                     沙盒 · 未启用
                   </span>
                 </div>
-                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-50 pointer-events-none">
+                <div className="absolute bottom-8 left-0 hidden group-hover:flex flex-col w-60 p-2 rounded-lg bg-surface-container-highest shadow-xl z-dropdown pointer-events-none">
                   <span className="font-label-xs text-on-surface font-semibold mb-1">
                     宿主直通模式 (Host Direct)
                   </span>
@@ -1054,17 +998,13 @@ export function StatusSpecPage() {
             {/* Right Group: Telemetry Metrics */}
             <div className="flex items-center gap-space-md font-code-sm text-[11px] text-on-surface-variant">
               <div className="flex items-center gap-1 text-error">
-                <span className="material-symbols-outlined text-[13px]">
-                  signal_disconnected
-                </span>
+                <Icon name="signal_disconnected" className="text-[13px]" />
                 <span>
                   延迟 N/A
                 </span>
               </div>
               <div className="flex items-center gap-1 text-outline">
-                <span className="material-symbols-outlined text-[13px]">
-                  data_usage
-                </span>
+                <Icon name="data_usage" className="text-[13px]" />
                 <span>
                   已消耗 4.2k tokens
                 </span>
@@ -1076,9 +1016,7 @@ export function StatusSpecPage() {
                 LF
               </span>
               <button className="w-6 h-6 rounded-DEFAULT flex items-center justify-center hover:bg-surface-container-high text-error transition-colors">
-                <span className="material-symbols-outlined text-[14px]">
-                  error
-                </span>
+                <Icon name="error" className="text-[14px]" />
               </button>
             </div>
           </div>
@@ -1088,9 +1026,7 @@ export function StatusSpecPage() {
           {/* Spec Rule 1 */}
           <div className="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs shadow-md">
             <div className="flex items-center gap-space-xs text-primary font-label-md text-label-md">
-              <span className="material-symbols-outlined text-[16px]">
-                call_split
-              </span>
+              <Icon name="call_split" className="text-[16px]" />
               <span className="font-semibold">
                 窗口级独占子进程 (Per-Window PID)
               </span>
@@ -1102,9 +1038,7 @@ export function StatusSpecPage() {
           {/* Spec Rule 2 */}
           <div className="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs shadow-md">
             <div className="flex items-center gap-space-xs text-tertiary font-label-md text-label-md">
-              <span className="material-symbols-outlined text-[16px]">
-                rule
-              </span>
+              <Icon name="rule" className="text-[16px]" />
               <span className="font-semibold">
                 芯片物理隔离原则 (Strict Decoupling)
               </span>
@@ -1116,9 +1050,7 @@ export function StatusSpecPage() {
           {/* Spec Rule 3 */}
           <div className="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs shadow-md">
             <div className="flex items-center gap-space-xs text-secondary font-label-md text-label-md">
-              <span className="material-symbols-outlined text-[16px]">
-                cable
-              </span>
+              <Icon name="cable" className="text-[16px]" />
               <span className="font-semibold">
                 毫秒级遥测与自愈 (Telemetry &amp; Recovery)
               </span>

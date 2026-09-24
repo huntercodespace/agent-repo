@@ -14,7 +14,7 @@ interface StatusBarProps {
 }
 
 const engineSamples: { id: EngineState; dot: string }[] = [
-  { id: "idle", dot: "bg-[#10b981]" },
+  { id: "idle", dot: "bg-success" },
   { id: "chatting", dot: "bg-secondary animate-pulse" },
   { id: "reconnecting", dot: "spin" },
   { id: "disconnected", dot: "bg-error/60" },
@@ -34,7 +34,7 @@ function LiveEngineChip({ connection }: { connection: RpcStatus }) {
         <span
           className={`h-1.5 w-1.5 rounded-full ${
             connection.engine === "idle"
-              ? "bg-[#10b981]"
+              ? "bg-success"
               : connection.engine === "chatting"
                 ? "bg-secondary animate-pulse"
                 : "bg-error/60"
@@ -64,7 +64,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
 
   if (variant === "branch") {
     return (
-      <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-6 select-none items-center justify-between bg-surface-container-lowest px-space-md font-code-sm text-code-sm text-on-surface-variant">
+      <footer className="fixed bottom-0 left-0 right-0 z-chrome flex h-6 select-none items-center justify-between bg-surface-container-lowest px-space-md font-code-sm text-code-sm text-on-surface-variant">
         <div className="flex items-center gap-space-sm">
           <a
             href="#/branch"
@@ -100,7 +100,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
     const sandboxOn = sandbox === "on";
     const sandboxEnabling = sandbox === "enabling";
     return (
-      <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-12 select-none items-center justify-between bg-surface-container-lowest/95 px-space-md backdrop-blur-md">
+      <footer className="fixed bottom-0 left-0 right-0 z-chrome flex h-12 select-none items-center justify-between bg-surface-container-lowest/95 px-space-md backdrop-blur-md">
         <div className="flex h-full items-center gap-space-sm overflow-x-auto py-1">
           <a
             href="#/branch"
@@ -176,7 +176,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
               <Icon name="shield" className={`shrink-0 text-[15px] ${sandboxOn ? "text-tertiary" : "text-outline"}`} />
             </button>
             {(hoveringSandbox || policyOpen) && sandboxOn ? (
-              <div className="absolute bottom-12 left-0 z-50 w-[380px] rounded-lg border border-tertiary/40 bg-surface-container-high/95 p-space-md shadow-2xl backdrop-blur-md">
+              <div className="absolute bottom-12 left-0 z-chrome w-[380px] rounded-lg border border-tertiary/40 bg-surface-container-high/95 p-space-md shadow-2xl backdrop-blur-md">
                 <div className="mb-2 flex items-center justify-between border-b border-outline-variant/30 pb-1.5">
                   <div className="flex items-center gap-1.5">
                     <Icon name="shield_with_heart" className="text-[18px] text-tertiary" />
@@ -239,7 +239,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 flex h-6 select-none items-center justify-between bg-surface-container-lowest px-space-md font-code-sm text-code-sm text-on-surface-variant">
+    <footer className="fixed bottom-0 left-0 right-0 z-chrome flex h-6 select-none items-center justify-between bg-surface-container-lowest px-space-md font-code-sm text-code-sm text-on-surface-variant">
       <div className="flex items-center gap-space-md">
         <a href="#/branch" className="hover:text-on-surface">
           Git: main ✓
