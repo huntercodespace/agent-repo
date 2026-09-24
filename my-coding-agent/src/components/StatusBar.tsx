@@ -80,7 +80,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
             ) : (
               <>
                 <span className="h-1.5 w-1.5 rounded-full bg-tertiary" />
-                <span>Pi Engine · 已连接</span>
+                <span>引擎 · 已连接</span>
               </>
             )}
           </span>
@@ -245,7 +245,7 @@ export function StatusBar({ variant, engine, sandbox, connection, onEngineChange
           Git: main ✓
         </a>
         <span className="text-outline">|</span>
-        {connection?.available ? <LiveEngineChip connection={connection} /> : <span>Pi Engine: v2.4 (Ready)</span>}
+        {connection?.available ? <LiveEngineChip connection={connection} /> : <span>引擎: v2.4 (Ready)</span>}
         <span className="text-outline">|</span>
         <span>权限: 自动执行 (安全模式)</span>
       </div>

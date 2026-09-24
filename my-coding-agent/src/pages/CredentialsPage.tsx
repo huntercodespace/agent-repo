@@ -93,7 +93,7 @@ export function CredentialsPage() {
                 </span>
               </div>
               <p className="text-pi-muted text-xs mt-1.5 leading-relaxed max-w-2xl">
-                服务商和模型来自 Pi 的 ModelRegistry / pi-ai，不是写死的厂商表。密钥经主进程 AuthStorage.modify 写入。DeepSeek 的 provider id 是 deepseek。保存 API Key 后 set_model 使用注册表解析出的 Flash{flashModelId ? `（deepseek/${flashModelId}）` : ""}。
+                服务商和模型来自 ModelRegistry / pi-ai，不是写死的厂商表。密钥经主进程 AuthStorage.modify 写入。DeepSeek 的 provider id 是 deepseek。保存 API Key 后 set_model 使用注册表解析出的 Flash{flashModelId ? `（deepseek/${flashModelId}）` : ""}。
               </p>
             </div>
             <button
@@ -159,7 +159,7 @@ export function CredentialsPage() {
           <section aria-labelledby="security-rules-title" className="rounded-lg bg-pi-card/90 border border-pi-border p-4" data-purpose="credential-security-guarantees">
             <div className="flex items-center gap-2 mb-2.5">
               <h2 className="text-xs font-semibold text-white tracking-tight" id="security-rules-title">
-                Pi 安全与凭据隔离规范 (Credential Security Guarantees)
+                安全与凭据隔离规范 (Credential Security Guarantees)
               </h2>
               <span className="text-[10px] font-mono text-pi-muted">AuthStorage / Strict Local Bound</span>
             </div>

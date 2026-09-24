@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { Route } from "../router";
 import { useRpc } from "../rpc/RpcProvider";
 import { Icon } from "./Icon";
-import { PiLogo } from "./PiLogo";
 
 function workspaceName(cwd: string) {
   return cwd.split(/[\\/]/).filter(Boolean).at(-1) || cwd;
@@ -35,10 +34,6 @@ export function Sidebar({ route, bottomClass = "bottom-6" }: { route: Route; bot
   return (
     <aside className={`fixed left-0 top-10 z-40 flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest ${bottomClass}`}>
       <div className="flex flex-col">
-        <div className="flex h-12 items-center gap-space-sm bg-surface-container-lowest px-space-md">
-          <PiLogo className="h-5 w-auto object-contain" />
-          <span className="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface">Pi</span>
-        </div>
         <nav aria-label="工作区" className="flex flex-col gap-space-xs px-space-sm py-space-xs">
           <div className="px-space-sm pb-space-xs pt-space-sm font-label-xs text-label-xs font-semibold uppercase tracking-wider text-outline">
             工作区

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import logo from "../assets/pi-logo.png";
 import { useRpc } from "../rpc/RpcProvider";
 
 export function OnboardingPage() {
@@ -133,17 +132,6 @@ export function OnboardingPage() {
               </svg>
             </div>
             <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto py-space-md">
-              {/* Logo Container with Deep Radial Flare */}
-              <div className="relative group cursor-pointer mb-space-lg">
-                <div className="absolute -inset-2 bg-gradient-to-r from-primary-container via-secondary-container to-tertiary-container rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition duration-500">
-                </div>
-                <div className="relative w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center p-space-xs shadow-md">
-                  <img alt="Pi Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(124,130,246,0.5)]" src={logo} />
-                </div>
-                <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-surface-container-lowest font-code-sm text-[9px] text-primary tracking-widest font-bold">
-                  AGENT
-                </div>
-              </div>
               <div className="inline-flex items-center gap-space-xs px-space-md py-1 rounded-full bg-surface-container mb-space-md">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping">
                 </span>
@@ -158,7 +146,7 @@ export function OnboardingPage() {
                 </span>
               </div>
               <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight mb-space-sm">
-                欢迎使用 Pi 智能编程工作台
+                欢迎使用智能编程工作台
               </h1>
               <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed max-w-xl">
                 基于深度上下文推理的下一代全自主 AI 编码伙伴。选择工作目录即可开启精准代码理解、多文件编辑协同与自愈执行流水线。
@@ -314,7 +302,7 @@ export function OnboardingPage() {
               {/* Project Rows */}
               <div className="flex flex-col gap-1.5" id="recentList">
                 {/* Project Item 1 */}
-                <div className="group flex items-center justify-between p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer" onClick={() => openProject("pi-monorepo")}>
+                <div className="group flex items-center justify-between p-space-md rounded-lg bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer" onClick={() => openProject("demo-monorepo")}>
                   <div className="flex items-center gap-space-md min-w-0">
                     <div className="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors flex-shrink-0">
                       <span className="material-symbols-outlined text-[18px]">
@@ -324,7 +312,7 @@ export function OnboardingPage() {
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-space-sm">
                         <span className="font-headline-sm text-headline-sm text-on-surface font-medium truncate group-hover:text-primary transition-colors">
-                          pi-monorepo
+                          demo-monorepo
                         </span>
                         <span className="px-1.5 py-0.2 rounded bg-tertiary-container/20 text-tertiary font-code-sm text-code-sm">
                           main
@@ -334,7 +322,7 @@ export function OnboardingPage() {
                       </div>
                       <div className="flex items-center gap-space-xs font-code-sm text-code-sm text-outline truncate mt-0.5">
                         <span className="truncate">
-                          /Users/dev/code/pi-monorepo
+                          /Users/dev/code/demo-monorepo
                         </span>
                       </div>
                     </div>
@@ -609,7 +597,7 @@ export function OnboardingPage() {
           <footer className="flex flex-col sm:flex-row items-center justify-between text-outline font-label-xs text-label-xs px-space-sm gap-space-xs pb-space-sm">
             <div className="flex items-center gap-space-md">
               <span>
-                Pi Workstation © 2025
+                智能编程工作台 © 2025
               </span>
               <span>
                 ·
@@ -663,7 +651,7 @@ export function OnboardingPage() {
             </button>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
-            输入远程 Repository URL。Pi 将在沙箱临时目录运行克隆，并预先索引代码语义。
+            输入远程 Repository URL。应用将在沙箱临时目录运行克隆，并预先索引代码语义。
           </p>
           <div className="flex flex-col gap-space-md mb-space-lg">
             <div>

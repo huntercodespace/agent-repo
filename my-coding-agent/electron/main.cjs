@@ -125,10 +125,9 @@ function createWindow() {
     minWidth: 1180,
     minHeight: 720,
     backgroundColor: "#0b0e13",
-    title: "Pi",
+    title: "智能编程工作台",
     frame: false,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "../public/pi-logo.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,

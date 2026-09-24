@@ -6,7 +6,7 @@ interface ModelSelectProps {
   fallback?: string;
 }
 
-export function ModelSelect({ variant, fallback = "Pi-Sonnet-3.5" }: ModelSelectProps) {
+export function ModelSelect({ variant, fallback = "Sonnet-3.5" }: ModelSelectProps) {
   const board = useCredentialBoard();
   const configured = useMemo(() => {
     const ids = new Set(

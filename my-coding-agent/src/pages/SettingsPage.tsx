@@ -400,7 +400,7 @@ export function SettingsPage() {
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">
                 默认主模型 Primary Agent Model
               </label>
-              <ModelSelect variant="field" fallback="Pi-Sonnet-3.5" />
+              <ModelSelect variant="field" fallback="Sonnet-3.5" />
               <span className="font-code-sm text-code-sm text-outline">
                 保存 DeepSeek API Key 后，主进程会调用 set_model，切到 DeepSeek V4 Flash。
                 {flashModelId ? <span className="mt-0.5 block font-mono text-[10px]">deepseek/{flashModelId}</span> : null}
@@ -417,7 +417,7 @@ export function SettingsPage() {
                   <span className="w-2 h-2 rounded-full bg-secondary">
                   </span>
                   <span className="font-code-sm text-code-sm text-on-surface font-semibold">
-                    Pi-Haiku-Fast
+                    Haiku-Fast
                   </span>
                   <span className="font-label-xs text-label-xs text-on-surface-variant font-normal">
                     (Low latency autocomplete)

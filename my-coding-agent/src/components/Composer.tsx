@@ -11,7 +11,7 @@ interface ComposerProps {
 
 export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerProps) {
   const [text, setText] = useState("");
-  const label = modelLabel || "Pi-Sonnet-3.5";
+  const label = modelLabel || "Sonnet-3.5";
 
   async function send() {
     const trimmed = text.trim();
@@ -39,7 +39,7 @@ export function Composer({ modelLabel, busy = false, guide, onSend }: ComposerPr
       <div className="mx-auto flex max-w-5xl flex-col gap-space-md rounded-xl bg-surface-container-lowest p-space-md shadow-xl">
         <textarea
           className="w-full resize-none select-text bg-transparent font-body-md text-body-md text-on-surface outline-none placeholder:text-outline"
-          placeholder="向 Pi 描述你的编码需求，支持输入 @ 引用文件或 # 关联 Issue..."
+          placeholder="描述你的编码需求，支持输入 @ 引用文件或 # 关联 Issue..."
           rows={3}
           spellCheck={false}
           value={text}

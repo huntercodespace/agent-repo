@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRpc } from "../rpc/RpcProvider";
 import { Icon } from "./Icon";
-import { PiLogo } from "./PiLogo";
 
 /** Inline SVGs — Material subset lacks minimize / crop_square, which overflow as ligature text. */
 function MinimizeIcon() {
@@ -135,7 +134,6 @@ export function TitleBar({ showTerminal = false }: { showTerminal?: boolean }) {
           </a>
         </div>
         <div className="flex shrink-0 items-center gap-space-sm" onDoubleClick={() => desktop?.toggleMaximize()}>
-          <PiLogo className="h-4 w-auto shrink-0 object-contain" />
           <a
             href="#/branch"
             title="切换分支"

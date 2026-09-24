@@ -1,7 +1,7 @@
 export function EngineStatusPage() {
   return (
     <div className="relative w-full h-full min-h-0 flex flex-col justify-between overflow-hidden">
-      {/* BACKGROUND WORKSPACE (Active Code Diff & Inference Session in Pi) */}
+      {/* Background workspace with an active code diff and inference session. */}
       <div className="absolute inset-0 z-0 flex flex-col select-none transition-opacity duration-300">
         {/* Editor Breadcrumb & Tabs */}
         <div className="h-9 bg-surface-container-low flex items-center justify-between px-space-md shadow-sm">
@@ -40,7 +40,7 @@ export function EngineStatusPage() {
                 104
               </span>
               <span className="text-tertiary font-medium">
-                // Pi Agent: 优化流式推测解析缓冲池分配
+                // Agent: 优化流式推测解析缓冲池分配
               </span>
             </div>
             <div className="flex items-center gap-space-md text-on-surface">
@@ -119,7 +119,7 @@ export function EngineStatusPage() {
           <div className="col-span-4 bg-surface-container rounded-lg p-space-md flex flex-col gap-space-sm shadow-md">
             <div className="flex items-center justify-between pb-space-xs">
               <span className="font-label-sm text-label-sm text-primary font-medium">
-                PI AUTONOMOUS RUNNER
+                AUTONOMOUS RUNNER
               </span>
               <span className="font-code-sm text-code-sm text-tertiary flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse">

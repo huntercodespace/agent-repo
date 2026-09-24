@@ -27,7 +27,7 @@ export function MessageStream() {
         <div className="flex min-w-0 flex-1 flex-col gap-space-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-space-sm">
-              <span className="font-label-md text-label-md font-semibold text-on-surface">Pi Agent</span>
+              <span className="font-label-md text-label-md font-semibold text-on-surface">助手</span>
               <span className="rounded bg-primary/10 px-1.5 py-0.5 font-code-sm text-code-sm font-medium text-primary">
                 Sonnet-3.5 CoT
               </span>
@@ -43,7 +43,7 @@ export function MessageStream() {
                   className="text-[16px] text-primary transition-transform group-open:rotate-90"
                 />
                 <span className="font-label-sm text-label-sm font-medium text-on-surface">
-                  Pi 思考过程 (展开查看 4 个思考步骤 - 耗时 1.8s)
+                  思考过程 (展开查看 4 个思考步骤 - 耗时 1.8s)
                 </span>
               </div>
               <span className="rounded bg-surface-container-high px-2 py-0.5 font-code-sm text-code-sm text-on-surface-variant">

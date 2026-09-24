@@ -11,7 +11,7 @@ function AssistantBlock({ block }: { block: Extract<TranscriptBlock, { kind: "as
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-space-sm">
         <div className="flex items-center gap-space-sm">
-          <span className="font-label-md text-label-md font-semibold text-on-surface">Pi Agent</span>
+          <span className="font-label-md text-label-md font-semibold text-on-surface">助手</span>
           {block.pending ? (
             <span className="inline-flex items-center gap-1 font-code-sm text-code-sm text-secondary">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />

@@ -38,7 +38,7 @@ export function BranchCanvas() {
               neurology
             </span>
             <span className="font-headline-sm text-body-md font-medium text-on-surface">
-              Pi Agent 优化建议: 零内存拷贝解析流
+              优化建议: 零内存拷贝解析流
             </span>
           </div>
           <span className="font-code-sm text-[11px] text-tertiary">
@@ -218,7 +218,7 @@ export function BranchCanvas() {
             <span className="w-2 h-2 rounded-full bg-primary animate-ping">
             </span>
             <span className="font-headline-sm text-label-md font-semibold text-primary">
-              Pi Engine · Autonomous Plan
+              引擎 · Autonomous Plan
             </span>
           </div>
           <span className="font-code-sm text-[11px] text-outline">
@@ -273,7 +273,7 @@ export function BranchCanvas() {
     </div>
     <div className="p-space-md bg-surface-container-lowest border-t border-surface-container-high/30">
       <div className="rounded-xl bg-surface-container-low p-2 shadow-inner focus-within:ring-1 focus-within:ring-primary/60 transition-all">
-        <textarea className="w-full bg-transparent resize-none outline-none font-body-sm text-body-sm text-on-surface placeholder:text-outline/70 min-h-[58px]" placeholder="给 Pi 发送指令，或使用 '/' 呼出高级工作流..." readOnly />
+        <textarea className="w-full bg-transparent resize-none outline-none font-body-sm text-body-sm text-on-surface placeholder:text-outline/70 min-h-[58px]" placeholder="发送指令，或使用 '/' 呼出高级工作流..." readOnly />
         <div className="flex items-center justify-between pt-1 text-outline font-label-xs">
           <div className="flex items-center gap-2">
             <button className="p-1 hover:text-on-surface rounded transition-colors" title="添加引用文件">

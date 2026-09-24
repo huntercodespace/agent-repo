@@ -17,11 +17,11 @@ export function StatusSpecPage() {
                     状态栏架构规范：每窗口独立 RPC 进程状态矩阵
                   </span>
                   <span className="px-2 py-0.5 rounded-DEFAULT bg-primary/15 text-primary font-code-sm text-[11px] tracking-wide">
-                    SPEC-ID: PI-STATUS-2025.1
+                    SPEC-ID: AGENT-STATUS-2025.1
                   </span>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  Pi 工作区核心规范 · 引擎状态芯片独立绑定单个宿主窗口子进程（IPC/RPC Socket），严禁与宿主执行沙箱混编，杜绝上下文交叉污染。
+                  工作区核心规范 · 引擎状态芯片独立绑定单个宿主窗口子进程（IPC/RPC Socket），严禁与宿主执行沙箱混编，杜绝上下文交叉污染。
                 </p>
               </div>
             </div>
@@ -1096,7 +1096,7 @@ export function StatusSpecPage() {
               </span>
             </div>
             <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-              每个打开的 Pi 工作区窗口启动一个隔离的 Node/V8 子进程。多窗口并发编辑时，崩溃与长上下文排队严格局部化，不会造成全 IDE 假死。
+              每个打开的工作区窗口启动一个隔离的 Node/V8 子进程。多窗口并发编辑时，崩溃与长上下文排队严格局部化，不会造成全 IDE 假死。
             </p>
           </div>
           {/* Spec Rule 2 */}

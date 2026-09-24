@@ -6,18 +6,6 @@ function workspaceName(cwd: string) {
   return cwd.split(/[\\/]/).filter(Boolean).at(-1) || cwd;
 }
 
-function PiMark() {
-  return (
-    <svg className="h-6 w-6 rounded-md shadow-inner" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-      <rect fill="#16181e" height="48" rx="10" stroke="#2a2e39" strokeWidth="1.5" width="48" />
-      <path d="M14 18C14 16.8954 14.8954 16 16 16H32C33.1046 16 34 16.8954 34 18V19C34 20.1046 33.1046 21 32 21H16C14.8954 21 14 20.1046 14 19V18Z" fill="#7c82f6" />
-      <path d="M18 20V32C18 33.1046 17.1046 34 16 34H15C13.8954 34 13 33.1046 13 32V20" stroke="#7c82f6" strokeLinecap="round" strokeWidth="2.5" />
-      <path d="M28 20V29C28 31.7614 30.2386 34 33 34H34" stroke="#6366f1" strokeLinecap="round" strokeWidth="2.5" />
-      <circle cx="28" cy="20" fill="#a5b4fc" r="1.5" />
-    </svg>
-  );
-}
-
 function WindowChromeButton({
   label,
   onClick,
@@ -88,10 +76,6 @@ export function CredentialsFrame() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="flex w-60 shrink-0 flex-col justify-between border-r border-pi-border bg-pi-surface">
           <div className="p-3">
-            <a href="#/" className="flex items-center gap-2 border-b border-pi-border pb-3">
-              <PiMark />
-              <span className="text-sm font-bold tracking-tight text-white">Pi</span>
-            </a>
             <nav aria-label="工作区" className="pt-4 text-xs">
               <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-pi-muted">工作区</div>
               {paths.length ? (
@@ -126,7 +110,7 @@ export function CredentialsFrame() {
             <span className="text-pi-accent">Git:</span> main <span className="text-emerald-400">✓</span>
           </a>
           <span className="text-pi-border">|</span>
-          <span>Pi Engine: v2.4 (Ready)</span>
+          <span>引擎: v2.4 (Ready)</span>
           <span className="text-pi-border">|</span>
           <span className="flex items-center gap-1 text-pi-accent">凭据存储: 本地 AuthStorage 就绪</span>
           <span className="text-pi-border">|</span>

@@ -125,7 +125,7 @@ export function appendUserBlock(blocks: TranscriptBlock[], text: string): Transc
   return blocks.concat({ id: nextId(blocks, "user"), kind: "user", text });
 }
 
-/** Build the same visible blocks from Pi's persisted messages after a restart or session switch. */
+/** Build the same visible blocks from persisted messages after a restart or session switch. */
 export function hydrateMessages(messages: HistoryMessage[]): TranscriptBlock[] {
   let blocks: TranscriptBlock[] = [];
   for (const message of messages) {
