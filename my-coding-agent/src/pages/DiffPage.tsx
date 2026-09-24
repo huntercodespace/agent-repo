@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRpc } from "../rpc/RpcProvider";
+import { withStableFileOrder } from "../git/fileOrder";
 import type { GitFile, GitStatus } from "../git/types";
 import { Icon } from "../components/Icon";
+import { StageCheckbox } from "../components/ui/StageCheckbox";
 
 function fileLabel(file: GitFile) {
   if (file.index === "?" && file.worktree === "?") return "未跟踪";
@@ -9,6 +11,17 @@ function fileLabel(file: GitFile) {
   if (file.index === "A") return "新增";
   if (file.index === "R" || file.worktree === "R") return "重命名";
   return "已修改";
+}
+
+function optimisticStage(status: GitStatus, filePath: string | null, selected: boolean): GitStatus {
+  if (!status.ok) return status;
+  return {
+    ...status,
+    files: status.files.map((file) => {
+      if (filePath != null && file.path !== filePath) return file;
+      return { ...file, staged: selected };
+    }),
+  };
 }
 
 function diffTone(line: string) {
@@ -30,6 +43,7 @@ export function DiffPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const requestId = useRef(0);
+  const stagingRef = useRef(false);
   const cwdRef = useRef(engine.cwd);
   cwdRef.current = engine.cwd;
 
@@ -45,7 +59,7 @@ export function DiffPage() {
     try {
       const result = await desktop.getGitStatus();
       if (request !== requestId.current || cwd !== cwdRef.current) return;
-      setGit(result);
+      setGit((previous) => withStableFileOrder(previous, result));
       setSelectedPath((current) => result.files.some((file) => file.path === current) ? current : result.files[0]?.path ?? null);
       if (!result.ok) setError(result.message || "读取 Git 状态失败");
       else setError("");
@@ -82,24 +96,27 @@ export function DiffPage() {
 
   const stage = async (filePath: string | null, selected: boolean) => {
     const desktop = window.piDesktop;
-    if (!desktop) return;
+    if (!desktop || stagingRef.current) return;
+    stagingRef.current = true;
     requestId.current += 1;
     const cwd = cwdRef.current;
     setLoading(false);
-    setBusy(true);
     setError("");
     setSuccess("");
+    const snapshot = git;
+    setGit((current) => (current?.ok ? optimisticStage(current, filePath, selected) : current));
     try {
       const result = await desktop.stageGitFile(filePath, selected);
       if (cwd !== cwdRef.current) return;
       if (!result.ok) throw new Error(result.message || "暂存失败");
-      setGit(result);
+      setGit((previous) => withStableFileOrder(previous, result));
       setSelectedPath((current) => result.files.some((file) => file.path === current) ? current : result.files[0]?.path ?? null);
       window.dispatchEvent(new Event("git:changed"));
     } catch (cause) {
+      if (snapshot?.ok) setGit(snapshot);
       setError(cause instanceof Error ? cause.message : "暂存失败");
     } finally {
-      setBusy(false);
+      stagingRef.current = false;
     }
   };
 
@@ -116,7 +133,7 @@ export function DiffPage() {
       const result = await desktop.commitGitChanges(message);
       if (cwd !== cwdRef.current) return;
       if (!result.ok) throw new Error(result.message || "提交失败");
-      setGit(result);
+      setGit((previous) => withStableFileOrder(previous, result));
       setSelectedPath((current) => result.files.some((file) => file.path === current) ? current : result.files[0]?.path ?? null);
       setMessage("");
       setSuccess(`已提交 ${result.hash || ""}`.trim());
@@ -177,7 +194,11 @@ export function DiffPage() {
           {git?.ok && files.length === 0 ? <p className="p-space-md text-on-surface-variant">工作区没有待提交的更改。</p> : null}
           {files.map((file) => (
             <div key={file.path} className={`flex items-center gap-2 rounded px-space-sm py-2 ${selectedPath === file.path ? "bg-surface-container-high" : "hover:bg-surface-container"}`}>
-              <input type="checkbox" checked={file.staged} disabled={busy} onChange={(event) => void stage(file.path, event.target.checked)} aria-label={`${file.staged ? "取消暂存" : "暂存"} ${file.path}`} className="h-4 w-4 shrink-0 accent-primary" />
+              <StageCheckbox
+                checked={file.staged}
+                onChange={(event) => void stage(file.path, event.target.checked)}
+                aria-label={`${file.staged ? "取消暂存" : "暂存"} ${file.path}`}
+              />
               <button type="button" onClick={() => setSelectedPath(file.path)} className="min-w-0 flex-1 text-left">
                 <span className="block truncate font-code-sm text-code-sm" title={file.path}>{file.path}</span>
                 <span className="font-label-xs text-label-xs text-on-surface-variant">{fileLabel(file)}{file.staged ? " · 已暂存" : ""}{file.staged && file.worktree !== " " ? " · 还有未暂存改动" : ""}</span>

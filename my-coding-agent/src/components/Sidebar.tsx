@@ -7,7 +7,7 @@ function workspaceName(cwd: string) {
   return cwd.split(/[\\/]/).filter(Boolean).at(-1) || cwd;
 }
 
-export function Sidebar({ route, bottomClass = "bottom-6" }: { route: Route; bottomClass?: string }) {
+export function Sidebar({ route, width }: { route: Route; width: number }) {
   const { status, sessions, activeSessionId, sessionBusy, workspaceState, workspaceBusy, switchWorkspace, changeSession } = useRpc();
   const [expandedByPath, setExpandedByPath] = useState<Record<string, boolean>>({});
   const cwd = status.available ? status.cwd : "";
@@ -32,7 +32,10 @@ export function Sidebar({ route, bottomClass = "bottom-6" }: { route: Route; bot
   }
 
   return (
-    <aside className={`fixed left-0 top-10 z-sidebar flex w-60 flex-col justify-between overflow-y-auto bg-surface-container-lowest ${bottomClass}`}>
+    <aside
+      style={{ width }}
+      className="flex h-full min-h-0 shrink-0 flex-col justify-between overflow-y-auto bg-surface-container-lowest"
+    >
       <div className="flex flex-col">
         <nav aria-label="工作区" className="flex flex-col gap-space-xs px-space-sm py-space-xs">
           <div className="px-space-sm pb-space-xs pt-space-sm font-label-xs text-label-xs font-semibold uppercase tracking-wider text-outline">

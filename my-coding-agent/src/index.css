@@ -122,6 +122,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.resize-dragging {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+body.resize-dragging * {
+  cursor: col-resize !important;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #464653 transparent;

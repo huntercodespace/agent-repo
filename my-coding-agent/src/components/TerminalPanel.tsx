@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-export function TerminalPanel({ cwd, onClose }: { cwd: string; onClose: () => void }) {
+export function TerminalPanel({ cwd, width, onClose }: { cwd: string; width: number; onClose: () => void }) {
   const [output, setOutput] = useState("");
   const [command, setCommand] = useState("");
   const [running, setRunning] = useState(false);
@@ -48,7 +48,11 @@ export function TerminalPanel({ cwd, onClose }: { cwd: string; onClose: () => vo
   }
 
   return (
-    <aside className="flex h-full min-h-0 w-[340px] shrink-0 flex-col border-l border-outline-variant/40 bg-surface-container-lowest text-on-surface" aria-label="终端">
+    <aside
+      style={{ width }}
+      className="flex h-full min-h-0 shrink-0 flex-col bg-surface-container-lowest text-on-surface shadow-[-10px_0_28px_rgba(0,0,0,0.18)]"
+      aria-label="终端"
+    >
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-outline-variant/30 px-space-sm font-label-sm text-label-sm">
         <span className="min-w-0 truncate" title={cwd}>终端 · {cwd}</span>
         <button type="button" onClick={onClose} className="rounded px-2 py-1 hover:bg-surface-container-high" aria-label="关闭终端">×</button>
