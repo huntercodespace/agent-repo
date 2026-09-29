@@ -1,3 +1,5 @@
 # agent-repo
 
 The desktop coding-agent shell is in [`my-coding-agent/`](my-coding-agent/).
+
+The resume Q&A agent is in [`resume-agent/`](resume-agent/).

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+data/lancedb/
+.env
+.env.local
+.vite/
