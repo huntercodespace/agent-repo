@@ -102,18 +102,26 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
   const { modal } = App.useApp();
 
   useEffect(() => {
+    let cancelled = false;
     const timer = window.setTimeout(() => {
       void fetchSessions(sessionQuery)
         .then((items) => {
+          if (cancelled) return;
           setSessions(items);
           setSessionError("");
         })
         .catch((reason: unknown) => {
+          if (cancelled) return;
           setSessionError(explainFailure(reason, "没有读到对话列表").replace("网络连接中断了，请再试一次。", "暂时连不上简历服务"));
         })
-        .finally(() => setSessionsLoading(false));
+        .finally(() => {
+          if (!cancelled) setSessionsLoading(false);
+        });
     }, 200);
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [sessionQuery, messages.length, activeId, listTick]);
 
   useEffect(() => {
@@ -249,6 +257,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
             ...(stopped ? { error: undefined, tools: message.tools?.filter((step) => step.status !== "pending") } : {}),
           }));
           assistantId = serverId;
+          setListTick((value) => value + 1);
         }
       });
       if (alive() && !gotDone) {
@@ -266,6 +275,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
         setStreaming(false);
       }
       if (abortRef.current === controller) abortRef.current = null;
+      setListTick((value) => value + 1);
     }
   }
 
@@ -615,10 +625,10 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                                   <p>
                                     {message.text}
                                     <CitationMarks tools={message.tools ?? []} />
-                                    {message.stopped ? <span className="stopped-mark">已停止</span> : null}
+                                    {message.stopped ? <span className="stopped-mark">已停止生成</span> : null}
                                   </p>
                                 ) : message.stopped ? (
-                                  <span className="stopped-mark">已停止</span>
+                                  <span className="stopped-mark">已停止生成</span>
                                 ) : null}
                                 <ResultCards tools={message.tools ?? []} onOpenProject={(id) => void openProject(id)} />
                                 {message.error ? (

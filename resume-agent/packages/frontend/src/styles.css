@@ -1119,6 +1119,11 @@ button:disabled { cursor: default; }
   vertical-align: 1px;
 }
 
+.assistant-card > .stopped-mark {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
 .answer-error {
   margin-top: 8px;
   padding: 12px;
@@ -1196,6 +1201,19 @@ button:disabled { cursor: default; }
 .delete-confirm .ant-btn-dangerous:hover {
   background: #93000a;
   border-color: #93000a;
+}
+
+.delete-confirm .ant-modal-confirm-btns .ant-btn:not(.ant-btn-dangerous):not(.ant-btn-color-dangerous) {
+  background: #e5eeff;
+  border-color: #e5eeff;
+  color: #111c2a;
+  box-shadow: none;
+}
+
+.delete-confirm .ant-modal-confirm-btns .ant-btn:not(.ant-btn-dangerous):not(.ant-btn-color-dangerous):hover {
+  background: #dee9fc;
+  border-color: #dee9fc;
+  color: #111c2a;
 }
 
 .app-mobile {

@@ -12,7 +12,7 @@ if (!root) throw new Error("缺少根节点");
 
 createRoot(root).render(
   <StrictMode>
-    <ConfigProvider theme={theme} locale={zhCN}>
+    <ConfigProvider theme={theme} locale={zhCN} button={{ autoInsertSpace: false }}>
       <AntApp>
         <XProvider>
           <App />

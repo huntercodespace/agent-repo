@@ -42,6 +42,7 @@ export function AnswerActions({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const ready = Boolean(message.saved && sessionId);
+  const bareStop = message.stopped === true && message.text.trim() === "";
 
   async function submit(rating: "like" | "dislike" | "clear", nextReason = "", nextComment = "") {
     if (!sessionId || !message.saved) return;
@@ -55,6 +56,19 @@ export function AnswerActions({
     });
     onRated(rating === "clear" ? null : rating);
     setOpen(false);
+  }
+
+  if (bareStop) {
+    if (!canRegenerate) return null;
+    return (
+      <div className="answer-actions">
+        <div className="action-icons">
+          <button className="icon-button" type="button" aria-label="重新生成" onClick={onRegenerate}>
+            <ReloadOutlined />
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

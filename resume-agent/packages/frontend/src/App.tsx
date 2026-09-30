@@ -63,6 +63,7 @@ export function App() {
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
+        console.error(reason);
         setProfile(null);
         setError(offlineMessage(reason));
       });

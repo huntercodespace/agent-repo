@@ -529,6 +529,46 @@ describe("会话、重新生成和反馈", () => {
     }
   });
 
+  it("消息落库之前列表里没有这轮对话，完成后才出现", async () => {
+    let url = "";
+    let cookie = "";
+    let duringIds: string[] = [];
+    const server = await listen(
+      createApp(
+        config(),
+        deps({
+          streamFn: () => {
+            const stream = new AssistantMessageEventStream();
+            void (async () => {
+              const listed = await fetch(`${url}/api/sessions`, { headers: { Cookie: cookie } });
+              const body = (await listed.json()) as { sessions: Array<{ id: string }> };
+              duringIds = body.sessions.map((item) => item.id);
+              const partial = assistantMessage([{ type: "text", text: "第一答" }], "pending");
+              stream.push({ type: "start", partial: assistantMessage([], "pending") });
+              stream.push({ type: "text_delta", contentIndex: 0, delta: "第一答", partial });
+              stream.push({ type: "done", reason: "stop", message: assistantMessage([{ type: "text", text: "第一答" }], "stop") });
+            })();
+            return stream;
+          },
+        }),
+      ),
+    );
+    url = server.url;
+    try {
+      const primed = await fetch(`${url}/api/sessions`);
+      cookie = cookieHeader(primed);
+      const chat = await postChat(url, { message: "第一问" }, cookie);
+      const sessionId = String(chat.events.find((event) => event.event === "session")?.data.sessionId);
+      expect(sessionId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(duringIds).not.toContain(sessionId);
+      const after = await fetch(`${url}/api/sessions`, { headers: { Cookie: cookie } });
+      const afterBody = (await after.json()) as { sessions: Array<{ id: string }> };
+      expect(afterBody.sessions.map((item) => item.id)).toContain(sessionId);
+    } finally {
+      await server.close();
+    }
+  });
+
   it("重命名和删除只作用于当前访客", async () => {
     const server = await listen(createApp(config(), deps()));
     try {
