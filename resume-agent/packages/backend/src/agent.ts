@@ -1,5 +1,5 @@
 import { Agent, type AgentMessage, type AgentTool, type StreamFn } from "@earendil-works/pi-agent-core";
-import type { Api, AssistantMessage, Model } from "@earendil-works/pi-ai";
+import type { Api, AssistantMessage, Message, Model } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import type { Profile } from "@resume/retrieval";
@@ -57,6 +57,16 @@ export function createResumeAgent(options: {
   const messages = options.messages ?? [];
   return new Agent({
     streamFn: options.streamFn ?? createStreamFn(),
+    convertToLlm: (messages) =>
+      messages.filter((message) => {
+        if (message.role === "assistant" && message.stopReason === "error") return false;
+        return (
+          message.role === "system" ||
+          message.role === "user" ||
+          message.role === "assistant" ||
+          message.role === "toolResult"
+        );
+      }) as Message[],
     initialState: {
       systemPrompt: buildSystemPrompt(options.profile),
       model: options.model,

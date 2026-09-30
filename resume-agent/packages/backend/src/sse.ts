@@ -1,4 +1,5 @@
 import type { AgentEvent } from "@earendil-works/pi-agent-core";
+import { sanitizeErrorMessage } from "./transcript.js";
 
 /**
  * 浏览器看到的 SSE 事件。
@@ -66,7 +67,7 @@ export function mapAgentEvent(event: AgentEvent, labels: ReadonlyMap<string, str
     }
     case "message_end": {
       if (event.message.role !== "assistant" || event.message.stopReason !== "error") return null;
-      return { event: "error", data: { message: event.message.errorMessage || "生成回答时出错了" } };
+      return { event: "error", data: { message: sanitizeErrorMessage(event.message.errorMessage) } };
     }
     case "tool_execution_start":
       return {

@@ -69,6 +69,8 @@ export interface ChatMessage {
   /** 服务端已经把这条回答写入数据库，反馈和重新生成才可用。 */
   saved?: boolean;
   rating?: "like" | "dislike" | null;
+  /** 用户中途停止。重新打开会话时仍在。 */
+  stopped?: boolean;
 }
 
 export interface SessionSummary {

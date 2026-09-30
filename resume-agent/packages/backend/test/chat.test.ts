@@ -63,6 +63,7 @@ function config(overrides: Partial<AppConfig> = {}): AppConfig {
     mockDelayMs: 0,
     trustProxy: false,
     corsOrigins: [],
+    modelTimeoutMs: 90_000,
     ...overrides,
   };
 }
@@ -290,6 +291,261 @@ describe("会话、重新生成和反馈", () => {
       });
       expect(reports[0]?.question).toContain("React");
       expect(reports.some((row) => row.reason === "" && row.question.includes("React"))).toBe(false);
+    } finally {
+      await server.close();
+    }
+  });
+
+  function assistantMessage(
+    content: AssistantMessage["content"],
+    stopReason: AssistantMessage["stopReason"],
+    errorMessage?: string,
+  ): AssistantMessage {
+    const model = selectChatModel();
+    return {
+      role: "assistant",
+      content,
+      api: model.api,
+      provider: model.provider,
+      model: model.id,
+      usage: usage(),
+      stopReason,
+      ...(errorMessage ? { errorMessage } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
+  function streamUntilAbort(text: string): ReturnType<AppDeps["streamFn"]> {
+    return (_model, _context, options) => {
+      const stream = new AssistantMessageEventStream();
+      const partial = assistantMessage([{ type: "text", text }], "pending");
+      stream.push({ type: "start", partial: assistantMessage([], "pending") });
+      stream.push({ type: "text_delta", contentIndex: 0, delta: text, partial });
+      const finish = () => {
+        stream.push({
+          type: "error",
+          reason: "aborted",
+          error: assistantMessage([{ type: "text", text }], "aborted", "Request was aborted"),
+        });
+      };
+      if (options?.signal?.aborted) finish();
+      else options?.signal?.addEventListener("abort", finish, { once: true });
+      return stream;
+    };
+  }
+
+  async function readStream(response: Response): Promise<{
+    cookie: string;
+    events: ReturnType<typeof parseSse>;
+    waitFor: (name: string) => Promise<{ event: string; data: Record<string, unknown> }>;
+    finished: Promise<void>;
+  }> {
+    const events: ReturnType<typeof parseSse> = [];
+    const waiters: Array<{ name: string; resolve: (event: { event: string; data: Record<string, unknown> }) => void }> = [];
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("没有响应体");
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const finished = (async () => {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() ?? "";
+        for (const frame of frames) {
+          const parsed = parseSse(`${frame}\n\n`)[0];
+          if (!parsed) continue;
+          events.push(parsed);
+          for (const waiter of waiters) {
+            if (waiter.name === parsed.event) waiter.resolve(parsed);
+          }
+        }
+      }
+    })();
+    return {
+      cookie: cookieHeader(response),
+      events,
+      waitFor(name) {
+        const existing = events.find((event) => event.event === name);
+        if (existing) return Promise.resolve(existing);
+        return new Promise((resolve) => waiters.push({ name, resolve }));
+      },
+      finished,
+    };
+  }
+
+  it("停止生成会把半段回答按 aborted 写入，别人停不了", async () => {
+    const server = await listen(createApp(config(), deps({ streamFn: streamUntilAbort("一半回答") })));
+    try {
+      const response = await fetch(`${server.url}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "停一下" }),
+      });
+      const stream = await readStream(response);
+      const sessionEvent = await stream.waitFor("session");
+      const sessionId = String(sessionEvent.data.sessionId);
+      const stranger = await fetch(`${server.url}/api/chat/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      expect(stranger.status).toBe(404);
+      const stopped = await fetch(`${server.url}/api/chat/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: stream.cookie },
+        body: JSON.stringify({ sessionId }),
+      });
+      expect(stopped.status).toBe(200);
+      await stream.finished;
+      expect(stream.events.some((event) => event.event === "done" && event.data.stopReason === "aborted")).toBe(true);
+
+      const saved = await pool.query<{ agent_message: { role?: string; stopReason?: string; content?: unknown } }>(
+        "SELECT agent_message FROM messages WHERE session_id = $1 ORDER BY seq",
+        [sessionId],
+      );
+      const last = saved.rows.filter((row) => row.agent_message.role === "assistant").at(-1);
+      expect(last?.agent_message.stopReason).toBe("aborted");
+      expect(textOf(last?.agent_message.content)).toBe("一半回答");
+
+      const visible = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: stream.cookie } });
+      const body = (await visible.json()) as { messages: Array<{ role: string; text: string; stopped?: boolean }> };
+      expect(body.messages.map((message) => message.text)).toEqual(["停一下", "一半回答"]);
+      expect(body.messages[1]?.stopped).toBe(true);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("错误回答可以重试，重试后不再进入上下文", async () => {
+    let turn = 0;
+    const server = await listen(
+      createApp(
+        config(),
+        deps({
+          streamFn: (_model, context) => {
+            seen.push(transcriptOf(context.messages as Array<{ role?: string; content?: unknown }>));
+            turn += 1;
+            if (turn === 1) {
+              const stream = new AssistantMessageEventStream();
+              const failed = assistantMessage([{ type: "text", text: "不要再看到这句" }], "error", "模型响应超时 sk-SECRETKEY");
+              stream.push({ type: "error", reason: "error", error: failed });
+              return stream;
+            }
+            return pushText("重试成功");
+          },
+        }),
+      ),
+    );
+    try {
+      const first = await postChat(server.url, { message: "超时问题" });
+      const sessionId = String(first.events.find((event) => event.event === "session")?.data.sessionId);
+      expect(first.events.some((event) => event.event === "error" && event.data.message === "模型响应超时")).toBe(true);
+      expect(JSON.stringify(first.events)).not.toContain("sk-SECRETKEY");
+      const before = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: first.cookie } });
+      const failed = (await before.json()) as { messages: Array<{ text: string; error?: string }> };
+      expect(failed.messages[1]?.error).toBe("模型响应超时");
+      expect(failed.messages[1]?.text).toContain("不要再看到这句");
+
+      seen.length = 0;
+      const again = await postChat(server.url, { retry: true, sessionId, message: "别的问题" }, first.cookie);
+      expect(again.status).toBe(200);
+      expect(seen[0]).toContain("U:超时问题");
+      expect(seen[0]).not.toContain("不要再看到这句");
+      expect(seen[0]).not.toContain("别的问题");
+      expect(seen[0]).not.toContain("sk-SECRETKEY");
+      const after = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: first.cookie } });
+      const retried = (await after.json()) as { messages: Array<{ text: string; error?: string }> };
+      expect(retried.messages.map((message) => message.text)).toEqual(["超时问题", "重试成功"]);
+      expect(retried.messages.some((message) => message.error)).toBe(false);
+      const stored = await pool.query<{ stop_reason: string | null }>(
+        `SELECT agent_message->>'stopReason' AS stop_reason FROM messages WHERE session_id = $1`,
+        [sessionId],
+      );
+      expect(stored.rows.some((row) => row.stop_reason === "error")).toBe(false);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("评分可以改、可以撤销，重新打开仍能读到", async () => {
+    const server = await listen(createApp(config({ chatMock: true }), deps()));
+    try {
+      const chat = await postChat(server.url, { message: "他最有代表性的项目是什么？" });
+      const sessionId = String(chat.events.find((event) => event.event === "session")?.data.sessionId);
+      const messageId = String(chat.events.find((event) => event.event === "done")?.data.messageId);
+      const rate = (rating: string, cookie = chat.cookie) =>
+        fetch(`${server.url}/api/feedback`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
+          body: JSON.stringify({ sessionId, messageId, rating }),
+        });
+      expect((await rate("like")).status).toBe(200);
+      const liked = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: chat.cookie } });
+      const likedBody = (await liked.json()) as { messages: Array<{ rating?: string | null }> };
+      expect(likedBody.messages.at(-1)?.rating).toBe("like");
+
+      expect((await rate("dislike")).status).toBe(200);
+      const disliked = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: chat.cookie } });
+      const dislikedBody = (await disliked.json()) as { messages: Array<{ rating?: string | null }> };
+      expect(dislikedBody.messages.at(-1)?.rating).toBe("dislike");
+
+      const stranger = await rate("clear", "");
+      expect(stranger.status).toBe(404);
+      expect((await rate("clear")).status).toBe(200);
+      const cleared = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: chat.cookie } });
+      const clearedBody = (await cleared.json()) as { messages: Array<{ rating?: string | null }> };
+      expect(clearedBody.messages.at(-1)?.rating ?? null).toBeNull();
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("重命名和删除只作用于当前访客", async () => {
+    const server = await listen(createApp(config(), deps()));
+    try {
+      const empty = await fetch(`${server.url}/api/sessions`);
+      const emptyBody = (await empty.json()) as { sessions: unknown[] };
+      expect(emptyBody.sessions).toEqual([]);
+
+      const chat = await postChat(server.url, { message: "第一问" }, cookieHeader(empty));
+      const sessionId = String(chat.events.find((event) => event.event === "session")?.data.sessionId);
+      const renamed = await fetch(`${server.url}/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: chat.cookie },
+        body: JSON.stringify({ title: "港湾项目" }),
+      });
+      expect(renamed.status).toBe(200);
+      const listed = await fetch(`${server.url}/api/sessions?q=${encodeURIComponent("港湾")}`, {
+        headers: { Cookie: chat.cookie },
+      });
+      const list = (await listed.json()) as { sessions: Array<{ title: string }> };
+      expect(list.sessions.map((item) => item.title)).toEqual(["港湾项目"]);
+      const missed = await fetch(`${server.url}/api/sessions?q=${encodeURIComponent("不存在的词")}`, {
+        headers: { Cookie: chat.cookie },
+      });
+      const missedBody = (await missed.json()) as { sessions: unknown[] };
+      expect(missedBody.sessions).toEqual([]);
+
+      const strangerRename = await fetch(`${server.url}/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "抢走了" }),
+      });
+      expect(strangerRename.status).toBe(404);
+      const strangerDelete = await fetch(`${server.url}/api/sessions/${sessionId}`, { method: "DELETE" });
+      expect(strangerDelete.status).toBe(404);
+
+      const removed = await fetch(`${server.url}/api/sessions/${sessionId}`, {
+        method: "DELETE",
+        headers: { Cookie: chat.cookie },
+      });
+      expect(removed.status).toBe(200);
+      const gone = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: chat.cookie } });
+      expect(gone.status).toBe(404);
+      const left = await pool.query("SELECT id FROM sessions WHERE id = $1", [sessionId]);
+      expect(left.rowCount).toBe(0);
     } finally {
       await server.close();
     }

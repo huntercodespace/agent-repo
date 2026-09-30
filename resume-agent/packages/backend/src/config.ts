@@ -19,6 +19,8 @@ export interface AppConfig {
   rateLimitMax: number;
   chatMock: boolean;
   mockDelayMs: number;
+  /** 单次模型请求超时，到点后回答里是错误，可以重试。 */
+  modelTimeoutMs: number;
   trustProxy: boolean;
   corsOrigins: string[];
 }
@@ -37,6 +39,8 @@ export function loadConfig(): AppConfig {
   if (!databaseUrl) {
     throw new Error("缺少 DATABASE_URL。本地可先 docker compose up -d，再把连接串写进 .env。");
   }
+  const modelTimeoutMs = integer("MODEL_TIMEOUT_MS", 90_000);
+  if (modelTimeoutMs < 1000) throw new Error("MODEL_TIMEOUT_MS 至少为 1000 毫秒。");
   return {
     port: integer("PORT", 8787),
     ...(modelId ? { deepseekModelId: modelId } : {}),
@@ -53,6 +57,7 @@ export function loadConfig(): AppConfig {
     rateLimitMax: integer("RATE_LIMIT_MAX", 20),
     chatMock: process.env.CHAT_MOCK === "1",
     mockDelayMs: integer("CHAT_MOCK_DELAY_MS", 350),
+    modelTimeoutMs,
     trustProxy: process.env.TRUST_PROXY === "1",
     corsOrigins: (process.env.CORS_ORIGIN || "http://127.0.0.1:5174,http://localhost:5174")
       .split(",")

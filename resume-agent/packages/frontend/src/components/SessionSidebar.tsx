@@ -1,4 +1,6 @@
-import { CloseOutlined, MessageFilled, MessageOutlined, PlusOutlined, RightOutlined, SearchOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { CloseOutlined, EllipsisOutlined, MessageFilled, MessageOutlined, PlusOutlined, RightOutlined, SearchOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { Dropdown } from "antd";
+import { useState } from "react";
 import type { Profile, SessionSummary } from "../types";
 import { groupSessions } from "../sessions";
 
@@ -20,9 +22,13 @@ export function SessionSidebar({
   query,
   activeId,
   error,
+  loading,
   onQuery,
   onCreate,
   onSelect,
+  onRename,
+  onDelete,
+  onReload,
   onClose,
 }: {
   mode: "desktop" | "drawer";
@@ -31,13 +37,36 @@ export function SessionSidebar({
   query: string;
   activeId?: string;
   error?: string;
+  loading?: boolean;
   onQuery: (value: string) => void;
   onCreate: () => void;
   onSelect: (id: string) => void;
+  onRename: (id: string, title: string) => Promise<void>;
+  onDelete: (id: string) => void;
+  onReload: () => void;
   onClose?: () => void;
 }) {
   const groups = groupSessions(sessions);
   const role = profile.headline.includes("全栈") ? "全栈" : "候选人";
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [renameError, setRenameError] = useState("");
+
+  async function commitRename(id: string) {
+    const title = draft.trim();
+    if (!title) {
+      setEditingId(null);
+      return;
+    }
+    try {
+      await onRename(id, title);
+      setEditingId(null);
+      setRenameError("");
+    } catch (reason) {
+      setRenameError(reason instanceof Error ? reason.message : "没有改成新标题");
+    }
+  }
+
   const body = (
     <>
       <div className={mode === "drawer" ? "drawer-head" : "brand"}>
@@ -71,31 +100,87 @@ export function SessionSidebar({
         </label>
       </div>
       <div className="session-scroll">
-        {error ? <p className="session-hint">{error}</p> : null}
-        {!error && groups.length === 0 ? <p className="session-hint">{query ? "没有匹配的对话" : "还没有对话"}</p> : null}
-        {groups.map((group) => (
-          <section key={group.label} className="session-group">
-            <div className="session-group-label">
-              <span>{group.label === "近 7 天" ? "最近 7 天" : group.label}</span>
-              {mode === "drawer" ? <span>{group.items.length} 条</span> : null}
-            </div>
-            {group.items.map((item) => {
-              const active = item.id === activeId;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={active ? "session-link active" : "session-link"}
-                  onClick={() => onSelect(item.id)}
-                >
-                  {mode === "drawer" ? active ? <MessageFilled /> : <MessageOutlined /> : null}
-                  <span>{item.title || "未命名对话"}</span>
-                  {mode === "drawer" && active ? <RightOutlined className="session-chevron" /> : null}
-                </button>
-              );
-            })}
-          </section>
-        ))}
+        {loading ? (
+          <div className="session-skeleton" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : null}
+        {!loading && error ? (
+          <div className="session-empty">
+            <strong>暂时连不上简历服务</strong>
+            <span>{error}</span>
+            <button type="button" onClick={onReload}>
+              重试
+            </button>
+          </div>
+        ) : null}
+        {!loading && !error && groups.length === 0 ? (
+          <div className="session-empty">
+            <strong>{query ? "搜不到" : "还没有对话"}</strong>
+            <span>{query ? "换个关键词试试" : "提问之后会出现在这里"}</span>
+          </div>
+        ) : null}
+        {renameError ? <p className="session-hint">{renameError}</p> : null}
+        {!loading && !error
+          ? groups.map((group) => (
+              <section key={group.label} className="session-group">
+                <div className="session-group-label">
+                  <span>{group.label === "近 7 天" ? "最近 7 天" : group.label}</span>
+                  {mode === "drawer" ? <span>{group.items.length} 条</span> : null}
+                </div>
+                {group.items.map((item) => {
+                  const active = item.id === activeId;
+                  return (
+                    <div key={item.id} className={active ? "session-link active" : "session-link"}>
+                      {mode === "drawer" ? active ? <MessageFilled /> : <MessageOutlined /> : null}
+                      {editingId === item.id ? (
+                        <input
+                          className="session-rename"
+                          value={draft}
+                          aria-label="对话标题"
+                          maxLength={80}
+                          autoFocus
+                          onChange={(event) => setDraft(event.target.value)}
+                          onBlur={() => void commitRename(item.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") void commitRename(item.id);
+                            if (event.key === "Escape") setEditingId(null);
+                          }}
+                        />
+                      ) : (
+                        <button type="button" className="session-select" onClick={() => onSelect(item.id)}>
+                          <span>{item.title || "未命名对话"}</span>
+                        </button>
+                      )}
+                      {mode === "drawer" && active ? <RightOutlined className="session-chevron" /> : null}
+                      <Dropdown
+                        trigger={["click"]}
+                        menu={{
+                          items: [
+                            {
+                              key: "rename",
+                              label: "重命名",
+                              onClick: () => {
+                                setDraft(item.title || "");
+                                setEditingId(item.id);
+                              },
+                            },
+                            { key: "delete", label: "删除", danger: true, onClick: () => onDelete(item.id) },
+                          ],
+                        }}
+                      >
+                        <button className="icon-button session-more" type="button" aria-label="对话操作">
+                          <EllipsisOutlined />
+                        </button>
+                      </Dropdown>
+                    </div>
+                  );
+                })}
+              </section>
+            ))
+          : null}
       </div>
       <div className={mode === "drawer" ? "sidebar-dock drawer-dock" : "sidebar-dock"}>
         <div className="dock-person">

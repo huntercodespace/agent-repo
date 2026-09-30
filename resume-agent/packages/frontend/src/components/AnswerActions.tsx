@@ -8,7 +8,7 @@ const REASONS = ["信息不准确", "没回答到点上", "其他"] as const;
 async function sendFeedback(input: {
   sessionId: string;
   messageId: string;
-  rating: "like" | "dislike";
+  rating: "like" | "dislike" | "clear";
   reason?: string;
   comment?: string;
 }): Promise<void> {
@@ -34,7 +34,7 @@ export function AnswerActions({
   sessionId?: string;
   canRegenerate: boolean;
   onRegenerate: () => void;
-  onRated: (rating: "like" | "dislike") => void;
+  onRated: (rating: "like" | "dislike" | null) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number] | "">("");
@@ -43,7 +43,7 @@ export function AnswerActions({
   const [error, setError] = useState("");
   const ready = Boolean(message.saved && sessionId);
 
-  async function submit(rating: "like" | "dislike", nextReason = "", nextComment = "") {
+  async function submit(rating: "like" | "dislike" | "clear", nextReason = "", nextComment = "") {
     if (!sessionId || !message.saved) return;
     setError("");
     await sendFeedback({
@@ -53,7 +53,7 @@ export function AnswerActions({
       ...(nextReason ? { reason: nextReason } : {}),
       ...(nextComment ? { comment: nextComment } : {}),
     });
-    onRated(rating);
+    onRated(rating === "clear" ? null : rating);
     setOpen(false);
   }
 
@@ -66,7 +66,8 @@ export function AnswerActions({
           aria-label="有用"
           disabled={!ready}
           onClick={() => {
-            void submit("like").catch((reasonError: unknown) => {
+            const next = message.rating === "like" ? "clear" : "like";
+            void submit(next).catch((reasonError: unknown) => {
               setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
             });
           }}
@@ -119,6 +120,19 @@ export function AnswerActions({
                 >
                   跳过
                 </Button>
+                {message.rating === "dislike" ? (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={() => {
+                      void submit("clear").catch((reasonError: unknown) => {
+                        setError(reasonError instanceof Error ? reasonError.message : "没有撤销反馈");
+                      });
+                    }}
+                  >
+                    撤销
+                  </Button>
+                ) : null}
               </div>
             </div>
           }

@@ -42,6 +42,8 @@ cp .env.example .env
 | `PORT` | 后端端口，默认 `8787` |
 | `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | 聊天和反馈接口各自按 IP 限流，默认 60 秒 20 次 |
 | `CHAT_MOCK` | `1` 时不调用模型，返回预设对话，只适合本地看界面 |
+| `CHAT_MOCK_DELAY_MS` | 演示模式下每条正文和工具结束之间的等待，默认 350 毫秒 |
+| `MODEL_TIMEOUT_MS` | 单次模型请求超时，默认 90000 毫秒。到点后这条回答记为错误，可以重试 |
 | `CORS_ORIGIN` | 允许的前端来源 |
 | `TRUST_PROXY` | 在反向代理后按转发头取 IP 时设为 `1` |
 
@@ -158,9 +160,13 @@ docker compose exec postgres psql -U resume -d resume -c 'CREATE DATABASE resume
 
 ## SSE 协议
 
-`POST /api/chat`，请求体 `{ "message": "…", "sessionId"?: "…", "regenerate"?: false }`，响应 `text/event-stream`。不接受 `history`。`sessionId` 必须属于当前访客，否则当作新会话。`regenerate: true` 时服务端丢掉最后一条助手回答，用库里的记录调用 `agent.continue()`（此时最后一条必须是用户消息）。客户端断开时服务端调用 `agent.abort()`。`agent.prompt()` 本身不接收 AbortSignal。
+`POST /api/chat`，请求体 `{ "message": "…", "sessionId"?: "…", "regenerate"?: false, "retry"?: false }`，响应 `text/event-stream`。不接受 `history`。`sessionId` 必须属于当前访客，否则当作新会话。`regenerate: true` 时服务端丢掉最后一条用户问题之后的内容，用库里的记录调用 `agent.continue()`。`retry: true` 只丢掉末尾 `stopReason === "error"` 的助手消息（同一轮里已经成功的工具结果留着），再 `continue()`。错误回答不会留在之后的模型上下文里。`agent.prompt()` 本身不接收 AbortSignal。
 
-每一轮都会新建一个 Agent，把库里的 `AgentMessage` 放进 `initialState.messages`，再 `prompt()` 新问题。这样模型能看到之前的工具调用和工具结果。
+用户点「停止生成」时，前端调用 `POST /api/chat/stop`，服务端对该轮执行 `agent.abort()`。半段回答以助手消息结束，`stopReason` 为 `aborted`，原样写入数据库。重新打开会话时，回答末尾仍显示「已停止」。客户端连接自己断开时也会 `abort()`，但那一轮不写入，界面在这条回答里显示原因和「重试」。
+
+单次模型请求有 `MODEL_TIMEOUT_MS`（默认 90 秒）。超时或模型失败时，最后一条助手消息的 `stopReason` 为 `error`，`errorMessage` 经清理后出现在这条回答里，不弹全局提示。清理会去掉密钥、连接串和过长的堆栈；超时统一写成「模型响应超时」。
+
+每一轮都会新建一个 Agent，把库里的 `AgentMessage` 放进 `initialState.messages`，再 `prompt()` 新问题。这样模型能看到之前的工具调用和工具结果。错误回答在交给模型前会被滤掉。
 
 每条消息是：
 
@@ -177,8 +183,8 @@ data: <json>
 | `tool_start` | 见下，`status: "pending"` | `tool_execution_start`。这个事件没有 label，服务端按工具名查中文 label |
 | `tool_progress` | 见下，`status: "pending"` | `tool_execution_update` |
 | `tool_end` | 见下，`status: "success"` 或 `"error"` | `tool_execution_end` 的 `result` 与 `isError` |
-| `error` | `{ message }` | 助手消息 `stopReason === "error"`，或服务端捕获的失败 |
-| `done` | `{ reason: "agent_end", sessionId, messageId }` | 一轮已经写入数据库。`messageId` 是这条回答的 id，反馈接口用它 |
+| `error` | `{ message }` | 助手消息 `stopReason === "error"`。`message` 已去掉密钥。界面把原因和「重试」放在这条回答里 |
+| `done` | `{ reason: "agent_end", sessionId, messageId, stopReason? }` | 一轮已经写入数据库。`messageId` 是这条回答的 id，反馈接口用它。`stopReason` 为 `aborted` 时界面在回答末尾标「已停止」 |
 
 工具事件的公共字段：
 
@@ -206,10 +212,16 @@ Ant Design X 的 ThoughtChain 状态是 `loading` / `success` / `error` / `abort
 
 未配置密钥时聊天接口返回 503，超限返回 429，上一轮还没结束返回 409，重新生成时找不到会话返回 404。这些是普通 JSON，不是 SSE。
 
-`GET /api/sessions?q=` 列出当前访客的对话，可按标题或内容搜索。界面按今天、昨天、近 7 天、更早分组。`GET /api/sessions/:id` 取回消息、思维链和卡片。别人的会话返回 404。
+`GET /api/sessions?q=` 列出当前访客的对话，可按标题或内容搜索。没有对话时界面写「还没有对话」；有搜索词但没有结果时写「搜不到」。列表和打开某一轮时会先显示骨架。`GET /api/sessions/:id` 取回消息、思维链、卡片，以及 `stopped`、`error` 和最新的 `rating`。别人的会话返回 404。
 
-`POST /api/feedback`，请求体 `{ sessionId, messageId, rating, reason?, comment? }`。`rating` 是 `like` 或 `dislike`。点踩的原因可以是 `信息不准确`、`没回答到点上`、`其他`，也可以留空。问题、回答、命中的片段 id 和模型 id 由服务端从这一轮记录里填写，不信浏览器。这个接口同样按 IP 限流。`pnpm feedback:report` 打印最近的点踩。
+`PATCH /api/sessions/:id`，请求体 `{ "title": "…" }`，标题去掉多余空白，最长 80 字。`DELETE /api/sessions/:id` 直接删除这轮对话。消息和反馈随外键级联删掉，没有回收站：会话不多，也没有登录后的废纸篓。两个接口都只动当前访客自己的会话，别人的返回 404。
 
-`GET /api/projects/:id` 走的是同一个 `get_project_detail`，给「查看详情」抽屉用，不会再开一轮模型。
+`POST /api/chat/stop`，请求体 `{ "sessionId" }`。只对当前访客正在生成的那一轮生效，调用 `agent.abort()`，并等这轮把半段回答写完再返回。
 
-回答下面有复制、重新生成、有用、没用。没用会在回答下方打开一个小层，原因和补充说明都可以跳过。
+`POST /api/feedback`，请求体 `{ sessionId, messageId, rating, reason?, comment? }`。`rating` 是 `like`、`dislike` 或 `clear`。再点一次「有用」，或在点踩的小层里选「撤销」，会删掉这条回答上当前访客的评分，按钮恢复。改成另一种评分会再插入一行，读会话时取最新的一行，所以重新打开后高亮还在。点踩的原因可以是 `信息不准确`、`没回答到点上`、`其他`，也可以留空。问题、回答、命中的片段 id 和模型 id 由服务端从这一轮记录里填写，不信浏览器。这个接口同样按 IP 限流。`pnpm feedback:report` 打印最近的点踩。
+
+`GET /api/projects/:id` 走的是同一个 `get_project_detail`，给「查看详情」抽屉用，不会再开一轮模型。下载简历和联系方式在回答里是卡片，不是一行裸链接。
+
+服务连不上时，进页面、对话列表和某一轮回答都在原地说明原因，并可以重试，不使用全局报错条。手机上输入框跟着 `visualViewport` 和 `dvh` 留在可见区域里，避免被键盘挡住。历史抽屉的遮罩只盖住抽屉右侧的聊天区。
+
+回答下面有复制、重新生成、有用、没用。没用会打开原因小层，原因和补充说明都可以跳过。演示模式（`CHAT_MOCK=1`）下发送「模拟超时」会写入一条可重试的超时回答，方便看错误状态。

@@ -35,6 +35,23 @@ export interface PublicMessage {
   text: string;
   tools?: PublicToolStep[];
   rating?: "like" | "dislike" | null;
+  /** 用户停止生成。对应助手消息 stopReason === "aborted"。 */
+  stopped?: boolean;
+  /** 已去掉密钥和堆栈的失败原因。对应 stopReason === "error"。 */
+  error?: string;
+}
+
+const SECRET = /sk-[A-Za-z0-9]|api[_-]?key|bearer\s+\S|postgres:\/\/\S+|DEEPSEEK_API_KEY|EMBEDDING_API_KEY/i;
+
+/** 失败原因可以给访客看，但不能带上密钥、连接串或一长串堆栈。 */
+export function sanitizeErrorMessage(raw: string | undefined): string {
+  const text = (raw ?? "").replace(/\s+/g, " ").trim();
+  if (/timeout|timed out|超时/i.test(text)) return "模型响应超时";
+  if (/network|ECONNRESET|ECONNREFUSED|socket hang up|fetch failed|Failed to fetch|网络/i.test(text)) {
+    return "网络连接中断了";
+  }
+  if (!text || SECRET.test(text) || text.length > 180) return "生成回答时出错了";
+  return text;
 }
 
 export function assertFormatVersions(rows: readonly StoredRow[]): void {
@@ -88,6 +105,23 @@ function uiDetailsFor(message: AgentMessage, labels: ReadonlyMap<string, string>
   };
 }
 
+/**
+ * 重试时只丢掉末尾 stopReason 为 error 的助手消息。
+ * 同一轮里已经成功的工具结果留着，这样 continue() 可以从用户消息或工具结果接着跑。
+ */
+export function dropTrailingErrors(rows: readonly StoredRow[]): StoredRow[] {
+  const next = [...rows];
+  while (next.length > 0) {
+    const last = next[next.length - 1]?.agentMessage;
+    if (last?.role === "assistant" && last.stopReason === "error") {
+      next.pop();
+      continue;
+    }
+    break;
+  }
+  return next;
+}
+
 /** 重新生成时，上下文停在最后一条用户问题上，丢掉这之后的助手回答和工具结果。 */
 export function trimToLastUser(rows: readonly StoredRow[]): StoredRow[] | null {
   let lastUser = -1;
@@ -122,7 +156,9 @@ export function projectMessages(
   let assistant: PublicMessage | null = null;
   const flush = () => {
     if (!assistant) return;
-    if (assistant.text || (assistant.tools && assistant.tools.length > 0)) out.push(assistant);
+    if (assistant.text || (assistant.tools && assistant.tools.length > 0) || assistant.stopped || assistant.error) {
+      out.push(assistant);
+    }
     assistant = null;
   };
   for (const row of rows) {
@@ -147,6 +183,16 @@ export function projectMessages(
       assistant.id = row.id;
       assistant.rating = ratings.get(row.id) ?? null;
       assistant.text += messageText(message);
+      if (message.stopReason === "aborted") {
+        assistant.stopped = true;
+        delete assistant.error;
+      } else if (message.stopReason === "error") {
+        assistant.stopped = false;
+        assistant.error = sanitizeErrorMessage(message.errorMessage);
+      } else {
+        assistant.stopped = false;
+        delete assistant.error;
+      }
       continue;
     }
     const details = row.uiDetails?.details ?? message.details;

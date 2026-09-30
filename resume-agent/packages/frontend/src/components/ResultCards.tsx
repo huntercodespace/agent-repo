@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, DownloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import type { ToolDetails, ToolStep } from "../types";
 import { ContactList } from "./ProfileViews";
 
@@ -101,9 +101,16 @@ function ResultBlock({
   }
   if (details.kind === "download") {
     return (
-      <Button className="btn-primary-inline" type="primary" icon={<DownloadOutlined />} href={details.url}>
-        下载简历
-      </Button>
+      <a className="file-card" href={details.url}>
+        <span className="file-card-copy">
+          <strong>{details.filename}</strong>
+          <span>PDF</span>
+        </span>
+        <span className="detail-link">
+          下载简历
+          <DownloadOutlined />
+        </span>
+      </a>
     );
   }
   if (details.kind === "contact") {

@@ -45,7 +45,10 @@ export interface DislikeReport {
 export interface BusinessStore {
   ensureVisitor(cookieId: string | null): Promise<string>;
   createSession(visitorId: string): Promise<SessionSummary>;
-  deleteSession(visitorId: string, sessionId: string): Promise<void>;
+  renameSession(visitorId: string, sessionId: string, title: string): Promise<SessionSummary | null>;
+  /** 直接删掉会话。消息和反馈随外键级联删除，没有回收站。不属于该访客时返回 false。 */
+  deleteSession(visitorId: string, sessionId: string): Promise<boolean>;
+  clearFeedback(visitorId: string, sessionId: string, messageId: string): Promise<void>;
   listSessions(visitorId: string, query: string): Promise<SessionSummary[]>;
   getSession(visitorId: string, sessionId: string): Promise<SessionDetail | null>;
   loadSession(visitorId: string, sessionId: string): Promise<LoadedSession | null>;
@@ -135,8 +138,23 @@ export function createPostgresBusinessStore(pool: Pool): BusinessStore {
       return { id: row.id, title: row.title, createdAt: iso(row.created_at), updatedAt: iso(row.updated_at) };
     },
 
-    async deleteSession(visitorId: string, sessionId: string): Promise<void> {
-      await pool.query("DELETE FROM sessions WHERE id = $1 AND visitor_id = $2", [sessionId, visitorId]);
+    async renameSession(visitorId: string, sessionId: string, title: string): Promise<SessionSummary | null> {
+      if (!UUID_PATTERN.test(sessionId)) return null;
+      const result = await pool.query<SessionDbRow>(
+        `UPDATE sessions SET title = $3, updated_at = now()
+         WHERE id = $1 AND visitor_id = $2
+         RETURNING id, title, created_at, updated_at`,
+        [sessionId, visitorId, title],
+      );
+      const row = result.rows[0];
+      if (!row) return null;
+      return { id: row.id, title: row.title, createdAt: iso(row.created_at), updatedAt: iso(row.updated_at) };
+    },
+
+    async deleteSession(visitorId: string, sessionId: string): Promise<boolean> {
+      if (!UUID_PATTERN.test(sessionId)) return false;
+      const result = await pool.query("DELETE FROM sessions WHERE id = $1 AND visitor_id = $2", [sessionId, visitorId]);
+      return (result.rowCount ?? 0) > 0;
     },
 
     async listSessions(visitorId: string, query: string): Promise<SessionSummary[]> {
@@ -259,6 +277,18 @@ export function createPostgresBusinessStore(pool: Pool): BusinessStore {
           source.modelId,
         ],
       );
+    },
+
+    async clearFeedback(visitorId: string, sessionId: string, messageId: string): Promise<void> {
+      const loaded = await this.loadSession(visitorId, sessionId);
+      if (!loaded) throw new FeedbackError("没有找到这轮对话。", 404);
+      const target = loaded.rows.find((row) => row.id === messageId);
+      if (!target || target.agentMessage.role !== "assistant") throw new FeedbackError("没有找到这条回答。", 404);
+      await pool.query("DELETE FROM feedback WHERE visitor_id = $1 AND session_id = $2 AND message_id = $3", [
+        visitorId,
+        sessionId,
+        messageId,
+      ]);
     },
 
     async recentDislikes(limit: number): Promise<DislikeReport[]> {
