@@ -14,6 +14,7 @@ import {
   rowsFromAgentMessages,
   titleFromMessages,
   trimToLastUser,
+  type StoredRow,
 } from "./transcript.js";
 
 function userMessage(text: string): AgentMessage {
@@ -156,9 +157,9 @@ export async function streamChat(options: {
   const prior = history.map((row) => row.agentMessage);
   const withUser = options.retry || options.regenerate ? prior : [...prior, userMessage(question)];
 
-  if (options.mock && /模拟超时/.test(question)) {
+  if (options.mock && !options.retry && !options.regenerate && /模拟超时/.test(question)) {
     options.emit({ event: "error", data: { message: "模型响应超时" } });
-    return save(options, [...withUser, assistantFrom(options.model, "", "error", "模型响应超时")], options.session.title);
+    return save(options, [...withUser, assistantFrom(options.model, "", "error", "模型响应超时")], options.session.title, history);
   }
 
   if (options.mock) {
@@ -169,13 +170,13 @@ export async function streamChat(options: {
       const before = gate(options);
       if (before === "drop") return false;
       if (before === "stop") {
-        return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title);
+        return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title, history);
       }
       if (options.mockDelayMs > 0 && (event.event === "tool_end" || event.event === "text_delta")) {
         const waited = await waitUnlessInterrupted(options.mockDelayMs, options);
         if (waited === "drop") return false;
         if (waited === "stop") {
-          return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title);
+          return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title, history);
         }
       }
       options.emit(event);
@@ -185,9 +186,9 @@ export async function streamChat(options: {
     const after = gate(options);
     if (after === "drop") return false;
     if (after === "stop") {
-      return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title);
+      return save(options, [...withUser, ...partialMockMessages(answer.messages, finished, text, options.model)], options.session.title, history);
     }
-    return save(options, [...withUser, ...answer.messages], options.session.title);
+    return save(options, [...withUser, ...answer.messages], options.session.title, history);
   }
 
   const agent = createResumeAgent({
@@ -210,7 +211,7 @@ export async function streamChat(options: {
     unsubscribe();
   }
   if (options.isClosed() && !options.isStopRequested()) return false;
-  return save(options, agent.state.messages, options.session.title);
+  return save(options, agent.state.messages, options.session.title, history);
 }
 
 async function save(
@@ -223,8 +224,9 @@ async function save(
   },
   messages: readonly AgentMessage[],
   existingTitle: string,
+  previous: readonly StoredRow[],
 ): Promise<boolean> {
-  const rows = rowsFromAgentMessages(messages, options.labels);
+  const rows = rowsFromAgentMessages(messages, options.labels, previous);
   const title = existingTitle.trim() || titleFromMessages(messages);
   await options.business.saveTranscript({
     visitorId: options.visitorId,

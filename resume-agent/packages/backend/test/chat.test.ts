@@ -502,6 +502,33 @@ describe("会话、重新生成和反馈", () => {
     }
   });
 
+  it("下一轮保存后，上一轮回答的 id 和评分还在", async () => {
+    const server = await listen(createApp(config({ chatMock: true }), deps()));
+    try {
+      const chat = await postChat(server.url, { message: "他最有代表性的项目是什么？" });
+      const sessionId = String(chat.events.find((event) => event.event === "session")?.data.sessionId);
+      const messageId = String(chat.events.find((event) => event.event === "done")?.data.messageId);
+      const liked = await fetch(`${server.url}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: chat.cookie },
+        body: JSON.stringify({ sessionId, messageId, rating: "like" }),
+      });
+      expect(liked.status).toBe(200);
+
+      const next = await postChat(server.url, { message: "下载简历", sessionId }, chat.cookie);
+      expect(next.status).toBe(200);
+      const again = await fetch(`${server.url}/api/sessions/${sessionId}`, { headers: { Cookie: chat.cookie } });
+      const body = (await again.json()) as { messages: Array<{ id: string; text: string; rating?: string | null }> };
+      const first = body.messages.find((message) => message.id === messageId);
+      expect(first?.rating).toBe("like");
+      expect(first?.text).toContain("港湾协作平台");
+      const feedback = await pool.query("SELECT message_id FROM feedback WHERE message_id = $1", [messageId]);
+      expect(feedback.rowCount).toBe(1);
+    } finally {
+      await server.close();
+    }
+  });
+
   it("重命名和删除只作用于当前访客", async () => {
     const server = await listen(createApp(config(), deps()));
     try {

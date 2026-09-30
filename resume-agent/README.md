@@ -218,7 +218,7 @@ Ant Design X 的 ThoughtChain 状态是 `loading` / `success` / `error` / `abort
 
 `POST /api/chat/stop`，请求体 `{ "sessionId" }`。只对当前访客正在生成的那一轮生效，调用 `agent.abort()`，并等这轮把半段回答写完再返回。
 
-`POST /api/feedback`，请求体 `{ sessionId, messageId, rating, reason?, comment? }`。`rating` 是 `like`、`dislike` 或 `clear`。再点一次「有用」，或在点踩的小层里选「撤销」，会删掉这条回答上当前访客的评分，按钮恢复。改成另一种评分会再插入一行，读会话时取最新的一行，所以重新打开后高亮还在。点踩的原因可以是 `信息不准确`、`没回答到点上`、`其他`，也可以留空。问题、回答、命中的片段 id 和模型 id 由服务端从这一轮记录里填写，不信浏览器。这个接口同样按 IP 限流。`pnpm feedback:report` 打印最近的点踩。
+`POST /api/feedback`，请求体 `{ sessionId, messageId, rating, reason?, comment? }`。`rating` 是 `like`、`dislike` 或 `clear`。再点一次「有用」，或在点踩的小层里选「撤销」，会删掉这条回答上当前访客的评分，按钮恢复。改成另一种评分会再插入一行，读会话时取最新的一行。继续对话时已有消息沿用原来的 id，不会因为重写记录把评分级联删掉，所以重新打开后高亮还在。点踩的原因可以是 `信息不准确`、`没回答到点上`、`其他`，也可以留空。问题、回答、命中的片段 id 和模型 id 由服务端从这一轮记录里填写，不信浏览器。这个接口同样按 IP 限流。`pnpm feedback:report` 打印最近的点踩。
 
 `GET /api/projects/:id` 走的是同一个 `get_project_detail`，给「查看详情」抽屉用，不会再开一轮模型。下载简历和联系方式在回答里是卡片，不是一行裸链接。
 

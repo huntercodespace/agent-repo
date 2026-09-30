@@ -84,14 +84,20 @@ export function messageText(message: AgentMessage): string {
 export function rowsFromAgentMessages(
   messages: readonly AgentMessage[],
   labels: ReadonlyMap<string, string>,
+  previous: readonly StoredRow[] = [],
 ): StoredRow[] {
-  return messages.map((message, seq) => ({
-    id: randomUUID(),
-    seq,
-    formatVersion: AGENT_FORMAT_VERSION,
-    agentMessage: message,
-    uiDetails: uiDetailsFor(message, labels),
-  }));
+  return messages.map((message, seq) => {
+    const prior = previous[seq];
+    // 只在前缀上沿用 id。后面的轮次会整段重写消息，评分挂在 message_id 上，id 一变按钮就会灭。
+    const id = prior && prior.agentMessage.role === message.role ? prior.id : randomUUID();
+    return {
+      id,
+      seq,
+      formatVersion: AGENT_FORMAT_VERSION,
+      agentMessage: message,
+      uiDetails: uiDetailsFor(message, labels),
+    };
+  });
 }
 
 function uiDetailsFor(message: AgentMessage, labels: ReadonlyMap<string, string>): UiDetails | null {

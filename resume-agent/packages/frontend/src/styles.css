@@ -1143,6 +1143,12 @@ button:disabled { cursor: default; }
 
 .app-mobile .shell { height: 100%; }
 
+.app-mobile .workspace {
+  height: auto;
+  min-height: 0;
+  align-self: stretch;
+}
+
 .contact-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 
 .contact-list li { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }

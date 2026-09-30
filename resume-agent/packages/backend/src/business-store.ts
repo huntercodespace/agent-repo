@@ -225,11 +225,23 @@ export function createPostgresBusinessStore(pool: Pool): BusinessStore {
           input.visitorId,
         ]);
         if (!owned.rows[0]) throw new Error("会话不存在");
-        await client.query("DELETE FROM messages WHERE session_id = $1", [input.sessionId]);
+        const ids = input.rows.map((row) => row.id);
+        // 先删掉这一轮丢掉的消息（错误回答、重新生成的尾巴）。评分外键会跟着级联删掉。
+        // 留下来的行不能先删再插，否则 ON DELETE CASCADE 会把已经记下的评分清掉。
+        await client.query(
+          `DELETE FROM messages WHERE session_id = $1 AND NOT (id = ANY($2::uuid[]))`,
+          [input.sessionId, ids],
+        );
+        await client.query("UPDATE messages SET seq = -1 - seq WHERE session_id = $1", [input.sessionId]);
         for (const row of input.rows) {
           await client.query(
             `INSERT INTO messages (id, session_id, seq, format_version, agent_message, ui_details)
-             VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
+             VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)
+             ON CONFLICT (id) DO UPDATE SET
+               seq = EXCLUDED.seq,
+               format_version = EXCLUDED.format_version,
+               agent_message = EXCLUDED.agent_message,
+               ui_details = EXCLUDED.ui_details`,
             [
               row.id,
               input.sessionId,
