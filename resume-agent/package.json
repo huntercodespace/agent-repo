@@ -1,0 +1,27 @@
+{
+  "name": "resume-agent",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "基于简历检索的个人问答助手（示例数据）",
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "ingest": "pnpm --filter @resume/retrieval build && pnpm --filter @resume/backend ingest",
+    "dev": "pnpm --filter @resume/retrieval build && pnpm --parallel --filter @resume/backend --filter @resume/frontend dev",
+    "build": "pnpm -r --filter \"@resume/*\" build",
+    "typecheck": "pnpm -r --filter \"@resume/*\" typecheck",
+    "migrate": "pnpm --filter @resume/backend migrate",
+    "feedback:report": "pnpm --filter @resume/backend feedback:report",
+    "test": "pnpm --filter @resume/retrieval test && pnpm --filter @resume/backend test",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  }
+}

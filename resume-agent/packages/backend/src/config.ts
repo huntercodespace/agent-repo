@@ -1,0 +1,67 @@
+import { join } from "node:path";
+import { repoRoot } from "./paths.js";
+
+export interface AppConfig {
+  port: number;
+  /** 留空则按 pi-ai 目录自动选择。 */
+  deepseekModelId?: string;
+  embeddingBaseUrl: string;
+  embeddingModel: string;
+  embeddingApiKey: string;
+  /** 必须与迁移里的 vector(1024) 一致。 */
+  embeddingDimension: number;
+  databaseUrl: string;
+  cookieSecure: boolean;
+  resumeDir: string;
+  publicDir: string;
+  frontendDist: string;
+  rateLimitWindowMs: number;
+  rateLimitMax: number;
+  chatMock: boolean;
+  mockDelayMs: number;
+  /** 单次模型请求超时，到点后回答里是错误，可以重试。 */
+  modelTimeoutMs: number;
+  trustProxy: boolean;
+  corsOrigins: string[];
+}
+
+function integer(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) throw new Error(`${name} 必须是数字`);
+  return value;
+}
+
+export function loadConfig(): AppConfig {
+  const modelId = process.env.DEEPSEEK_MODEL?.trim();
+  const databaseUrl = process.env.DATABASE_URL?.trim() || "";
+  if (!databaseUrl) {
+    throw new Error("缺少 DATABASE_URL。本地可先 docker compose up -d，再把连接串写进 .env。");
+  }
+  const modelTimeoutMs = integer("MODEL_TIMEOUT_MS", 90_000);
+  if (modelTimeoutMs < 1000) throw new Error("MODEL_TIMEOUT_MS 至少为 1000 毫秒。");
+  return {
+    port: integer("PORT", 8787),
+    ...(modelId ? { deepseekModelId: modelId } : {}),
+    embeddingBaseUrl: process.env.EMBEDDING_BASE_URL?.trim() || "https://api.siliconflow.cn/v1",
+    embeddingModel: process.env.EMBEDDING_MODEL?.trim() || "BAAI/bge-m3",
+    embeddingApiKey: process.env.EMBEDDING_API_KEY?.trim() || "",
+    embeddingDimension: integer("EMBEDDING_DIMENSION", 1024),
+    databaseUrl,
+    cookieSecure: process.env.COOKIE_SECURE === "1",
+    resumeDir: process.env.RESUME_DIR?.trim() || join(repoRoot, "data/resume"),
+    publicDir: process.env.PUBLIC_DIR?.trim() || join(repoRoot, "data/public"),
+    frontendDist: join(repoRoot, "packages/frontend/dist"),
+    rateLimitWindowMs: integer("RATE_LIMIT_WINDOW_MS", 60_000),
+    rateLimitMax: integer("RATE_LIMIT_MAX", 20),
+    chatMock: process.env.CHAT_MOCK === "1",
+    mockDelayMs: integer("CHAT_MOCK_DELAY_MS", 350),
+    modelTimeoutMs,
+    trustProxy: process.env.TRUST_PROXY === "1",
+    corsOrigins: (process.env.CORS_ORIGIN || "http://127.0.0.1:5174,http://localhost:5174")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+  };
+}
