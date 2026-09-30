@@ -1,3 +1,4 @@
+import { CheckOutlined, CopyOutlined, DislikeFilled, DislikeOutlined, LikeFilled, LikeOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Input, Popover, Radio } from "antd";
 import { useState } from "react";
 import type { ChatMessage } from "../types";
@@ -40,6 +41,7 @@ export function AnswerActions({
   const [comment, setComment] = useState("");
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const ready = Boolean(message.saved && sessionId);
 
   async function submit(rating: "like" | "dislike", nextReason = "", nextComment = "") {
     if (!sessionId || !message.saved) return;
@@ -57,87 +59,98 @@ export function AnswerActions({
 
   return (
     <div className="answer-actions">
-      <Button
-        type="text"
-        size="small"
-        onClick={() => {
-          void navigator.clipboard.writeText(message.text).then(() => {
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1500);
-          });
-        }}
-      >
-        {copied ? "已复制" : "复制"}
-      </Button>
-      {canRegenerate ? (
-        <Button type="text" size="small" onClick={onRegenerate}>
-          重新生成
-        </Button>
-      ) : null}
-      <Button
-        type={message.rating === "like" ? "primary" : "text"}
-        size="small"
-        disabled={!message.saved || !sessionId}
-        onClick={() => {
-          void submit("like").catch((reasonError: unknown) => {
-            setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
-          });
-        }}
-      >
-        有用
-      </Button>
-      <Popover
-        trigger="click"
-        open={open}
-        onOpenChange={setOpen}
-        content={
-          <div className="feedback-box">
-            <Radio.Group
-              value={reason}
-              onChange={(event) => setReason(event.target.value as (typeof REASONS)[number])}
-            >
-              {REASONS.map((item) => (
-                <Radio key={item} value={item}>
-                  {item}
-                </Radio>
-              ))}
-            </Radio.Group>
-            <Input.TextArea
-              value={comment}
-              placeholder="补充说明，可以不填"
-              autoSize={{ minRows: 2, maxRows: 4 }}
-              onChange={(event) => setComment(event.target.value)}
-            />
-            <div className="feedback-actions">
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => {
-                  void submit("dislike", reason, comment).catch((reasonError: unknown) => {
-                    setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
-                  });
-                }}
+      <div className="action-icons">
+        <button
+          className={message.rating === "like" ? "icon-button active" : "icon-button"}
+          type="button"
+          aria-label="有用"
+          disabled={!ready}
+          onClick={() => {
+            void submit("like").catch((reasonError: unknown) => {
+              setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
+            });
+          }}
+        >
+          {message.rating === "like" ? <LikeFilled /> : <LikeOutlined />}
+        </button>
+        <Popover
+          trigger="click"
+          open={open}
+          onOpenChange={(next) => {
+            if (ready) setOpen(next);
+          }}
+          content={
+            <div className="feedback-box">
+              <Radio.Group
+                value={reason}
+                onChange={(event) => setReason(event.target.value as (typeof REASONS)[number])}
               >
-                提交
-              </Button>
-              <Button
-                size="small"
-                onClick={() => {
-                  void submit("dislike").catch((reasonError: unknown) => {
-                    setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
-                  });
-                }}
-              >
-                跳过
-              </Button>
+                {REASONS.map((item) => (
+                  <Radio key={item} value={item}>
+                    {item}
+                  </Radio>
+                ))}
+              </Radio.Group>
+              <Input.TextArea
+                value={comment}
+                placeholder="补充说明，可以不填"
+                autoSize={{ minRows: 2, maxRows: 4 }}
+                onChange={(event) => setComment(event.target.value)}
+              />
+              <div className="feedback-actions">
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => {
+                    void submit("dislike", reason, comment).catch((reasonError: unknown) => {
+                      setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
+                    });
+                  }}
+                >
+                  提交
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    void submit("dislike").catch((reasonError: unknown) => {
+                      setError(reasonError instanceof Error ? reasonError.message : "没有记下反馈");
+                    });
+                  }}
+                >
+                  跳过
+                </Button>
+              </div>
             </div>
-          </div>
-        }
-      >
-        <Button type={message.rating === "dislike" ? "primary" : "text"} size="small" disabled={!message.saved || !sessionId}>
-          没用
-        </Button>
-      </Popover>
+          }
+        >
+          <button
+            className={message.rating === "dislike" ? "icon-button active" : "icon-button"}
+            type="button"
+            aria-label="没用"
+            disabled={!ready}
+          >
+            {message.rating === "dislike" ? <DislikeFilled /> : <DislikeOutlined />}
+          </button>
+        </Popover>
+        <button
+          className="icon-button"
+          type="button"
+          aria-label={copied ? "已复制" : "复制回答"}
+          onClick={() => {
+            void navigator.clipboard.writeText(message.text).then(() => {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1500);
+            });
+          }}
+        >
+          {copied ? <CheckOutlined /> : <CopyOutlined />}
+        </button>
+        {canRegenerate ? (
+          <button className="icon-button" type="button" aria-label="重新生成" onClick={onRegenerate}>
+            <ReloadOutlined />
+          </button>
+        ) : null}
+      </div>
       {error ? <span className="feedback-error">{error}</span> : null}
     </div>
   );

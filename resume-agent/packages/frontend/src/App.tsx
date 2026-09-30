@@ -1,13 +1,11 @@
-import { Alert } from "antd";
 import { useEffect, useState } from "react";
 import { ChatPanel } from "./components/ChatPanel";
-import { ProfileCard } from "./components/ProfileCard";
 import type { Profile } from "./types";
 
 function useNarrow() {
-  const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 720px)").matches);
+  const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 960px)").matches);
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 720px)");
+    const query = window.matchMedia("(max-width: 960px)");
     const onChange = () => setNarrow(query.matches);
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
@@ -34,13 +32,9 @@ export function App() {
   }, []);
 
   return (
-    <main className="page">
-      <section className="sheet">
-        {error ? <Alert type="error" showIcon message={error} /> : null}
-        {mock ? <Alert type="info" showIcon message="本地演示模式：回答是预设的，不会调用模型。" /> : null}
-        {profile ? <ProfileCard profile={profile} narrow={narrow} /> : null}
-        {profile ? <ChatPanel profile={profile} /> : null}
-      </section>
+    <main className={narrow ? "app app-mobile" : "app"}>
+      {error ? <p className="boot-error">{error}</p> : null}
+      {profile ? <ChatPanel profile={profile} narrow={narrow} mock={mock} /> : null}
     </main>
   );
 }

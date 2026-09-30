@@ -1,19 +1,28 @@
-import { Bubble, Prompts, Sender, ThoughtChain, Welcome } from "@ant-design/x";
-import { Alert, Button, Drawer } from "antd";
-import { useRef, useState } from "react";
-import { fetchSession } from "../sessions";
+import {
+  ArrowUpOutlined,
+  AudioOutlined,
+  EditOutlined,
+  EllipsisOutlined,
+  MenuOutlined,
+  PaperClipOutlined,
+  RobotOutlined,
+  SendOutlined,
+  ShareAltOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import { Bubble, Sender, ThoughtChain } from "@ant-design/x";
+import { Alert, Dropdown } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { fetchSession, fetchSessions } from "../sessions";
 import { readSse } from "../sse";
-import type { ChatMessage, Profile, ProjectDetail, ToolDetails, ToolStatus, ToolStep } from "../types";
+import type { ChatMessage, Profile, ProjectDetail, SessionSummary, ToolDetails, ToolStatus, ToolStep } from "../types";
 import { AnswerActions } from "./AnswerActions";
+import { CompactProfile, WelcomeProfile } from "./ProfileViews";
+import { ProjectPanel } from "./ProjectPanel";
 import { ResultCards } from "./ResultCards";
-import { SessionDrawer } from "./SessionDrawer";
+import { SessionSidebar } from "./SessionSidebar";
 
-const SUGGESTIONS = [
-  { key: "flagship", label: "最有代表性的项目是什么？" },
-  { key: "react", label: "他 2023 年后做过哪些 React 项目？" },
-  { key: "fit", label: "为什么适合这个岗位？" },
-  { key: "contact", label: "如何联系他？" },
-];
+const SUGGESTIONS = ["他最有代表性的项目是什么？", "2023 年后做过哪些 React 项目？", "为什么适合前端岗位？"];
 
 function thoughtStatus(status: ToolStatus): "loading" | "success" | "error" {
   if (status === "pending") return "loading";
@@ -30,7 +39,15 @@ function asToolDetails(value: unknown): ToolDetails | undefined {
   return value as ToolDetails;
 }
 
-export function ChatPanel({ profile }: { profile: Profile }) {
+function AssistantMark() {
+  return (
+    <span className="assistant-mark" aria-hidden="true">
+      <RobotOutlined />
+    </span>
+  );
+}
+
+export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow: boolean; mock: boolean }) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -39,9 +56,34 @@ export function ChatPanel({ profile }: { profile: Profile }) {
   const [projectError, setProjectError] = useState("");
   const [projectLoading, setProjectLoading] = useState(false);
   const [sessionsOpen, setSessionsOpen] = useState(false);
-  const [sessionTitle, setSessionTitle] = useState("");
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [sessionQuery, setSessionQuery] = useState("");
+  const [sessionError, setSessionError] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
   const sessionId = useRef<string | undefined>(undefined);
+  const [activeId, setActiveId] = useState<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchSessions(sessionQuery)
+        .then((items) => {
+          setSessions(items);
+          setSessionError("");
+        })
+        .catch((reason: unknown) => {
+          setSessionError(reason instanceof Error ? reason.message : "没有读到对话列表");
+        });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [sessionQuery, messages.length, activeId]);
+
+  useEffect(() => {
+    const node = threadRef.current;
+    if (!node || messages.length === 0) return;
+    node.scrollTop = node.scrollHeight;
+  }, [messages]);
 
   function patchAssistant(id: string, recipe: (message: ChatMessage) => ChatMessage) {
     setMessages((current) => current.map((message) => (message.id === id ? recipe(message) : message)));
@@ -84,9 +126,6 @@ export function ChatPanel({ profile }: { profile: Profile }) {
     if ((!question && !options?.regenerate) || streaming) return;
     if (!options?.regenerate) setDraft("");
     let assistantId: string = crypto.randomUUID();
-    if (!options?.regenerate && !sessionTitle) {
-      setSessionTitle(question.length > 40 ? `${question.slice(0, 40)}…` : question);
-    }
     setMessages((current) => {
       const withoutPending = options?.regenerate && current.at(-1)?.role === "assistant" ? current.slice(0, -1) : current;
       return [
@@ -122,6 +161,7 @@ export function ChatPanel({ profile }: { profile: Profile }) {
       await readSse(response, (event, data) => {
         if (event === "session" && typeof data.sessionId === "string") {
           sessionId.current = data.sessionId;
+          setActiveId(data.sessionId);
         } else if (event === "text_delta" && typeof data.delta === "string") {
           patchAssistant(assistantId, (message) => ({ ...message, text: message.text + data.delta }));
         } else if (event === "tool_start" || event === "tool_progress" || event === "tool_end") {
@@ -159,151 +199,296 @@ export function ChatPanel({ profile }: { profile: Profile }) {
   function startNewChat() {
     stopStreaming();
     sessionId.current = undefined;
-    setSessionTitle("");
+    setActiveId(undefined);
     setMessages([]);
     setDraft("");
+    setProjectOpen(false);
+    setSessionsOpen(false);
   }
 
   async function openSession(id: string) {
     stopStreaming();
     const session = await fetchSession(id);
     sessionId.current = session.id;
-    setSessionTitle(session.title);
+    setActiveId(session.id);
     setMessages(session.messages);
     setSessionsOpen(false);
+    setProjectOpen(false);
+  }
+
+  function share() {
+    void navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 1500);
+    });
   }
 
   const empty = messages.length === 0;
   const lastAssistantId = [...messages].reverse().find((message) => message.role === "assistant")?.id;
+  const note = mock ? "答案由 AI 根据简历内容生成 · 本地演示" : "答案由 AI 根据简历内容生成";
+
+  const composer = (
+    <Sender
+      className={narrow ? "composer composer-mobile" : empty ? "composer composer-welcome" : "composer composer-docked"}
+      value={draft}
+      onChange={setDraft}
+      loading={streaming}
+      placeholder="问问我的经历..."
+      submitType="enter"
+      autoSize={narrow || !empty ? { minRows: 1, maxRows: 4 } : { minRows: 3, maxRows: 6 }}
+      onSubmit={(value) => void send(value)}
+      onCancel={() => abortRef.current?.abort()}
+      styles={
+        !narrow && empty
+          ? {
+              root: {
+                background: "rgba(255,255,255,0.9)",
+                border: "none",
+                borderRadius: 12,
+                boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
+                padding: 16,
+              },
+              content: {
+                display: "grid",
+                gridTemplateColumns: "1fr auto",
+                gridTemplateAreas: '"input input" "tools send"',
+                alignItems: "center",
+                rowGap: 8,
+                background: "transparent",
+                padding: 0,
+              },
+              input: { gridArea: "input", minHeight: 72, background: "transparent" },
+              prefix: { gridArea: "tools" },
+              suffix: { gridArea: "send", justifySelf: "end" },
+            }
+          : {
+              root: {
+                background: narrow ? "#ffffff" : "rgba(255,255,255,0.95)",
+                border: "none",
+                borderRadius: narrow ? 999 : 12,
+                boxShadow: narrow
+                  ? "0 1px 2px rgba(0,0,0,0.05)"
+                  : "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+              },
+              content: { background: "transparent", padding: 0 },
+              input: { background: "transparent" },
+            }
+      }
+      prefix={
+        narrow || empty ? (
+          <span className="composer-tools">
+            <button className="icon-button" type="button" disabled title="暂不支持附件" aria-label="附件">
+              <PaperClipOutlined />
+            </button>
+            <button className="icon-button" type="button" disabled title="暂不支持语音" aria-label="语音">
+              <AudioOutlined />
+            </button>
+          </span>
+        ) : undefined
+      }
+      suffix={(_, info) => {
+        const { SendButton, LoadingButton } = info.components;
+        if (streaming) return <LoadingButton aria-label="停止" />;
+        return (
+          <SendButton className="send-button" aria-label="发送" icon={narrow || empty ? <ArrowUpOutlined /> : <SendOutlined />} />
+        );
+      }}
+      footer={!narrow && !empty ? <p className="composer-note">{note}</p> : undefined}
+    />
+  );
+
+  const sidebarProps = {
+    profile,
+    sessions,
+    query: sessionQuery,
+    activeId,
+    error: sessionError,
+    onQuery: setSessionQuery,
+    onCreate: startNewChat,
+    onSelect: (id: string) => {
+      void openSession(id);
+    },
+  };
 
   return (
-    <div className="chat-panel">
-      <div className="chat-toolbar">
-        {sessionTitle ? <span className="session-title">{sessionTitle}</span> : <span />}
-        <Button type="text" onClick={() => setSessionsOpen(true)}>
-          历史对话
-        </Button>
-      </div>
-      <div className="thread">
-        {empty ? (
-          <Welcome
-            className="welcome"
-            variant="borderless"
-            icon={<img src={profile.avatar} alt="" />}
-            title={`你好，我是${profile.name}的简历助手`}
-            description="可以问我项目、技能和经历。我只会根据简历里写明的内容回答。"
-          />
-        ) : null}
-        <Prompts
-          className="prompt-row"
-          title={empty ? "可以试试" : undefined}
-          items={SUGGESTIONS.map((item) => ({ key: item.key, label: item.label }))}
-          wrap
-          onItemClick={(info) => {
-            const label = info.data.label;
-            if (typeof label === "string") void send(label);
-          }}
-        />
-        {messages.map((message) =>
-          message.role === "user" ? (
-            <Bubble key={message.id} placement="end" content={message.text} className="user-bubble" />
-          ) : (
-            <div key={message.id} className="assistant-block">
-              {message.tools && message.tools.length > 0 ? (
-                <ThoughtChain
-                  className="thoughts"
-                  items={message.tools.map((step) => ({
-                    key: step.toolCallId,
-                    title: step.label,
-                    status: thoughtStatus(step.status),
-                    collapsible: true,
-                    blink: step.status === "pending",
-                  }))}
-                  expandedKeys={message.tools
-                    .filter((step) => step.status !== "success")
-                    .map((step) => step.toolCallId)}
-                />
-              ) : null}
-              {message.text || message.streaming ? (
-                <Bubble
-                  placement="start"
-                  streaming={Boolean(message.streaming && message.text)}
-                  loading={Boolean(message.streaming && !message.text && !(message.tools && message.tools.length))}
-                  content={message.text}
-                />
-              ) : null}
-              {message.error ? <Alert type="error" showIcon message={message.error} /> : null}
-              <ResultCards tools={message.tools ?? []} onOpenProject={(id) => void openProject(id)} />
-              {!message.streaming && message.text ? (
-                <AnswerActions
-                  message={message}
-                  sessionId={sessionId.current}
-                  canRegenerate={Boolean(message.saved && message.id === lastAssistantId && !streaming)}
-                  onRegenerate={() => {
-                    const question = [...messages].reverse().find((item) => item.role === "user")?.text ?? "";
-                    void send(question, { regenerate: true });
-                  }}
-                  onRated={(rating) => patchAssistant(message.id, (current) => ({ ...current, rating }))}
-                />
-              ) : null}
-            </div>
-          ),
-        )}
-      </div>
-      <Sender
-        className="composer"
-        value={draft}
-        onChange={setDraft}
-        loading={streaming}
-        placeholder="问问我的经历…"
-        submitType="enter"
-        autoSize={{ minRows: 1, maxRows: 4 }}
-        onSubmit={(value) => void send(value)}
-        onCancel={() => abortRef.current?.abort()}
-        suffix={(_, info) => {
-          const { SendButton, LoadingButton } = info.components;
-          return streaming ? (
-            <LoadingButton aria-label="停止" />
-          ) : (
-            <SendButton aria-label="发送" shape="round" icon={null}>
-              发送
-            </SendButton>
-          );
-        }}
-      />
-      <SessionDrawer
-        open={sessionsOpen}
-        activeId={sessionId.current}
-        onClose={() => setSessionsOpen(false)}
-        onCreate={startNewChat}
-        onSelect={(id) => {
-          void openSession(id);
-        }}
-      />
-      <Drawer
-        title={project?.title || "项目详情"}
-        placement="right"
-        size="default"
-        open={projectOpen}
-        onClose={() => setProjectOpen(false)}
-        className="project-drawer"
-      >
-        {projectLoading ? <p>正在读取项目全文…</p> : null}
-        {projectError ? <Alert type="warning" showIcon message={projectError} /> : null}
-        {project ? (
-          <div className="drawer-body">
-            <p className="drawer-period">{project.period || "时间未写"}</p>
-            <div className="skill-row">
-              {project.tech_stack.map((tech) => (
-                <span key={tech} className="drawer-tag">
-                  {tech}
+    <div className="shell">
+      {narrow ? null : <SessionSidebar mode="desktop" {...sidebarProps} />}
+      <div className="workspace">
+        <header className="topbar">
+          {narrow ? (
+            <>
+              <button className="icon-button icon-button-lg" type="button" aria-label="打开历史记录" onClick={() => setSessionsOpen(true)}>
+                <MenuOutlined />
+              </button>
+              <div className="topbar-title">
+                <i className="live-dot" />
+                <h1>Ai Assistant</h1>
+              </div>
+              <div className="topbar-actions">
+                <button className="icon-button icon-button-lg" type="button" aria-label="新建对话" onClick={startNewChat}>
+                  <EditOutlined />
+                </button>
+                <button className="icon-button icon-button-lg" type="button" aria-label="分享" onClick={share}>
+                  <ShareAltOutlined />
+                </button>
+                <span className="topbar-avatar">
+                  <UserOutlined />
                 </span>
-              ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="topbar-title">
+                <strong>
+                  {profile.name} · 简历问答
+                </strong>
+                <span className="capability-pill">
+                  <i />
+                  {profile.headline.split("·")[0]?.trim() || "简历问答"}
+                </span>
+              </div>
+              <div className="topbar-actions">
+                <button className="share-button" type="button" onClick={share}>
+                  <ShareAltOutlined />
+                  {copiedLink ? "已复制链接" : "分享对话"}
+                </button>
+                <Dropdown
+                  menu={{
+                    items: [{ key: "new", label: "新建对话", onClick: startNewChat }],
+                  }}
+                >
+                  <button className="icon-button" type="button" aria-label="更多">
+                    <EllipsisOutlined />
+                  </button>
+                </Dropdown>
+                <span className="topbar-avatar">
+                  <UserOutlined />
+                </span>
+              </div>
+            </>
+          )}
+        </header>
+        <div className={projectOpen && !narrow ? "stage with-project" : "stage"}>
+          <div className="thread-wrap">
+            <div className="thread" ref={threadRef}>
+              <div className={empty && !narrow ? "thread-inner thread-welcome" : "thread-inner"}>
+                {empty && !narrow ? <WelcomeProfile profile={profile} /> : <CompactProfile profile={profile} narrow={narrow} />}
+                <div className="intro">
+                  <AssistantMark />
+                  <div className="intro-copy">
+                    {empty && !narrow ? (
+                      <div className="intro-meta">
+                        <strong>简历助手 Copilot</strong>
+                        <span>智能问答已就绪</span>
+                      </div>
+                    ) : null}
+                    <div className={empty && !narrow ? "intro-bubble intro-bubble-welcome" : "intro-bubble"}>
+                      你好，我是{profile.name}的简历助手，可以问我他的项目、技能和经历。
+                      {empty && !narrow ? "你可以点击下方热门问题，也可以在下方输入框自由提问。" : ""}
+                    </div>
+                    <div className={empty && !narrow ? "suggestion-grid" : narrow ? "suggestion-list" : "suggestion-pills"}>
+                      {SUGGESTIONS.map((label) => (
+                        <button key={label} type="button" onClick={() => void send(label)}>
+                          <span>{label}</span>
+                          {narrow || (empty && !narrow) ? <span className="suggestion-arrow" aria-hidden="true">→</span> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {messages.map((message) =>
+                  message.role === "user" ? (
+                    <div key={message.id} className="user-row">
+                      <Bubble
+                        placement="end"
+                        variant="borderless"
+                        content={message.text}
+                        className="user-bubble"
+                      />
+                      {narrow ? null : (
+                        <span className="user-mark" aria-hidden="true">
+                          <UserOutlined />
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div key={message.id} className="assistant-block">
+                      {message.tools && message.tools.length > 0 ? (
+                        <ThoughtChain
+                          className="tool-chain"
+                          line={false}
+                          items={message.tools.map((step) => ({
+                            key: step.toolCallId,
+                            title: step.label,
+                            status: thoughtStatus(step.status),
+                            blink: step.status === "pending",
+                          }))}
+                        />
+                      ) : null}
+                      {message.text || message.streaming || message.error ? (
+                        <div className="assistant-row">
+                          <AssistantMark />
+                          <div className="assistant-copy">
+                            {message.streaming && !message.text && !(message.tools && message.tools.length) ? (
+                              <Bubble placement="start" variant="borderless" loading content="" />
+                            ) : null}
+                            {message.text ? (
+                              <div className="assistant-card">
+                                <p>{message.text}</p>
+                                <ResultCards tools={message.tools ?? []} onOpenProject={(id) => void openProject(id)} />
+                                {!message.streaming ? (
+                                  <AnswerActions
+                                    message={message}
+                                    sessionId={sessionId.current}
+                                    canRegenerate={Boolean(message.saved && message.id === lastAssistantId && !streaming)}
+                                    onRegenerate={() => {
+                                      const question = [...messages].reverse().find((item) => item.role === "user")?.text ?? "";
+                                      void send(question, { regenerate: true });
+                                    }}
+                                    onRated={(rating) => patchAssistant(message.id, (current) => ({ ...current, rating }))}
+                                  />
+                                ) : null}
+                              </div>
+                            ) : null}
+                            {message.error ? <Alert type="error" showIcon message={message.error} /> : null}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ),
+                )}
+                {empty && !narrow ? (
+                  <div className="welcome-composer">
+                    {composer}
+                    <p className="composer-note">{note}</p>
+                  </div>
+                ) : null}
+              </div>
             </div>
-            <p className="drawer-text">{project.text}</p>
+            {empty && !narrow ? null : (
+              <div className="composer-dock">
+                {composer}
+                {narrow ? <p className="composer-note">{note}</p> : null}
+              </div>
+            )}
           </div>
-        ) : null}
-      </Drawer>
+          {projectOpen && !narrow ? (
+            <ProjectPanel
+              project={project}
+              loading={projectLoading}
+              error={projectError}
+              onClose={() => setProjectOpen(false)}
+            />
+          ) : null}
+        </div>
+      </div>
+      {narrow && sessionsOpen ? <SessionSidebar mode="drawer" {...sidebarProps} onClose={() => setSessionsOpen(false)} /> : null}
+      {narrow && projectOpen ? (
+        <div className="mobile-project">
+          <button className="mobile-mask" type="button" aria-label="关闭项目详情" onClick={() => setProjectOpen(false)} />
+          <ProjectPanel project={project} loading={projectLoading} error={projectError} onClose={() => setProjectOpen(false)} />
+        </div>
+      ) : null}
     </div>
   );
 }

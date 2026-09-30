@@ -1,5 +1,7 @@
-import { Button, Card, Tag, Tooltip } from "antd";
+import { ArrowRightOutlined, DownloadOutlined } from "@ant-design/icons";
+import { Button, Tooltip } from "antd";
 import type { ToolDetails, ToolStep } from "../types";
+import { ContactList } from "./ProfileViews";
 
 const TYPE_LABEL = {
   experience: "经历",
@@ -50,96 +52,70 @@ function ResultBlock({
                   </span>
                 }
               >
-                <Tag className="citation-tag">
-                  引用{index + 1} · {TYPE_LABEL[item.type]}
-                </Tag>
+                <span className="cite-chip">
+                  {index + 1} · {TYPE_LABEL[item.type]}
+                </span>
               </Tooltip>
             ))}
           </div>
         ) : null}
         {projects.map((project) => (
-          <Card key={project.id} className="project-card" size="small">
-            <div className="project-card-top">
-              <div>
-                <h3>{project.title}</h3>
-                <p>{project.period || "时间未写"}</p>
-              </div>
-              <Button type="link" onClick={() => onOpenProject(project.id)}>
-                查看详情
-              </Button>
-            </div>
-            <div className="skill-row">
-              {project.tech_stack.map((tech) => (
-                <Tag key={tech}>{tech}</Tag>
-              ))}
-            </div>
-          </Card>
+          <button key={project.id} type="button" className="project-card" onClick={() => onOpenProject(project.id)}>
+            <span className="project-card-copy">
+              <span className="project-card-title">
+                <strong>{project.title}</strong>
+                {project.period ? <em>{project.period}</em> : null}
+              </span>
+              <span className="skill-row">
+                {project.tech_stack.map((tech) => (
+                  <span key={tech} className="plain-chip">
+                    {tech}
+                  </span>
+                ))}
+              </span>
+            </span>
+            <span className="detail-link">
+              查看详情
+              <ArrowRightOutlined />
+            </span>
+          </button>
         ))}
       </>
     );
   }
   if (details.kind === "project") {
     return (
-      <Card className="project-card" size="small">
-        <div className="project-card-top">
-          <div>
-            <h3>{details.title}</h3>
-            <p>{details.period || "时间未写"}</p>
-          </div>
-          <Button type="link" onClick={() => onOpenProject(details.id)}>
-            查看详情
-          </Button>
-        </div>
-        <div className="skill-row">
-          {details.tech_stack.map((tech) => (
-            <Tag key={tech}>{tech}</Tag>
-          ))}
-        </div>
-      </Card>
+      <button type="button" className="project-card" onClick={() => onOpenProject(details.id)}>
+        <span className="project-card-copy">
+          <span className="project-card-title">
+            <strong>{details.title}</strong>
+            {details.period ? <em>{details.period}</em> : null}
+          </span>
+        </span>
+        <span className="detail-link">
+          查看详情
+          <ArrowRightOutlined />
+        </span>
+      </button>
     );
   }
   if (details.kind === "download") {
     return (
-      <Button type="primary" href={details.url}>
+      <Button className="btn-primary-inline" type="primary" icon={<DownloadOutlined />} href={details.url}>
         下载简历
       </Button>
     );
   }
   if (details.kind === "contact") {
     return (
-      <Card className="contact-card" size="small" title="联系方式">
-        <ul className="contact-list">
-          {details.email ? (
-            <li>
-              <span>邮箱</span>
-              <strong>{details.email}</strong>
-            </li>
-          ) : null}
-          {details.phone ? (
-            <li>
-              <span>电话</span>
-              <strong>{details.phone}</strong>
-            </li>
-          ) : null}
-          {details.github ? (
-            <li>
-              <span>GitHub</span>
-              <a href={details.github} target="_blank" rel="noreferrer">
-                {details.github}
-              </a>
-            </li>
-          ) : null}
-          {details.website ? (
-            <li>
-              <span>网站</span>
-              <a href={details.website} target="_blank" rel="noreferrer">
-                {details.website}
-              </a>
-            </li>
-          ) : null}
-        </ul>
-      </Card>
+      <div className="contact-card">
+        <strong>联系方式</strong>
+        <ContactList contact={details} />
+      </div>
     );
+  }
+  if (details.kind === "project_missing") {
+    return <p className="muted">没有找到这个项目。</p>;
   }
   return null;
 }

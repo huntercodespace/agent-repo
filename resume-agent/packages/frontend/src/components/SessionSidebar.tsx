@@ -1,0 +1,136 @@
+import { CloseOutlined, MessageFilled, MessageOutlined, PlusOutlined, RightOutlined, SearchOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import type { Profile, SessionSummary } from "../types";
+import { groupSessions } from "../sessions";
+
+function SparkIcon() {
+  return (
+    <svg className="spark-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2.4 13.55 8.45 19.6 10 13.55 11.55 12 17.6 10.45 11.55 4.4 10 10.45 8.45 12 2.4Zm6.15 12.05.7 1.85 1.85.7-1.85.7-.7 1.85-.7-1.85-1.85-.7 1.85-.7.7-1.85Z"
+      />
+    </svg>
+  );
+}
+
+export function SessionSidebar({
+  mode,
+  profile,
+  sessions,
+  query,
+  activeId,
+  error,
+  onQuery,
+  onCreate,
+  onSelect,
+  onClose,
+}: {
+  mode: "desktop" | "drawer";
+  profile: Profile;
+  sessions: SessionSummary[];
+  query: string;
+  activeId?: string;
+  error?: string;
+  onQuery: (value: string) => void;
+  onCreate: () => void;
+  onSelect: (id: string) => void;
+  onClose?: () => void;
+}) {
+  const groups = groupSessions(sessions);
+  const role = profile.headline.includes("全栈") ? "全栈" : "候选人";
+  const body = (
+    <>
+      <div className={mode === "drawer" ? "drawer-head" : "brand"}>
+        <div className="brand-mark">
+          <SparkIcon />
+        </div>
+        <div className="brand-copy">
+          <strong>简历问答 Copilot</strong>
+          <span>{mode === "drawer" ? "智能上下文记忆" : `${profile.name} · 智能人才咨询`}</span>
+        </div>
+        {mode === "drawer" ? (
+          <button className="icon-button" type="button" aria-label="关闭历史" onClick={onClose}>
+            <CloseOutlined />
+          </button>
+        ) : null}
+      </div>
+      <div className="sidebar-pad">
+        <button className={mode === "drawer" ? "new-chat new-chat-solid" : "new-chat"} type="button" onClick={onCreate}>
+          <PlusOutlined />
+          新建对话
+        </button>
+      </div>
+      <div className="sidebar-pad sidebar-search-pad">
+        <label className="search-field">
+          <SearchOutlined />
+          <input
+            value={query}
+            placeholder="搜索对话..."
+            onChange={(event) => onQuery(event.target.value)}
+          />
+        </label>
+      </div>
+      <div className="session-scroll">
+        {error ? <p className="session-hint">{error}</p> : null}
+        {!error && groups.length === 0 ? <p className="session-hint">{query ? "没有匹配的对话" : "还没有对话"}</p> : null}
+        {groups.map((group) => (
+          <section key={group.label} className="session-group">
+            <div className="session-group-label">
+              <span>{group.label === "近 7 天" ? "最近 7 天" : group.label}</span>
+              {mode === "drawer" ? <span>{group.items.length} 条</span> : null}
+            </div>
+            {group.items.map((item) => {
+              const active = item.id === activeId;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={active ? "session-link active" : "session-link"}
+                  onClick={() => onSelect(item.id)}
+                >
+                  {mode === "drawer" ? active ? <MessageFilled /> : <MessageOutlined /> : null}
+                  <span>{item.title || "未命名对话"}</span>
+                  {mode === "drawer" && active ? <RightOutlined className="session-chevron" /> : null}
+                </button>
+              );
+            })}
+          </section>
+        ))}
+      </div>
+      <div className={mode === "drawer" ? "sidebar-dock drawer-dock" : "sidebar-dock"}>
+        <div className="dock-person">
+          <span className="dock-avatar">
+            {mode === "drawer" ? <img src={profile.avatar} alt="" /> : <span className="dock-glyph"><UserOutlined /></span>}
+            <i className="online-dot" />
+          </span>
+          <span className="dock-copy">
+            <span className="dock-name">
+              <strong>{profile.name}</strong>
+              <em>{mode === "drawer" ? role : "候选人"}</em>
+            </span>
+            <span className="dock-status">
+              <i />
+              {mode === "drawer" ? "在线 · 随时提问" : "在线 · 随时解答"}
+            </span>
+          </span>
+        </div>
+        <button className="icon-button" type="button" disabled title="暂无设置" aria-label="设置">
+          <SettingOutlined />
+        </button>
+      </div>
+    </>
+  );
+
+  if (mode === "desktop") {
+    return <aside className="sidebar">{body}</aside>;
+  }
+
+  return (
+    <div className="mobile-history">
+      <aside className="mobile-drawer" role="dialog" aria-label="历史对话记录">
+        {body}
+      </aside>
+      <button className="mobile-mask" type="button" aria-label="关闭历史" onClick={onClose} />
+    </div>
+  );
+}
