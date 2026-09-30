@@ -8,7 +8,10 @@ export interface AppConfig {
   embeddingBaseUrl: string;
   embeddingModel: string;
   embeddingApiKey: string;
-  lancedbPath: string;
+  /** 必须与迁移里的 vector(1024) 一致。 */
+  embeddingDimension: number;
+  databaseUrl: string;
+  cookieSecure: boolean;
   resumeDir: string;
   publicDir: string;
   frontendDist: string;
@@ -30,13 +33,19 @@ function integer(name: string, fallback: number): number {
 
 export function loadConfig(): AppConfig {
   const modelId = process.env.DEEPSEEK_MODEL?.trim();
+  const databaseUrl = process.env.DATABASE_URL?.trim() || "";
+  if (!databaseUrl) {
+    throw new Error("缺少 DATABASE_URL。本地可先 docker compose up -d，再把连接串写进 .env。");
+  }
   return {
     port: integer("PORT", 8787),
     ...(modelId ? { deepseekModelId: modelId } : {}),
     embeddingBaseUrl: process.env.EMBEDDING_BASE_URL?.trim() || "https://api.siliconflow.cn/v1",
     embeddingModel: process.env.EMBEDDING_MODEL?.trim() || "BAAI/bge-m3",
     embeddingApiKey: process.env.EMBEDDING_API_KEY?.trim() || "",
-    lancedbPath: process.env.LANCEDB_PATH?.trim() || join(repoRoot, "data/lancedb"),
+    embeddingDimension: integer("EMBEDDING_DIMENSION", 1024),
+    databaseUrl,
+    cookieSecure: process.env.COOKIE_SECURE === "1",
     resumeDir: process.env.RESUME_DIR?.trim() || join(repoRoot, "data/resume"),
     publicDir: process.env.PUBLIC_DIR?.trim() || join(repoRoot, "data/public"),
     frontendDist: join(repoRoot, "packages/frontend/dist"),

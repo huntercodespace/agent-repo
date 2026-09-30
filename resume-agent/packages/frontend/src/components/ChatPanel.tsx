@@ -1,9 +1,12 @@
 import { Bubble, Prompts, Sender, ThoughtChain, Welcome } from "@ant-design/x";
-import { Alert, Drawer } from "antd";
+import { Alert, Button, Drawer } from "antd";
 import { useRef, useState } from "react";
+import { fetchSession } from "../sessions";
 import { readSse } from "../sse";
 import type { ChatMessage, Profile, ProjectDetail, ToolDetails, ToolStatus, ToolStep } from "../types";
+import { AnswerActions } from "./AnswerActions";
 import { ResultCards } from "./ResultCards";
+import { SessionDrawer } from "./SessionDrawer";
 
 const SUGGESTIONS = [
   { key: "flagship", label: "最有代表性的项目是什么？" },
@@ -35,6 +38,8 @@ export function ChatPanel({ profile }: { profile: Profile }) {
   const [projectOpen, setProjectOpen] = useState(false);
   const [projectError, setProjectError] = useState("");
   const [projectLoading, setProjectLoading] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [sessionTitle, setSessionTitle] = useState("");
   const sessionId = useRef<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -70,16 +75,26 @@ export function ChatPanel({ profile }: { profile: Profile }) {
     }
   }
 
-  async function send(text: string) {
+  function stopStreaming() {
+    abortRef.current?.abort();
+  }
+
+  async function send(text: string, options?: { regenerate?: boolean }) {
     const question = text.trim();
-    if (!question || streaming) return;
-    setDraft("");
-    const assistantId = crypto.randomUUID();
-    setMessages((current) => [
-      ...current,
-      { id: crypto.randomUUID(), role: "user", text: question },
-      { id: assistantId, role: "assistant", text: "", streaming: true, tools: [] },
-    ]);
+    if ((!question && !options?.regenerate) || streaming) return;
+    if (!options?.regenerate) setDraft("");
+    let assistantId: string = crypto.randomUUID();
+    if (!options?.regenerate && !sessionTitle) {
+      setSessionTitle(question.length > 40 ? `${question.slice(0, 40)}…` : question);
+    }
+    setMessages((current) => {
+      const withoutPending = options?.regenerate && current.at(-1)?.role === "assistant" ? current.slice(0, -1) : current;
+      return [
+        ...withoutPending,
+        ...(options?.regenerate ? [] : [{ id: crypto.randomUUID(), role: "user" as const, text: question }]),
+        { id: assistantId, role: "assistant" as const, text: "", streaming: true, tools: [] },
+      ];
+    });
     setStreaming(true);
     const controller = new AbortController();
     abortRef.current = controller;
@@ -87,7 +102,11 @@ export function ChatPanel({ profile }: { profile: Profile }) {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question, sessionId: sessionId.current }),
+        body: JSON.stringify({
+          message: question,
+          ...(sessionId.current ? { sessionId: sessionId.current } : {}),
+          ...(options?.regenerate ? { regenerate: true } : {}),
+        }),
         signal: controller.signal,
       });
       if (!response.ok) {
@@ -119,6 +138,10 @@ export function ChatPanel({ profile }: { profile: Profile }) {
           });
         } else if (event === "error" && typeof data.message === "string") {
           patchAssistant(assistantId, (message) => ({ ...message, error: data.message as string }));
+        } else if (event === "done" && typeof data.messageId === "string") {
+          const serverId = data.messageId;
+          patchAssistant(assistantId, (message) => ({ ...message, id: serverId, saved: true }));
+          assistantId = serverId;
         }
       });
     } catch (error) {
@@ -133,10 +156,34 @@ export function ChatPanel({ profile }: { profile: Profile }) {
     }
   }
 
+  function startNewChat() {
+    stopStreaming();
+    sessionId.current = undefined;
+    setSessionTitle("");
+    setMessages([]);
+    setDraft("");
+  }
+
+  async function openSession(id: string) {
+    stopStreaming();
+    const session = await fetchSession(id);
+    sessionId.current = session.id;
+    setSessionTitle(session.title);
+    setMessages(session.messages);
+    setSessionsOpen(false);
+  }
+
   const empty = messages.length === 0;
+  const lastAssistantId = [...messages].reverse().find((message) => message.role === "assistant")?.id;
 
   return (
     <div className="chat-panel">
+      <div className="chat-toolbar">
+        {sessionTitle ? <span className="session-title">{sessionTitle}</span> : <span />}
+        <Button type="text" onClick={() => setSessionsOpen(true)}>
+          历史对话
+        </Button>
+      </div>
       <div className="thread">
         {empty ? (
           <Welcome
@@ -187,6 +234,18 @@ export function ChatPanel({ profile }: { profile: Profile }) {
               ) : null}
               {message.error ? <Alert type="error" showIcon message={message.error} /> : null}
               <ResultCards tools={message.tools ?? []} onOpenProject={(id) => void openProject(id)} />
+              {!message.streaming && message.text ? (
+                <AnswerActions
+                  message={message}
+                  sessionId={sessionId.current}
+                  canRegenerate={Boolean(message.saved && message.id === lastAssistantId && !streaming)}
+                  onRegenerate={() => {
+                    const question = [...messages].reverse().find((item) => item.role === "user")?.text ?? "";
+                    void send(question, { regenerate: true });
+                  }}
+                  onRated={(rating) => patchAssistant(message.id, (current) => ({ ...current, rating }))}
+                />
+              ) : null}
             </div>
           ),
         )}
@@ -210,6 +269,15 @@ export function ChatPanel({ profile }: { profile: Profile }) {
               发送
             </SendButton>
           );
+        }}
+      />
+      <SessionDrawer
+        open={sessionsOpen}
+        activeId={sessionId.current}
+        onClose={() => setSessionsOpen(false)}
+        onCreate={startNewChat}
+        onSelect={(id) => {
+          void openSession(id);
         }}
       />
       <Drawer

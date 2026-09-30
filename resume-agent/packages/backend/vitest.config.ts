@@ -10,9 +10,10 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["test/**/*.test.ts"],
+    fileParallelism: false,
     server: {
       deps: {
-        external: [/@lancedb\/lancedb/, /apache-arrow/, /@earendil-works/],
+        external: [/@earendil-works/, /^pg$/, /@node-rs/, /node-pg-migrate/],
       },
     },
   },

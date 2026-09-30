@@ -94,6 +94,74 @@ button, input, textarea { font-family: inherit; }
   gap: 10px;
 }
 
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-title {
+  color: #5d6d66;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.answer-actions,
+.feedback-actions,
+.session-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.session-toolbar { margin-bottom: 12px; }
+
+.session-search { margin-bottom: 8px; }
+
+.session-drawer h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  color: #5d6d66;
+  font-weight: 600;
+}
+
+.session-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid #eadfce;
+  background: #fffaf3;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.session-item.active { border-color: #1e5c4e; }
+
+.session-item time,
+.session-empty,
+.feedback-error {
+  color: #5d6d66;
+  font-size: 12px;
+}
+
+.feedback-box {
+  width: min(240px, 70vw);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-box .ant-radio-wrapper { display: flex; margin-inline-start: 0; }
+
 .thread {
   min-height: 0;
   flex: 1;

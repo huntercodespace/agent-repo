@@ -66,4 +66,14 @@ export interface ChatMessage {
   streaming?: boolean;
   tools?: ToolStep[];
   error?: string;
+  /** 服务端已经把这条回答写入数据库，反馈和重新生成才可用。 */
+  saved?: boolean;
+  rating?: "like" | "dislike" | null;
+}
+
+export interface SessionSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -1,0 +1,2 @@
+-- 测试库。只在数据目录第一次初始化时执行。
+CREATE DATABASE resume_test OWNER resume;

@@ -1,4 +1,4 @@
-import { Agent, type AgentTool, type StreamFn } from "@earendil-works/pi-agent-core";
+import { Agent, type AgentMessage, type AgentTool, type StreamFn } from "@earendil-works/pi-agent-core";
 import type { Api, AssistantMessage, Model } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
@@ -51,13 +51,17 @@ export function createResumeAgent(options: {
   profile: Profile;
   tools: AgentTool[];
   streamFn?: StreamFn;
+  /** 来自数据库的原文。空数组表示新会话，由 Agent 自己写入系统提示。 */
+  messages?: AgentMessage[];
 }): Agent {
+  const messages = options.messages ?? [];
   return new Agent({
     streamFn: options.streamFn ?? createStreamFn(),
     initialState: {
       systemPrompt: buildSystemPrompt(options.profile),
       model: options.model,
       tools: options.tools,
+      ...(messages.length > 0 ? { messages } : {}),
       // 不设置 thinkingLevel。0.99.1 运行时默认是 off，类型里虽然没有 "off"。
     },
   });
