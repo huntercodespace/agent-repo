@@ -3,6 +3,18 @@ import { Button, Modal } from "antd";
 import { useState } from "react";
 import type { Profile } from "../types";
 
+export function Portrait({ src, name, className }: { src: string; name: string; className: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) {
+    return (
+      <span className={`${className} portrait-fallback`} aria-hidden="true">
+        {name.slice(0, 1) || "人"}
+      </span>
+    );
+  }
+  return <img className={className} src={src} alt="" onError={() => setBroken(true)} />;
+}
+
 export function ContactList({ contact }: { contact: Profile["contact"] }) {
   const rows = [
     ["邮箱", contact.email],
@@ -50,7 +62,7 @@ export function WelcomeProfile({ profile }: { profile: Profile }) {
   return (
     <article className="hero-card">
       <div className="hero-main">
-        <img className="hero-avatar" src={profile.avatar} alt="" />
+        <Portrait className="hero-avatar" src={profile.avatar} name={profile.name} />
         <div className="hero-copy">
           <div className="hero-name-line">
             <h1>{profile.name}</h1>
@@ -92,7 +104,7 @@ export function CompactProfile({ profile, narrow }: { profile: Profile; narrow: 
       <div className="compact-main">
         {narrow ? (
           <span className="compact-photo-wrap">
-            <img className="compact-photo" src={profile.avatar} alt="" />
+            <Portrait className="compact-photo" src={profile.avatar} name={profile.name} />
             <span className="online-dot" />
           </span>
         ) : (

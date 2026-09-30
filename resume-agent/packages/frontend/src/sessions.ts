@@ -1,25 +1,22 @@
 import type { ChatMessage, SessionSummary } from "./types";
 
-export type SessionGroup = "今天" | "昨天" | "近 7 天" | "更早";
+export type SessionGroup = "今天" | "近 7 天" | "更早";
 
 export function groupSessions(items: SessionSummary[], now = new Date()): Array<{ label: SessionGroup; items: SessionSummary[] }> {
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const startYesterday = startToday - 86_400_000;
   const startWeek = startToday - 7 * 86_400_000;
   const buckets: Record<SessionGroup, SessionSummary[]> = {
     今天: [],
-    昨天: [],
     "近 7 天": [],
     更早: [],
   };
   for (const item of items) {
     const time = new Date(item.updatedAt).getTime();
     if (time >= startToday) buckets.今天.push(item);
-    else if (time >= startYesterday) buckets.昨天.push(item);
     else if (time >= startWeek) buckets["近 7 天"].push(item);
     else buckets.更早.push(item);
   }
-  return (["今天", "昨天", "近 7 天", "更早"] as const)
+  return (["今天", "近 7 天", "更早"] as const)
     .filter((label) => buckets[label].length > 0)
     .map((label) => ({ label, items: buckets[label] }));
 }

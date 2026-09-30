@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import { doneToolLabel } from "./tools.js";
 
 /** 与安装的 @earendil-works/pi-agent-core 版本对齐。升级库之后要另写数据迁移。 */
 export const AGENT_FORMAT_VERSION = "pi-agent-core@0.99.1";
@@ -102,11 +103,13 @@ export function rowsFromAgentMessages(
 
 function uiDetailsFor(message: AgentMessage, labels: ReadonlyMap<string, string>): UiDetails | null {
   if (message.role !== "toolResult") return null;
+  const pending = labels.get(message.toolName) ?? message.toolName;
+  const failed = Boolean(message.isError);
   return {
     toolCallId: message.toolCallId,
     toolName: message.toolName,
-    label: labels.get(message.toolName) ?? message.toolName,
-    isError: Boolean(message.isError),
+    label: failed ? pending : (doneToolLabel(message.toolName) ?? pending),
+    isError: failed,
     details: message.details ?? null,
   };
 }

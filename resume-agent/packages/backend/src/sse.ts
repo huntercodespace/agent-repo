@@ -1,4 +1,5 @@
 import type { AgentEvent } from "@earendil-works/pi-agent-core";
+import { doneToolLabel } from "./tools.js";
 import { sanitizeErrorMessage } from "./transcript.js";
 
 /**
@@ -88,9 +89,11 @@ export function mapAgentEvent(event: AgentEvent, labels: ReadonlyMap<string, str
     case "tool_execution_end": {
       const content = textFromToolResult(event.result);
       const details = detailsFromToolResult(event.result);
+      const finished = event.isError ? undefined : doneToolLabel(event.toolName);
       return {
         event: "tool_end",
         data: toolPayload(event, labels, event.isError ? "error" : "success", {
+          ...(finished ? { label: finished } : {}),
           isError: event.isError,
           ...(content ? { content } : {}),
           ...(details !== undefined ? { details } : {}),

@@ -3,6 +3,7 @@ import { Dropdown } from "antd";
 import { useState } from "react";
 import type { Profile, SessionSummary } from "../types";
 import { groupSessions } from "../sessions";
+import { Portrait } from "./ProfileViews";
 
 function SparkIcon() {
   return (
@@ -185,7 +186,13 @@ export function SessionSidebar({
       <div className={mode === "drawer" ? "sidebar-dock drawer-dock" : "sidebar-dock"}>
         <div className="dock-person">
           <span className="dock-avatar">
-            {mode === "drawer" ? <img src={profile.avatar} alt="" /> : <span className="dock-glyph"><UserOutlined /></span>}
+            {mode === "drawer" ? (
+              <Portrait className="dock-photo" src={profile.avatar} name={profile.name} />
+            ) : (
+              <span className="dock-glyph">
+                <UserOutlined />
+              </span>
+            )}
             <i className="online-dot" />
           </span>
           <span className="dock-copy">
@@ -198,10 +205,17 @@ export function SessionSidebar({
               {mode === "drawer" ? "在线 · 随时提问" : "在线 · 随时解答"}
             </span>
           </span>
+          {mode === "drawer" ? (
+            <button className="icon-button" type="button" disabled title="暂无设置" aria-label="设置">
+              <SettingOutlined />
+            </button>
+          ) : null}
         </div>
-        <button className="icon-button" type="button" disabled title="暂无设置" aria-label="设置">
-          <SettingOutlined />
-        </button>
+        {mode === "drawer" ? null : (
+          <button className="icon-button" type="button" disabled title="暂无设置" aria-label="设置">
+            <SettingOutlined />
+          </button>
+        )}
       </div>
     </>
   );

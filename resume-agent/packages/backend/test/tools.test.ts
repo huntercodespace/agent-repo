@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createResumeTools } from "../src/tools.js";
+import { createResumeTools, doneToolLabel } from "../src/tools.js";
 import type { ResumeLookup } from "../src/tools.js";
 import type { Profile, ResumeChunk, SearchQuery } from "@resume/retrieval";
 
@@ -58,6 +58,10 @@ describe("四个工具", () => {
       ["download_resume", "正在获取简历文件"],
       ["get_contact", "正在获取联系方式"],
     ]);
+    expect(doneToolLabel("search_resume")).toBe("已查阅相关经历");
+    expect(doneToolLabel("get_project_detail")).toBe("已获取项目详情");
+    expect(doneToolLabel("download_resume")).toBe("已获取简历文件");
+    expect(doneToolLabel("get_contact")).toBe("已获取联系方式");
   });
 
   it("search_resume 把摘要给模型，把引用卡片放在 details", async () => {

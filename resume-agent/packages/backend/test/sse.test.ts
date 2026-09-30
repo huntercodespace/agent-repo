@@ -178,6 +178,7 @@ describe("SSE 事件映射", () => {
     expect(events[1]?.data).toMatchObject({
       status: "success",
       isError: false,
+      label: "已查阅相关经历",
       details: { kind: "search", items: [{ id: "proj-harbor", title: "港湾协作平台" }] },
     });
     expect(events.filter((event) => event.event === "text_delta").map((event) => event.data.delta).join("")).toBe(

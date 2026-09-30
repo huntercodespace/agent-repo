@@ -1,3 +1,4 @@
+import { DisconnectOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { ChatPanel } from "./components/ChatPanel";
 import type { Profile } from "./types";
@@ -71,12 +72,15 @@ export function App() {
   return (
     <main className={narrow ? "app app-mobile" : "app"}>
       {error && !profile ? (
-        <div className="offline-card">
-          <strong>暂时连不上简历服务</strong>
-          <p>{error}</p>
-          <button type="button" onClick={() => setAttempt((value) => value + 1)}>
-            重试
-          </button>
+        <div className="offline-screen">
+          <div className="offline-card">
+            <DisconnectOutlined />
+            <strong>暂时连不上简历服务</strong>
+            <p>请检查网络后重试</p>
+            <button type="button" onClick={() => setAttempt((value) => value + 1)}>
+              重试
+            </button>
+          </div>
         </div>
       ) : null}
       {profile ? <ChatPanel profile={profile} narrow={narrow} mock={mock} /> : null}

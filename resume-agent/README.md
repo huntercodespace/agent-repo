@@ -151,10 +151,10 @@ docker compose exec postgres psql -U resume -d resume -c 'CREATE DATABASE resume
 
 | 工具 | 界面状态 | 作用 |
 | --- | --- | --- |
-| `search_resume` | 正在查阅相关经历 | 向量加全文的混合检索，可按 type、tech_stack、年份过滤 |
-| `get_project_detail` | 正在查阅项目详情 | 按 id 读项目全文，不走向量 |
-| `download_resume` | 正在获取简历文件 | 返回 PDF 地址 |
-| `get_contact` | 正在获取联系方式 | 返回邮箱、电话和主页 |
+| `search_resume` | 正在查阅相关经历 / 已查阅相关经历 | 向量加全文的混合检索，可按 type、tech_stack、年份过滤 |
+| `get_project_detail` | 正在查阅项目详情 / 已获取项目详情 | 按 id 读项目全文，不走向量 |
+| `download_resume` | 正在获取简历文件 / 已获取简历文件 | 返回 PDF 地址 |
+| `get_contact` | 正在获取联系方式 / 已获取联系方式 | 返回邮箱、电话和主页 |
 
 系统提示要求第三人称，只根据工具查到的内容回答；简历里没有的事情要直说，并建议用联系方式联系本人。
 
@@ -203,7 +203,7 @@ data: <json>
 
 `args` 出现在开始时，`content` / `details` / `isError` 出现在结束时。`details.kind`：
 
-- `search`：`items[]` 含 `id`、`type`、`title`、`period`、`tech_stack`、`snippet`。界面画引用标签；`type === "project"` 再画项目卡片。
+- `search`：`items[]` 含 `id`、`type`、`title`、`period`、`tech_stack`、`snippet`。引用是回答正文里的上标，不再单独成行；`type === "project"` 再画项目卡片。步骤进行中用「正在…」，成功结束后换成「已…」。
 - `project`：项目全文。`project_missing` 表示这个 id 不是项目。
 - `download`：`url`、`filename`。
 - `contact`：`email`、`phone`、`github`、`website`。
@@ -212,7 +212,7 @@ Ant Design X 的 ThoughtChain 状态是 `loading` / `success` / `error` / `abort
 
 未配置密钥时聊天接口返回 503，超限返回 429，上一轮还没结束返回 409，重新生成时找不到会话返回 404。这些是普通 JSON，不是 SSE。
 
-`GET /api/sessions?q=` 列出当前访客的对话，可按标题或内容搜索。没有对话时界面写「还没有对话」；有搜索词但没有结果时写「搜不到」。列表和打开某一轮时会先显示骨架。`GET /api/sessions/:id` 取回消息、思维链、卡片，以及 `stopped`、`error` 和最新的 `rating`。别人的会话返回 404。
+`GET /api/sessions?q=` 列出当前访客的对话，可按标题或内容搜索。分组是今天、最近 7 天、更早。没有对话时界面写「还没有对话」；有搜索词但没有结果时写「搜不到」。列表和打开某一轮时会先显示骨架。`GET /api/sessions/:id` 取回消息、思维链、卡片，以及 `stopped`、`error` 和最新的 `rating`。别人的会话返回 404。
 
 `PATCH /api/sessions/:id`，请求体 `{ "title": "…" }`，标题去掉多余空白，最长 80 字。`DELETE /api/sessions/:id` 直接删除这轮对话。消息和反馈随外键级联删掉，没有回收站：会话不多，也没有登录后的废纸篓。两个接口都只动当前访客自己的会话，别人的返回 404。
 

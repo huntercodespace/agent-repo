@@ -10,6 +10,31 @@ const TYPE_LABEL = {
   education: "教育",
 } as const;
 
+export function CitationMarks({ tools }: { tools: ToolStep[] }) {
+  const items = tools.flatMap((step) => (step.details?.kind === "search" ? step.details.items : []));
+  if (!items.length) return null;
+  return (
+    <>
+      {items.map((item, index) => (
+        <Tooltip
+          key={item.id}
+          title={
+            <span>
+              <strong>{item.title}</strong>
+              <br />
+              {item.snippet}
+            </span>
+          }
+        >
+          <sup className="cite-chip">
+            {index + 1} · {TYPE_LABEL[item.type]}
+          </sup>
+        </Tooltip>
+      ))}
+    </>
+  );
+}
+
 export function ResultCards({
   tools,
   onOpenProject,
@@ -39,26 +64,6 @@ function ResultBlock({
     const projects = details.items.filter((item) => item.type === "project");
     return (
       <>
-        {details.items.length ? (
-          <div className="citation-row">
-            {details.items.map((item, index) => (
-              <Tooltip
-                key={item.id}
-                title={
-                  <span>
-                    <strong>{item.title}</strong>
-                    <br />
-                    {item.snippet}
-                  </span>
-                }
-              >
-                <span className="cite-chip">
-                  {index + 1} · {TYPE_LABEL[item.type]}
-                </span>
-              </Tooltip>
-            ))}
-          </div>
-        ) : null}
         {projects.map((project) => (
           <button key={project.id} type="button" className="project-card" onClick={() => onOpenProject(project.id)}>
             <span className="project-card-copy">

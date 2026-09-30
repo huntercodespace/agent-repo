@@ -158,3 +158,15 @@ export function createResumeTools(lookup: ResumeLookup): AgentTool[] {
 export function toolLabelMap(tools: AgentTool[]): Map<string, string> {
   return new Map(tools.map((tool) => [tool.name, tool.label]));
 }
+
+/** 步骤结束后换成完成态。进行中的文案仍用各工具自己的 label。 */
+const DONE_LABEL: Record<string, string> = {
+  search_resume: "已查阅相关经历",
+  get_project_detail: "已获取项目详情",
+  download_resume: "已获取简历文件",
+  get_contact: "已获取联系方式",
+};
+
+export function doneToolLabel(name: string): string | undefined {
+  return DONE_LABEL[name];
+}

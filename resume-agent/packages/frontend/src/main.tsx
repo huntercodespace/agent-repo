@@ -1,5 +1,5 @@
 import { XProvider } from "@ant-design/x";
-import { ConfigProvider } from "antd";
+import { App as AntApp, ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -13,9 +13,11 @@ if (!root) throw new Error("缺少根节点");
 createRoot(root).render(
   <StrictMode>
     <ConfigProvider theme={theme} locale={zhCN}>
-      <XProvider>
-        <App />
-      </XProvider>
+      <AntApp>
+        <XProvider>
+          <App />
+        </XProvider>
+      </AntApp>
     </ConfigProvider>
   </StrictMode>,
 );

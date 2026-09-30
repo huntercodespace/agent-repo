@@ -128,7 +128,7 @@ export function buildMockAnswer(message: string, model: ModelRef): MockAnswer {
     return {
       events: [
         toolStart("get_contact", "正在获取联系方式", {}),
-        toolEnd("get_contact", "正在获取联系方式", details, content),
+        toolEnd("get_contact", "已获取联系方式", details, content),
         ...deltas(text),
       ],
       messages: [
@@ -144,7 +144,7 @@ export function buildMockAnswer(message: string, model: ModelRef): MockAnswer {
     return {
       events: [
         toolStart("download_resume", "正在获取简历文件", {}),
-        toolEnd("download_resume", "正在获取简历文件", details, content),
+        toolEnd("download_resume", "已获取简历文件", details, content),
         ...deltas(text),
       ],
       messages: [
@@ -161,7 +161,7 @@ export function buildMockAnswer(message: string, model: ModelRef): MockAnswer {
   return {
     events: [
       toolStart("search_resume", "正在查阅相关经历", args),
-      toolEnd("search_resume", "正在查阅相关经历", details, content),
+      toolEnd("search_resume", "已查阅相关经历", details, content),
       ...deltas(text),
     ],
     messages: [

@@ -1,17 +1,20 @@
 import {
+  ArrowRightOutlined,
   ArrowUpOutlined,
   AudioOutlined,
   EditOutlined,
   EllipsisOutlined,
+  ExclamationCircleFilled,
   MenuOutlined,
   PaperClipOutlined,
   RobotOutlined,
   SendOutlined,
   ShareAltOutlined,
   UserOutlined,
+  WarningFilled,
 } from "@ant-design/icons";
 import { Bubble, Sender, ThoughtChain } from "@ant-design/x";
-import { Dropdown, Modal } from "antd";
+import { App, Dropdown } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { deleteSession, fetchSession, fetchSessions, renameSession } from "../sessions";
 import { readSse } from "../sse";
@@ -19,10 +22,22 @@ import type { ChatMessage, Profile, ProjectDetail, SessionSummary, ToolDetails, 
 import { AnswerActions } from "./AnswerActions";
 import { CompactProfile, WelcomeProfile } from "./ProfileViews";
 import { ProjectPanel } from "./ProjectPanel";
-import { ResultCards } from "./ResultCards";
+import { CitationMarks, ResultCards } from "./ResultCards";
 import { SessionSidebar } from "./SessionSidebar";
 
 const SUGGESTIONS = ["他最有代表性的项目是什么？", "2023 年后做过哪些 React 项目？", "为什么适合前端岗位？"];
+
+const DONE_LABEL: Record<string, string> = {
+  search_resume: "已查阅相关经历",
+  get_project_detail: "已获取项目详情",
+  download_resume: "已获取简历文件",
+  get_contact: "已获取联系方式",
+};
+
+function stepTitle(step: ToolStep): string {
+  const done = step.status === "success" ? DONE_LABEL[step.name] : undefined;
+  return done ?? step.label;
+}
 
 function thoughtStatus(status: ToolStatus): "loading" | "success" | "error" {
   if (status === "pending") return "loading";
@@ -84,6 +99,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
   const abortRef = useRef<AbortController | null>(null);
   const runToken = useRef(0);
   const threadRef = useRef<HTMLDivElement>(null);
+  const { modal } = App.useApp();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -310,8 +326,10 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
 
   function confirmDelete(id: string) {
     const title = sessions.find((item) => item.id === id)?.title || "这轮对话";
-    Modal.confirm({
+    modal.confirm({
+      className: "delete-confirm",
       title: "删除这轮对话？",
+      icon: <ExclamationCircleFilled />,
       content: `「${title}」会直接删除，消息一并去掉，没有回收站。`,
       okText: "删除",
       cancelText: "取消",
@@ -454,7 +472,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
               </button>
               <div className="topbar-title">
                 <i className="live-dot" />
-                <h1>Ai Assistant</h1>
+                <h1>简历问答</h1>
               </div>
               <div className="topbar-actions">
                 <button className="icon-button icon-button-lg" type="button" aria-label="新建对话" onClick={startNewChat}>
@@ -500,7 +518,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
             </>
           )}
         </header>
-        <div className={projectOpen && !narrow ? "stage with-project" : "stage"}>
+        <div className="stage">
           <div className="thread-wrap">
             <div className="thread" ref={threadRef}>
               <div className={empty && !narrow ? "thread-inner thread-welcome" : "thread-inner"}>
@@ -522,7 +540,9 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                       {SUGGESTIONS.map((label) => (
                         <button key={label} type="button" onClick={() => void send(label)}>
                           <span>{label}</span>
-                          {narrow || (empty && !narrow) ? <span className="suggestion-arrow" aria-hidden="true">→</span> : null}
+                          {narrow || (empty && !narrow) ? (
+                            <ArrowRightOutlined className="suggestion-arrow" />
+                          ) : null}
                         </button>
                       ))}
                     </div>
@@ -537,7 +557,10 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                 ) : null}
                 {threadError ? (
                   <div className="answer-error">
-                    <p>{threadError}</p>
+                    <p>
+                      <WarningFilled />
+                      {threadError}
+                    </p>
                     {threadErrorId ? (
                       <button type="button" onClick={() => void openSession(threadErrorId)}>
                         重试
@@ -564,7 +587,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                     </div>
                   ) : (
                     <div key={message.id} className="assistant-block">
-                      {message.streaming && !message.text ? (
+                      {message.streaming && !message.text && !message.tools?.length ? (
                         <p className="progress-hint" role="status">
                           <i />
                           {progressText(message)}
@@ -576,7 +599,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                           line={false}
                           items={message.tools.map((step) => ({
                             key: step.toolCallId,
-                            title: step.label,
+                            title: stepTitle(step),
                             status: thoughtStatus(step.status),
                             blink: step.status === "pending",
                           }))}
@@ -591,6 +614,7 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                                 {message.text ? (
                                   <p>
                                     {message.text}
+                                    <CitationMarks tools={message.tools ?? []} />
                                     {message.stopped ? <span className="stopped-mark">已停止</span> : null}
                                   </p>
                                 ) : message.stopped ? (
@@ -599,7 +623,10 @@ export function ChatPanel({ profile, narrow, mock }: { profile: Profile; narrow:
                                 <ResultCards tools={message.tools ?? []} onOpenProject={(id) => void openProject(id)} />
                                 {message.error ? (
                                   <div className="answer-error">
-                                    <p>{message.error}</p>
+                                    <p>
+                                      <WarningFilled />
+                                      {message.error}
+                                    </p>
                                     <button
                                       type="button"
                                       onClick={() => {
